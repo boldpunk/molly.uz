@@ -5,6 +5,8 @@ import { products as productsTable } from "@/db/schema";
 import { ProductForm } from "@/components/admin/product-form";
 import { updateProduct, deleteProduct } from "@/lib/admin-actions";
 import { getCategories } from "@/lib/data";
+import { PageHeader } from "@/components/admin/page-header";
+import { DeleteButton } from "@/components/admin/delete-button";
 
 export default async function EditProductPage({
   params,
@@ -45,18 +47,12 @@ export default async function EditProductPage({
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h1 className="font-heading text-2xl font-bold text-navy">
-          {product.name}
-        </h1>
-        <form action={deleteWithId}>
-          <button
-            type="submit"
-            className="text-sm font-medium text-red-600 hover:underline"
-          >
-            Удалить товар
-          </button>
-        </form>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <PageHeader
+          title={product.name}
+          back={{ href: "/admin/products", label: "Товары" }}
+        />
+        <DeleteButton action={deleteWithId} label="Удалить товар" />
       </div>
       <div className="mt-6">
         <ProductForm

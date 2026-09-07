@@ -4,6 +4,8 @@ import { db } from "@/db";
 import { categories as categoriesTable } from "@/db/schema";
 import { CategoryForm } from "@/components/admin/category-form";
 import { updateCategory, deleteCategory } from "@/lib/admin-actions";
+import { PageHeader } from "@/components/admin/page-header";
+import { DeleteButton } from "@/components/admin/delete-button";
 
 export default async function EditCategoryPage({
   params,
@@ -32,18 +34,12 @@ export default async function EditCategoryPage({
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h1 className="font-heading text-2xl font-bold text-navy">
-          {category.name}
-        </h1>
-        <form action={deleteWithId}>
-          <button
-            type="submit"
-            className="text-sm font-medium text-red-600 hover:underline"
-          >
-            Удалить категорию
-          </button>
-        </form>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <PageHeader
+          title={category.name}
+          back={{ href: "/admin/categories", label: "Категории" }}
+        />
+        <DeleteButton action={deleteWithId} label="Удалить категорию" />
       </div>
       <div className="mt-6">
         <CategoryForm action={updateWithId} category={category} />
