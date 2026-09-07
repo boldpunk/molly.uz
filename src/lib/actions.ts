@@ -8,11 +8,13 @@ export async function submitRequest(
   name: string,
   phone: string,
   notes: string,
-  items: RequestItem[]
+  items: RequestItem[],
+  customerId?: string
 ) {
   const [request] = await db
     .insert(requests)
     .values({
+      customerId,
       customerName: name,
       customerPhone: phone,
       notes,
