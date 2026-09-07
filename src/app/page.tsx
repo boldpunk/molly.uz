@@ -9,26 +9,26 @@ export default function HomePage() {
   return (
     <div>
       {/* Hero */}
-      <section className="relative overflow-hidden bg-navy text-cream">
+      <section className="relative overflow-hidden bg-white">
         <div className="mx-auto grid max-w-7xl items-center gap-8 px-6 py-16 md:grid-cols-2 md:py-24">
           <div>
-            <h1 className="font-heading text-3xl font-bold leading-tight md:text-5xl">
+            <h1 className="font-heading text-3xl font-bold leading-tight text-navy md:text-5xl">
               Мебель для дома, сделанная под вас
             </h1>
-            <p className="mt-4 max-w-md text-cream/80">
+            <p className="mt-4 max-w-md text-navy/70">
               Molly Home — производитель комфортной мебели для дома.
               Современные технологии, лояльный бренд.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href="/catalog/kuhonnaya-mebel"
-                className="rounded-full bg-sage px-6 py-3 text-sm font-semibold text-navy hover:bg-sage-dark hover:text-cream"
+                className="rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white hover:bg-navy/90"
               >
                 Смотреть каталог
               </Link>
               <Link
                 href="/request"
-                className="rounded-full border border-cream/30 px-6 py-3 text-sm font-semibold hover:bg-cream/10"
+                className="rounded-full border border-navy/20 px-6 py-3 text-sm font-semibold text-navy hover:bg-navy/5"
               >
                 Оставить заявку на замер
               </Link>
@@ -37,13 +37,12 @@ export default function HomePage() {
           <PlaceholderImage
             label="Молли Хоум — интерьер"
             aspect="aspect-[4/3]"
-            className="border-cream/20 bg-cream/5"
           />
         </div>
       </section>
 
       {/* USP strip */}
-      <section className="border-b border-navy/10 bg-cream">
+      <section className="border-y border-navy/10 bg-white">
         <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-6 py-8 text-center md:grid-cols-4">
           {[
             { label: "Высота фасадов", value: "любая под проект" },
@@ -87,7 +86,7 @@ export default function HomePage() {
                   className="transition group-hover:scale-[1.02]"
                 />
               )}
-              <span className="text-center text-sm font-medium text-navy group-hover:text-sage-dark">
+              <span className="text-center text-sm font-medium text-navy">
                 {cat.name}
               </span>
             </Link>
@@ -103,7 +102,7 @@ export default function HomePage() {
           </h2>
           <Link
             href="/catalog/kuhonnaya-mebel"
-            className="text-sm font-medium text-sage-dark hover:underline"
+            className="text-sm font-medium text-navy hover:underline"
           >
             Смотреть все →
           </Link>
@@ -116,8 +115,11 @@ export default function HomePage() {
       </section>
 
       {/* Configurator teaser */}
-      <section className="bg-sage/15">
-        <div className="mx-auto flex max-w-7xl flex-col items-center gap-6 px-6 py-14 text-center">
+      <section className="bg-white">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-6 rounded-2xl border border-navy/10 px-6 py-14 text-center">
+          <span className="rounded-full bg-sage/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sage-dark">
+            Онлайн-конфигуратор
+          </span>
           <h2 className="font-heading text-2xl font-bold text-navy">
             Соберите свою кухню онлайн
           </h2>
@@ -128,7 +130,7 @@ export default function HomePage() {
           </p>
           <Link
             href="/catalog/kuhonnaya-mebel/antro"
-            className="rounded-full bg-navy px-6 py-3 text-sm font-semibold text-cream hover:bg-navy/90"
+            className="rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white hover:bg-navy/90"
           >
             Открыть конфигуратор
           </Link>
@@ -150,7 +152,7 @@ export default function HomePage() {
           </p>
           <Link
             href="/about"
-            className="mt-4 inline-block text-sm font-medium text-sage-dark hover:underline"
+            className="mt-4 inline-block text-sm font-medium text-navy hover:underline"
           >
             Узнать больше →
           </Link>
@@ -167,7 +169,7 @@ export default function HomePage() {
             href="https://instagram.com/mollyhome"
             target="_blank"
             rel="noreferrer"
-            className="text-sm font-medium text-sage-dark hover:underline"
+            className="text-sm font-medium text-navy hover:underline"
           >
             @mollyhome
           </a>

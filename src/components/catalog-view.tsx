@@ -85,7 +85,7 @@ export function CatalogView({
             href={`/catalog/${cat.slug}`}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${
               cat.id === category.id
-                ? "bg-navy text-cream"
+                ? "bg-navy text-white"
                 : "bg-navy/5 text-navy/70 hover:bg-navy/10"
             }`}
           >
@@ -110,7 +110,7 @@ export function CatalogView({
           </p>
           <Link
             href="/catalog/kuhonnaya-mebel"
-            className="mt-6 inline-block rounded-full bg-sage px-6 py-3 text-sm font-semibold text-navy hover:bg-sage-dark hover:text-cream"
+            className="mt-6 inline-block rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white hover:bg-navy/90"
           >
             Смотреть кухни
           </Link>
@@ -119,7 +119,7 @@ export function CatalogView({
         <div className="mt-6 flex flex-col gap-8 md:flex-row">
           {/* Filters — accordion on mobile, always-open sidebar on desktop */}
           <aside className="shrink-0 md:w-56">
-            <details className="group rounded-lg border border-navy/10 bg-white/40 p-4 md:hidden">
+            <details className="group rounded-lg border border-navy/10 bg-white p-4 md:hidden">
               <summary className="cursor-pointer text-sm font-semibold text-navy">
                 Фильтры
               </summary>

@@ -97,7 +97,7 @@ export function ProductDetail({
           <p className="mt-1 text-sm text-navy/60">{product.specLine}</p>
 
           {isConfigurable ? (
-            <div className="mt-6 flex flex-col gap-6 rounded-xl border border-navy/10 bg-white/40 p-5">
+            <div className="mt-6 flex flex-col gap-6 rounded-xl border border-navy/10 bg-white p-5">
               {product.hardwareOptions && (
                 <div>
                   <h3 className="text-sm font-semibold text-navy">
@@ -200,13 +200,13 @@ export function ProductDetail({
               <button
                 type="button"
                 onClick={handleAddToRequest}
-                className="w-full rounded-full bg-sage px-6 py-3 text-sm font-semibold text-navy hover:bg-sage-dark hover:text-cream"
+                className="w-full rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white hover:bg-navy/90"
               >
                 {submitted ? "Добавлено ✓" : "Оставить заявку на замер"}
               </button>
             </div>
           ) : (
-            <div className="mt-6 flex flex-col gap-4 rounded-xl border border-navy/10 bg-white/40 p-5">
+            <div className="mt-6 flex flex-col gap-4 rounded-xl border border-navy/10 bg-white p-5">
               {product.colourOptions && product.colourOptions.length > 0 && (
                 <div>
                   <h3 className="text-sm font-semibold text-navy">
@@ -230,12 +230,14 @@ export function ProductDetail({
                   </div>
                 </div>
               )}
-              <p className="text-sm font-medium text-navy">Цена по запросу</p>
+              <span className="inline-block w-fit rounded-full bg-sage/15 px-3 py-1 text-xs font-semibold text-sage-dark">
+                Цена по запросу
+              </span>
               <div className="flex flex-wrap gap-3">
                 <button
                   type="button"
                   onClick={handleAddToRequest}
-                  className="rounded-full bg-sage px-6 py-3 text-sm font-semibold text-navy hover:bg-sage-dark hover:text-cream"
+                  className="rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white hover:bg-navy/90"
                 >
                   {submitted ? "Добавлено ✓" : "Узнать цену"}
                 </button>
@@ -269,7 +271,7 @@ export function ProductDetail({
               onClick={() => setTab(key)}
               className={`-mb-px border-b-2 pb-3 text-sm font-medium transition ${
                 tab === key
-                  ? "border-sage-dark text-navy"
+                  ? "border-navy text-navy"
                   : "border-transparent text-navy/50 hover:text-navy"
               }`}
             >

@@ -11,7 +11,7 @@ export function Header() {
   const { items } = useRequestList();
 
   return (
-    <header className="sticky top-0 z-50 bg-cream/95 backdrop-blur supports-[backdrop-filter]:bg-cream/80">
+    <header className="sticky top-0 z-50 border-b border-navy/10 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
       {/* Utility bar — hidden on mobile */}
       <div className="hidden border-b border-navy/10 text-xs text-navy/70 md:block">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-2">
@@ -66,7 +66,7 @@ export function Header() {
               Каталог
             </button>
             {menuOpen && (
-              <div className="absolute left-0 top-full z-50 mt-2 w-full rounded-lg border border-navy/10 bg-cream p-6 shadow-lg">
+              <div className="absolute left-0 top-full z-50 mt-2 w-full rounded-lg border border-navy/10 bg-white p-6 shadow-lg">
                 <div className="grid grid-cols-5 gap-4">
                   {categories.map((cat) => (
                     <Link
@@ -74,7 +74,7 @@ export function Header() {
                       href={`/catalog/${cat.slug}`}
                       className="group flex flex-col gap-2"
                     >
-                      <div className="aspect-square rounded-md bg-gradient-to-br from-navy/5 to-sage/15 transition group-hover:from-sage/10 group-hover:to-sage/25" />
+                      <div className="aspect-square rounded-md border border-navy/10 bg-navy/[0.03] transition group-hover:bg-sage/10" />
                       <span className="text-sm font-medium text-navy group-hover:text-sage-dark">
                         {cat.name}
                       </span>
@@ -155,7 +155,7 @@ export function Header() {
               <circle cx="17" cy="20" r="1.5" fill="currentColor" />
             </svg>
             {items.length > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-sage-dark text-[10px] font-semibold text-cream">
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-sage-dark text-[10px] font-semibold text-white">
                 {items.length}
               </span>
             )}
@@ -172,7 +172,7 @@ export function Header() {
             aria-label="Закрыть меню"
             onClick={() => setDrawerOpen(false)}
           />
-          <div className="absolute left-0 top-0 h-full w-72 max-w-[85%] overflow-y-auto bg-cream p-6 shadow-xl">
+          <div className="absolute left-0 top-0 h-full w-72 max-w-[85%] overflow-y-auto bg-white p-6 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
               <span className="font-heading text-lg font-bold text-navy">
                 MOLLY HOME
