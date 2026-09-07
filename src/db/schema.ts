@@ -76,6 +76,14 @@ export const products = pgTable("products", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const customers = pgTable("customers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  phone: text("phone").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export interface StatusHistoryEntry {
   status: string;
   changedAt: string;
@@ -83,6 +91,9 @@ export interface StatusHistoryEntry {
 
 export const requests = pgTable("requests", {
   id: uuid("id").primaryKey().defaultRandom(),
+  customerId: uuid("customer_id").references(() => customers.id, {
+    onDelete: "set null",
+  }),
   customerName: text("customer_name").notNull(),
   customerPhone: text("customer_phone").notNull(),
   notes: text("notes").notNull().default(""),
