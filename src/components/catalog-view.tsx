@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Category, Product } from "@/lib/types";
 import { ProductCard } from "@/components/product-card";
-import { getCategoryIcon } from "@/components/icons/categories";
+import { getCategoryIcon, FurnitureIcon } from "@/components/icons/categories";
 
 type SortKey = "default" | "price-asc" | "price-desc" | "name";
 
@@ -20,7 +20,7 @@ export function CatalogView({
   categories: allCategories,
   products,
 }: {
-  category: Category;
+  category: Category | null;
   categories: Category[];
   products: Product[];
 }) {
@@ -76,14 +76,30 @@ export function CatalogView({
         <Link href="/" className="hover:underline">
           Главная
         </Link>{" "}
-        / <span className="text-navy">{category.name}</span>
+        /{" "}
+        <span className="text-navy">
+          {category ? category.name : "Все продукты"}
+        </span>
       </nav>
 
       {/* Category tabs */}
       <div className="mt-4 flex flex-wrap gap-2 border-b border-navy/10 pb-4">
+        <Link
+          href="/catalog"
+          className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${
+            !category
+              ? "bg-navy text-white"
+              : "bg-navy/5 text-navy/70 hover:bg-navy/10"
+          }`}
+        >
+          <FurnitureIcon
+            className={`h-4 w-4 ${!category ? "text-white" : "text-navy/40"}`}
+          />
+          Все продукты
+        </Link>
         {allCategories.map((cat) => {
           const Icon = getCategoryIcon(cat.slug);
-          const active = cat.id === category.id;
+          const active = cat.id === category?.id;
           return (
             <Link
               key={cat.id}
@@ -104,10 +120,10 @@ export function CatalogView({
       </div>
 
       <h1 className="font-heading mt-6 text-2xl font-bold text-navy">
-        {category.name}
+        {category ? category.name : "Все продукты"}
       </h1>
 
-      {category.isPlaceholder ? (
+      {category?.isPlaceholder ? (
         <div className="mt-8 rounded-xl border border-dashed border-navy/20 bg-navy/[0.02] px-6 py-16 text-center">
           <p className="font-heading text-lg font-semibold text-navy">
             Каталог пока наполняется
@@ -140,7 +156,7 @@ export function CatalogView({
                   colour={colour}
                   setHardware={setHardware}
                   setColour={setColour}
-                  showKitchenNote={category.filterKind === "kitchen"}
+                  showKitchenNote={category?.filterKind === "kitchen"}
                 />
               </div>
             </details>
@@ -152,7 +168,7 @@ export function CatalogView({
                 colour={colour}
                 setHardware={setHardware}
                 setColour={setColour}
-                showKitchenNote={category.filterKind === "kitchen"}
+                showKitchenNote={category?.filterKind === "kitchen"}
               />
             </div>
           </aside>
