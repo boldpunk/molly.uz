@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getCategories, getFeaturedProducts } from "@/lib/data";
 import { ProductCard } from "@/components/product-card";
 import { PlaceholderImage } from "@/components/placeholder-image";
+import { getCategoryIcon } from "@/components/icons/categories";
 
 export const dynamic = "force-dynamic";
 
@@ -69,33 +70,42 @@ export default async function HomePage() {
           Каталог
         </h2>
         <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-5">
-          {categories.map((cat) => (
-            <Link
-              key={cat.id}
-              href={`/catalog/${cat.slug}`}
-              className="group flex flex-col gap-3"
-            >
-              {cat.isPlaceholder ? (
-                <div className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-navy/20 bg-navy/[0.02] text-center">
-                  <span className="text-xs font-medium text-navy/40">
-                    Каталог
-                  </span>
-                  <span className="text-[11px] text-navy/30">
-                    наполняется
-                  </span>
-                </div>
-              ) : (
-                <PlaceholderImage
-                  label={cat.name}
-                  aspect="aspect-square"
-                  className="transition group-hover:scale-[1.02]"
-                />
-              )}
-              <span className="text-center text-sm font-medium text-navy">
-                {cat.name}
-              </span>
-            </Link>
-          ))}
+          {categories.map((cat) => {
+            const Icon = getCategoryIcon(cat.slug);
+            return (
+              <Link
+                key={cat.id}
+                href={`/catalog/${cat.slug}`}
+                className="group flex flex-col gap-3"
+              >
+                {cat.isPlaceholder ? (
+                  <div className="flex aspect-square flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-navy/20 bg-navy/[0.02] text-center">
+                    <Icon className="h-8 w-8 text-navy/25" />
+                    <span className="text-xs font-medium text-navy/40">
+                      Каталог
+                    </span>
+                    <span className="text-[11px] text-navy/30">
+                      наполняется
+                    </span>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <PlaceholderImage
+                      label={cat.name}
+                      aspect="aspect-square"
+                      className="transition group-hover:scale-[1.02]"
+                    />
+                    <span className="absolute left-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-sm">
+                      <Icon className="h-[18px] w-[18px] text-navy/60" />
+                    </span>
+                  </div>
+                )}
+                <span className="text-center text-sm font-medium text-navy">
+                  {cat.name}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </section>
 

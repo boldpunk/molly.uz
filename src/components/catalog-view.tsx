@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Category, Product } from "@/lib/types";
 import { ProductCard } from "@/components/product-card";
+import { getCategoryIcon } from "@/components/icons/categories";
 
 type SortKey = "default" | "price-asc" | "price-desc" | "name";
 
@@ -80,19 +81,26 @@ export function CatalogView({
 
       {/* Category tabs */}
       <div className="mt-4 flex flex-wrap gap-2 border-b border-navy/10 pb-4">
-        {allCategories.map((cat) => (
-          <Link
-            key={cat.id}
-            href={`/catalog/${cat.slug}`}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              cat.id === category.id
-                ? "bg-navy text-white"
-                : "bg-navy/5 text-navy/70 hover:bg-navy/10"
-            }`}
-          >
-            {cat.name}
-          </Link>
-        ))}
+        {allCategories.map((cat) => {
+          const Icon = getCategoryIcon(cat.slug);
+          const active = cat.id === category.id;
+          return (
+            <Link
+              key={cat.id}
+              href={`/catalog/${cat.slug}`}
+              className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${
+                active
+                  ? "bg-navy text-white"
+                  : "bg-navy/5 text-navy/70 hover:bg-navy/10"
+              }`}
+            >
+              <Icon
+                className={`h-4 w-4 ${active ? "text-white" : "text-navy/40"}`}
+              />
+              {cat.name}
+            </Link>
+          );
+        })}
       </div>
 
       <h1 className="font-heading mt-6 text-2xl font-bold text-navy">
