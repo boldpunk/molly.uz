@@ -10,40 +10,47 @@ export default async function AdminLoginPage({
   const { next = "/admin", error } = await searchParams;
 
   return (
-    <div className="flex min-h-[70vh] items-center justify-center px-6">
-      <div className="w-full max-w-sm rounded-xl border border-navy/10 bg-white p-6 shadow-sm">
-        <h1 className="font-heading text-xl font-bold text-navy">
-          Mebelflow
-        </h1>
-        <p className="mt-1 text-sm text-navy/60">
-          Вход в панель управления Molly Home.
-        </p>
-
-        {error && (
-          <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
-            Неверный пароль.
+    <div className="flex min-h-screen items-center justify-center bg-navy/[0.025] px-6">
+      <div className="w-full max-w-sm">
+        <div className="mb-6 flex flex-col items-center text-center">
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-navy font-heading text-lg font-bold text-white shadow-sm">
+            M
+          </span>
+          <h1 className="font-heading mt-3 text-xl font-bold text-navy">
+            Mebelflow
+          </h1>
+          <p className="mt-1 text-sm text-navy/50">
+            Панель управления Molly Home
           </p>
-        )}
+        </div>
 
-        <form action={login} className="mt-6 flex flex-col gap-4">
-          <input type="hidden" name="next" value={next} />
-          <div>
-            <label className="text-sm font-medium text-navy">Пароль</label>
-            <input
-              required
-              type="password"
-              name="password"
-              autoFocus
-              className="mt-1 w-full rounded-md border border-navy/15 px-3 py-2 text-sm"
-            />
-          </div>
-          <button
-            type="submit"
-            className="rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white hover:bg-navy/90"
-          >
-            Войти
-          </button>
-        </form>
+        <div className="rounded-xl border border-navy/10 bg-white p-6 shadow-sm">
+          {error && (
+            <p className="mb-4 rounded-lg bg-red-50 px-3 py-2.5 text-sm text-red-700">
+              Неверный пароль.
+            </p>
+          )}
+
+          <form action={login} className="flex flex-col gap-4">
+            <input type="hidden" name="next" value={next} />
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="font-medium text-navy">Пароль</span>
+              <input
+                required
+                type="password"
+                name="password"
+                autoFocus
+                className="input"
+              />
+            </label>
+            <button
+              type="submit"
+              className="rounded-full bg-navy px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-navy/90 hover:shadow"
+            >
+              Войти
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
