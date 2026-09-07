@@ -102,6 +102,21 @@ export async function getFeaturedProducts(): Promise<Product[]> {
   return rows.map((r) => toProduct(r.product, r.categorySlug));
 }
 
+export async function getAllProducts(): Promise<Product[]> {
+  const rows = await db
+    .select({
+      product: productsTable,
+      categorySlug: categoriesTable.slug,
+    })
+    .from(productsTable)
+    .innerJoin(
+      categoriesTable,
+      eq(productsTable.categoryId, categoriesTable.id)
+    )
+    .orderBy(asc(categoriesTable.sortOrder), asc(productsTable.name));
+  return rows.map((r) => toProduct(r.product, r.categorySlug));
+}
+
 export async function searchProducts(query: string): Promise<Product[]> {
   const term = query.trim();
   if (!term) return [];
