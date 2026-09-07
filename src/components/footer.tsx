@@ -7,7 +7,7 @@ export function Footer({ categories }: { categories: Category[] }) {
     <footer className="mt-16 border-t border-navy/10 bg-white text-navy">
       <div className="mx-auto grid max-w-7xl grid-cols-2 gap-8 px-6 py-12 md:grid-cols-4">
         <div>
-          <Logo className="h-6 w-auto" />
+          <Logo size={24} />
           <p className="mt-3 text-sm text-navy/60">
             Производитель комфортной мебели для дома. Современные технологии,
             лояльный бренд.

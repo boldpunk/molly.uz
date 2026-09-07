@@ -23,7 +23,7 @@ const NAV_ITEMS = [
 function SidebarLogo() {
   return (
     <div className="flex flex-col gap-1">
-      <Logo className="h-6 w-auto" />
+      <Logo size={24} />
       <p className="text-[11px] leading-tight text-navy/40">
         Панель управления
       </p>

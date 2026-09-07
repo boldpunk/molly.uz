@@ -1,32 +1,32 @@
-const VARIANTS = {
-  horizontal: {
-    src: "/logo/molly-home-logo-horizontal-color.svg",
-    width: 296,
-    height: 84,
-  },
-  stacked: {
-    src: "/logo/molly-home-logo-stacked-color.svg",
-    width: 477,
-    height: 231,
-  },
-} as const;
+import { CornerJointMark } from "@/components/icons/brand-mark";
 
 export function Logo({
-  variant = "horizontal",
-  className = "h-7 w-auto",
+  size = 28,
+  className = "",
 }: {
-  variant?: keyof typeof VARIANTS;
+  size?: number;
   className?: string;
 }) {
-  const { src, width, height } = VARIANTS[variant];
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={src}
-      width={width}
-      height={height}
-      alt="Molly Home"
-      className={className}
-    />
+    <span
+      className={`inline-flex items-center ${className}`}
+      style={{ gap: size * 0.28 }}
+    >
+      <CornerJointMark style={{ width: size, height: size, flexShrink: 0 }} />
+      <span className="flex flex-col" style={{ gap: size * 0.02 }}>
+        <span
+          className="font-heading font-bold leading-none text-navy"
+          style={{ fontSize: size * 0.62 }}
+        >
+          Molly
+        </span>
+        <span
+          className="font-sans font-semibold leading-none text-navy/60"
+          style={{ fontSize: Math.max(size * 0.16, 6), letterSpacing: "0.24em" }}
+        >
+          HOME
+        </span>
+      </span>
+    </span>
   );
 }

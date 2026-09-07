@@ -54,7 +54,7 @@ export function Header({ categories }: { categories: Category[] }) {
         </button>
 
         <Link href="/" aria-label="Molly Home">
-          <Logo className="h-6 w-auto md:h-7" />
+          <Logo size={26} />
         </Link>
 
         {/* Desktop nav */}
@@ -186,7 +186,7 @@ export function Header({ categories }: { categories: Category[] }) {
           />
           <div className="absolute left-0 top-0 h-full w-72 max-w-[85%] overflow-y-auto bg-white p-6 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
-              <Logo className="h-6 w-auto" />
+              <Logo size={24} />
               <button
                 type="button"
                 onClick={() => setDrawerOpen(false)}
