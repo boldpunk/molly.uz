@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Category } from "@/lib/types";
 import { useRequestList } from "@/lib/request-list-context";
+import { Logo } from "@/components/logo";
 
 export function Header({ categories }: { categories: Category[] }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -49,8 +50,8 @@ export function Header({ categories }: { categories: Category[] }) {
           </svg>
         </button>
 
-        <Link href="/" className="font-heading text-xl font-bold text-navy">
-          MOLLY HOME
+        <Link href="/" aria-label="Molly Home">
+          <Logo className="h-6 w-auto md:h-7" />
         </Link>
 
         {/* Desktop nav */}
@@ -174,9 +175,7 @@ export function Header({ categories }: { categories: Category[] }) {
           />
           <div className="absolute left-0 top-0 h-full w-72 max-w-[85%] overflow-y-auto bg-white p-6 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
-              <span className="font-heading text-lg font-bold text-navy">
-                MOLLY HOME
-              </span>
+              <Logo className="h-6 w-auto" />
               <button
                 type="button"
                 onClick={() => setDrawerOpen(false)}

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { logout } from "@/lib/admin-auth-actions";
+import { Logo } from "@/components/logo";
 import {
   DashboardIcon,
   RequestsIcon,
@@ -19,20 +20,13 @@ const NAV_ITEMS = [
   { href: "/admin/categories", label: "Категории", icon: CategoriesIcon },
 ];
 
-function Logo() {
+function SidebarLogo() {
   return (
-    <div className="flex items-center gap-2.5">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-navy font-heading text-sm font-bold text-white">
-        M
-      </span>
-      <div>
-        <p className="font-heading text-base font-bold leading-tight text-navy">
-          Mebelflow
-        </p>
-        <p className="text-[11px] leading-tight text-navy/40">
-          Molly Home admin
-        </p>
-      </div>
+    <div className="flex flex-col gap-1">
+      <Logo className="h-6 w-auto" />
+      <p className="text-[11px] leading-tight text-navy/40">
+        Панель управления
+      </p>
     </div>
   );
 }
@@ -104,7 +98,7 @@ export function AdminSidebar() {
     <>
       {/* Mobile top bar */}
       <div className="flex items-center justify-between border-b border-navy/10 bg-white px-4 py-3 md:hidden">
-        <Logo />
+        <SidebarLogo />
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -133,7 +127,7 @@ export function AdminSidebar() {
           />
           <div className="absolute left-0 top-0 flex h-full w-72 max-w-[85%] flex-col bg-white shadow-xl">
             <div className="flex items-center justify-between px-6 py-6">
-              <Logo />
+              <SidebarLogo />
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -159,7 +153,7 @@ export function AdminSidebar() {
       {/* Desktop sidebar */}
       <aside className="hidden w-64 shrink-0 flex-col border-r border-navy/10 bg-white md:flex">
         <div className="px-6 py-6">
-          <Logo />
+          <SidebarLogo />
         </div>
         <NavLinks />
         <AccountFooter />

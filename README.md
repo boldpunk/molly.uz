@@ -1,4 +1,4 @@
-# Molly Home — storefront + Mebelflow back office
+# Molly Home — storefront + admin back office
 
 Phase 1 MVP for [molly.uz](https://molly.uz), built per the Molly Home
 Technical Specification (Route B: custom headless stack, Next.js + Postgres
@@ -11,7 +11,7 @@ product detail pages (made-to-order configurator and price-on-request
 patterns), and the quote/measurement request flow — now backed by the real
 database, including a working submission that persists to `requests`.
 
-**Mebelflow back office** (Section 7), at `/admin`:
+**Admin back office** (Section 7), at `/admin`:
 
 - Password-gated admin area (`/admin/login`) — a signed, httpOnly session
   cookie, bcrypt-hashed password (`ADMIN_PASSWORD_HASH` env var), enforced

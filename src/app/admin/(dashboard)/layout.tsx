@@ -1,6 +1,6 @@
 import { AdminSidebar } from "@/components/admin/sidebar";
 
-export const metadata = { title: "Mebelflow" };
+export const metadata = { title: "Molly Home — админ" };
 
 export default function AdminLayout({
   children,

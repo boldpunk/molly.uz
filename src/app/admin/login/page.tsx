@@ -1,6 +1,7 @@
 import { login } from "@/lib/admin-auth-actions";
+import { Logo } from "@/components/logo";
 
-export const metadata = { title: "Вход — Mebelflow" };
+export const metadata = { title: "Вход — Molly Home" };
 
 export default async function AdminLoginPage({
   searchParams,
@@ -13,15 +14,8 @@ export default async function AdminLoginPage({
     <div className="flex min-h-screen items-center justify-center bg-navy/[0.025] px-6">
       <div className="w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center text-center">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-navy font-heading text-lg font-bold text-white shadow-sm">
-            M
-          </span>
-          <h1 className="font-heading mt-3 text-xl font-bold text-navy">
-            Mebelflow
-          </h1>
-          <p className="mt-1 text-sm text-navy/50">
-            Панель управления Molly Home
-          </p>
+          <Logo variant="stacked" className="h-16 w-auto" />
+          <p className="mt-3 text-sm text-navy/50">Панель управления</p>
         </div>
 
         <div className="rounded-xl border border-navy/10 bg-white p-6 shadow-sm">
