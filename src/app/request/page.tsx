@@ -32,7 +32,7 @@ export default function RequestPage() {
         </p>
         <Link
           href="/"
-          className="mt-8 inline-block rounded-full bg-sage px-6 py-3 text-sm font-semibold text-navy hover:bg-sage-dark hover:text-cream"
+          className="mt-8 inline-block rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white hover:bg-navy/90"
         >
           На главную
         </Link>
@@ -55,7 +55,7 @@ export default function RequestPage() {
           <p className="text-sm text-navy/60">Список заявки пуст.</p>
           <Link
             href="/catalog/kuhonnaya-mebel"
-            className="mt-6 inline-block rounded-full bg-sage px-6 py-3 text-sm font-semibold text-navy hover:bg-sage-dark hover:text-cream"
+            className="mt-6 inline-block rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white hover:bg-navy/90"
           >
             Перейти в каталог
           </Link>
@@ -66,7 +66,7 @@ export default function RequestPage() {
             {items.map((item, i) => (
               <li
                 key={i}
-                className="flex items-start justify-between gap-4 rounded-xl border border-navy/10 bg-white/40 p-4"
+                className="flex items-start justify-between gap-4 rounded-xl border border-navy/10 bg-white p-4"
               >
                 <div>
                   <Link
@@ -85,7 +85,7 @@ export default function RequestPage() {
                       .join(" · ")}
                   </p>
                   {item.estimate && (
-                    <p className="mt-1 text-sm font-medium text-sage-dark">
+                    <p className="mt-1 text-sm font-semibold text-navy">
                       ≈ {formatSum(item.estimate)}
                     </p>
                   )}
@@ -101,7 +101,7 @@ export default function RequestPage() {
             ))}
           </ul>
 
-          <div className="flex flex-col gap-4 rounded-xl border border-navy/10 bg-white/40 p-5">
+          <div className="flex flex-col gap-4 rounded-xl border border-navy/10 bg-white p-5">
             <div>
               <label className="text-sm font-medium text-navy">Имя</label>
               <input
@@ -139,7 +139,7 @@ export default function RequestPage() {
 
           <button
             type="submit"
-            className="rounded-full bg-sage px-6 py-3 text-sm font-semibold text-navy hover:bg-sage-dark hover:text-cream"
+            className="rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white hover:bg-navy/90"
           >
             Отправить заявку
           </button>

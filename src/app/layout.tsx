@@ -27,7 +27,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="ru"
       className={`${golosText.variable} ${inter.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-cream text-navy">
+      <body className="min-h-full flex flex-col bg-white text-navy">
         <RequestListProvider>
           <Header />
           <main className="flex-1">{children}</main>
