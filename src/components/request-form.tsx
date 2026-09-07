@@ -165,6 +165,13 @@ export function RequestForm({
           >
             {status === "submitting" ? "Отправляем…" : "Отправить заявку"}
           </button>
+          <p className="-mt-4 text-xs text-navy/40">
+            Отправляя заявку, вы соглашаетесь с{" "}
+            <Link href="/privacy" className="underline hover:text-navy">
+              политикой конфиденциальности
+            </Link>
+            .
+          </p>
         </form>
       )}
     </div>

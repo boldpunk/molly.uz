@@ -8,6 +8,7 @@ import { formatSum } from "@/lib/format";
 import { PlaceholderImage } from "@/components/placeholder-image";
 import { ProductCard } from "@/components/product-card";
 import { useRequestList } from "@/lib/request-list-context";
+import { getHardwareBrandBadge } from "@/lib/hardware-brands";
 
 const MIN_WIDTH = 1.5;
 const MAX_WIDTH = 8;
@@ -103,24 +104,35 @@ export function ProductDetail({
                   <h3 className="text-sm font-semibold text-navy">
                     Фурнитура
                   </h3>
-                  <div className="mt-2 flex gap-2">
-                    {product.hardwareOptions.map((h) => (
-                      <button
-                        key={h.id}
-                        type="button"
-                        onClick={() => setHardwareId(h.id)}
-                        className={`rounded-lg border px-4 py-2 text-sm transition ${
-                          hardwareId === h.id
-                            ? "border-sage-dark bg-sage/20 font-medium text-navy"
-                            : "border-navy/15 text-navy/70 hover:bg-navy/5"
-                        }`}
-                      >
-                        {h.label}
-                        <span className="block text-xs text-navy/50">
-                          {formatSum(h.pricePerMetre)} / пог.м
-                        </span>
-                      </button>
-                    ))}
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {product.hardwareOptions.map((h) => {
+                      const badge = getHardwareBrandBadge(h.id, h.label);
+                      return (
+                        <button
+                          key={h.id}
+                          type="button"
+                          onClick={() => setHardwareId(h.id)}
+                          className={`flex items-center gap-2 rounded-lg border px-4 py-2 text-sm transition ${
+                            hardwareId === h.id
+                              ? "border-sage-dark bg-sage/20 font-medium text-navy"
+                              : "border-navy/15 text-navy/70 hover:bg-navy/5"
+                          }`}
+                        >
+                          <span
+                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[8px] font-bold"
+                            style={{ backgroundColor: badge.bg, color: badge.fg }}
+                          >
+                            {badge.letter}
+                          </span>
+                          <span className="text-left">
+                            {h.label}
+                            <span className="block text-xs text-navy/50">
+                              {formatSum(h.pricePerMetre)} / пог.м
+                            </span>
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
