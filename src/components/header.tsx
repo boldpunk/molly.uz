@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Category } from "@/lib/types";
 import { useRequestList } from "@/lib/request-list-context";
 import { Logo } from "@/components/logo";
+import { getCategoryIcon } from "@/components/icons/categories";
 
 export function Header({ categories }: { categories: Category[] }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -12,6 +14,7 @@ export function Header({ categories }: { categories: Category[] }) {
   const { items } = useRequestList();
 
   return (
+    <>
     <header className="sticky top-0 z-50 border-b border-navy/10 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
       {/* Utility bar — hidden on mobile */}
       <div className="hidden border-b border-navy/10 text-xs text-navy/70 md:block">
@@ -69,18 +72,23 @@ export function Header({ categories }: { categories: Category[] }) {
             {menuOpen && (
               <div className="absolute left-0 top-full z-50 mt-2 w-full rounded-lg border border-navy/10 bg-white p-6 shadow-lg">
                 <div className="grid grid-cols-5 gap-4">
-                  {categories.map((cat) => (
-                    <Link
-                      key={cat.id}
-                      href={`/catalog/${cat.slug}`}
-                      className="group flex flex-col gap-2"
-                    >
-                      <div className="aspect-square rounded-md border border-navy/10 bg-navy/[0.03] transition group-hover:bg-sage/10" />
-                      <span className="text-sm font-medium text-navy group-hover:text-sage-dark">
-                        {cat.name}
-                      </span>
-                    </Link>
-                  ))}
+                  {categories.map((cat) => {
+                    const Icon = getCategoryIcon(cat.slug);
+                    return (
+                      <Link
+                        key={cat.id}
+                        href={`/catalog/${cat.slug}`}
+                        className="group flex flex-col gap-2"
+                      >
+                        <div className="flex aspect-square items-center justify-center rounded-md border border-navy/10 bg-navy/[0.03] transition group-hover:bg-sage/10">
+                          <Icon className="h-8 w-8 text-navy/40 transition group-hover:text-sage-dark" />
+                        </div>
+                        <span className="text-sm font-medium text-navy group-hover:text-sage-dark">
+                          {cat.name}
+                        </span>
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -164,8 +172,11 @@ export function Header({ categories }: { categories: Category[] }) {
         </div>
       </div>
 
-      {/* Mobile drawer */}
-      {drawerOpen && (
+    </header>
+
+    {/* Mobile drawer */}
+    {drawerOpen &&
+      createPortal(
         <div className="fixed inset-0 z-50 md:hidden">
           <button
             type="button"
@@ -193,16 +204,20 @@ export function Header({ categories }: { categories: Category[] }) {
               </button>
             </div>
             <nav className="flex flex-col gap-1">
-              {categories.map((cat) => (
-                <Link
-                  key={cat.id}
-                  href={`/catalog/${cat.slug}`}
-                  onClick={() => setDrawerOpen(false)}
-                  className="rounded-md px-3 py-2.5 text-sm font-medium text-navy hover:bg-navy/5"
-                >
-                  {cat.name}
-                </Link>
-              ))}
+              {categories.map((cat) => {
+                const Icon = getCategoryIcon(cat.slug);
+                return (
+                  <Link
+                    key={cat.id}
+                    href={`/catalog/${cat.slug}`}
+                    onClick={() => setDrawerOpen(false)}
+                    className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-navy hover:bg-navy/5"
+                  >
+                    <Icon className="h-[18px] w-[18px] text-navy/40" />
+                    {cat.name}
+                  </Link>
+                );
+              })}
               <div className="my-3 border-t border-navy/10" />
               <Link
                 href="/request"
@@ -241,8 +256,9 @@ export function Header({ categories }: { categories: Category[] }) {
               </Link>
             </nav>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
-    </header>
+    </>
   );
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getCategories } from "@/lib/data";
 import { PageHeader } from "@/components/admin/page-header";
 import { ArrowRightIcon, CategoriesIcon } from "@/components/admin/icons";
+import { getCategoryIcon } from "@/components/icons/categories";
 
 export const dynamic = "force-dynamic";
 
@@ -36,15 +37,17 @@ export default async function AdminCategoriesPage() {
               </tr>
             </thead>
             <tbody>
-              {categories.map((c) => (
+              {categories.map((c) => {
+                const Icon = getCategoryIcon(c.slug);
+                return (
                 <tr
                   key={c.id}
                   className="group border-b border-navy/5 transition last:border-0 hover:bg-navy/[0.02]"
                 >
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-navy/[0.06] text-xs font-semibold text-navy/60">
-                        {c.name.charAt(0).toUpperCase()}
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-navy/[0.06] text-navy/50">
+                        <Icon className="h-[18px] w-[18px]" />
                       </span>
                       <span className="font-medium text-navy">{c.name}</span>
                     </div>
@@ -74,7 +77,8 @@ export default async function AdminCategoriesPage() {
                     </Link>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         )}
