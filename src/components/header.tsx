@@ -7,6 +7,7 @@ import { Category } from "@/lib/types";
 import { useRequestList } from "@/lib/request-list-context";
 import { Logo } from "@/components/logo";
 import { getCategoryIcon } from "@/components/icons/categories";
+import { LocationPicker } from "@/components/location-picker";
 
 export function Header({ categories }: { categories: Category[] }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -19,7 +20,7 @@ export function Header({ categories }: { categories: Category[] }) {
       {/* Utility bar — hidden on mobile */}
       <div className="hidden border-b border-navy/10 text-xs text-navy/70 md:block">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-2">
-          <span>Ташкент и область</span>
+          <LocationPicker />
           <div className="flex items-center gap-4">
             <a href="tel:+998000000000" className="hover:text-navy">
               +998 00 000 00 00

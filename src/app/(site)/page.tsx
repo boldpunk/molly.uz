@@ -54,7 +54,7 @@ export default async function HomePage() {
             { label: "Высота фасадов", value: "любая под проект" },
             { label: "Материал фасада", value: "МДФ, окраска" },
             { label: "Клеевой состав", value: "влагостойкий" },
-            { label: "Фурнитура", value: "HIGOLD / BLUM" },
+            { label: "Фурнитура", value: "HIGOLD / BLUM / HETTICH" },
           ].map((item) => (
             <div key={item.label}>
               <p className="text-sm font-semibold text-navy">{item.value}</p>

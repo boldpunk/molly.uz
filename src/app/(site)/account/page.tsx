@@ -140,6 +140,13 @@ export default async function AccountPage({
           >
             Зарегистрироваться
           </button>
+          <p className="-mt-2 text-center text-xs text-navy/40">
+            Регистрируясь, вы соглашаетесь с{" "}
+            <Link href="/privacy" className="underline hover:text-navy">
+              политикой конфиденциальности
+            </Link>
+            .
+          </p>
           <p className="text-center text-sm text-navy/60">
             Уже есть аккаунт?{" "}
             <Link href="/account" className="font-medium text-navy hover:underline">

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { Category, Product } from "@/lib/types";
 import { ProductCard } from "@/components/product-card";
 import { getCategoryIcon, FurnitureIcon } from "@/components/icons/categories";
+import { getHardwareBrandBadge } from "@/lib/hardware-brands";
 
 type SortKey = "default" | "price-asc" | "price-desc" | "name";
 
@@ -213,21 +214,36 @@ function FilterOption({
   active,
   label,
   onClick,
+  badge,
 }: {
   active: boolean;
   label: string;
   onClick: () => void;
+  badge?: React.ReactNode;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-md px-3 py-1.5 text-left text-sm transition ${
+      className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm transition ${
         active ? "bg-sage/25 font-medium text-navy" : "text-navy/60 hover:bg-navy/5"
       }`}
     >
+      {badge}
       {label}
     </button>
+  );
+}
+
+function BrandBadge({ id, label }: { id: string; label: string }) {
+  const { letter, bg, fg } = getHardwareBrandBadge(id, label);
+  return (
+    <span
+      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[8px] font-bold"
+      style={{ backgroundColor: bg, color: fg }}
+    >
+      {letter}
+    </span>
   );
 }
 
@@ -267,6 +283,7 @@ function FiltersBody({
                 active={hardware === id}
                 label={label}
                 onClick={() => setHardware(id)}
+                badge={<BrandBadge id={id} label={label} />}
               />
             ))}
           </div>

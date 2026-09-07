@@ -72,8 +72,16 @@ export function Footer({ categories }: { categories: Category[] }) {
           </ul>
         </div>
       </div>
-      <div className="border-t border-navy/10 px-6 py-4 text-center text-xs text-navy/40">
-        © {new Date().getFullYear()} Molly Home
+      <div className="flex flex-col items-center gap-2 border-t border-navy/10 px-6 py-4 text-xs text-navy/40 sm:flex-row sm:justify-between">
+        <span>© {new Date().getFullYear()} Molly Home</span>
+        <div className="flex items-center gap-4">
+          <Link href="/privacy" className="hover:text-navy hover:underline">
+            Политика конфиденциальности
+          </Link>
+          <Link href="/terms" className="hover:text-navy hover:underline">
+            Условия использования
+          </Link>
+        </div>
       </div>
     </footer>
   );

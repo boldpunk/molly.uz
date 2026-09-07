@@ -46,6 +46,8 @@ export const categories = [
 const kitchenHardware: HardwareOption[] = [
   { id: "higold", label: "HIGOLD", pricePerMetre: 3_600_000 },
   { id: "blum", label: "BLUM", pricePerMetre: 3_950_000 },
+  { id: "hettich", label: "HETTICH", pricePerMetre: 3_750_000 },
+  { id: "hafele", label: "HAFELE", pricePerMetre: 4_200_000 },
 ];
 
 const kitchenColours: ColourOption[] = [
@@ -57,7 +59,7 @@ const kitchenColours: ColourOption[] = [
 
 const kitchenAttributes: ProductAttribute[] = [
   { key: "Материал фасада", value: "МДФ, окраска" },
-  { key: "Фурнитура", value: "HIGOLD / BLUM" },
+  { key: "Фурнитура", value: "HIGOLD / BLUM / HETTICH / HAFELE" },
   { key: "Ширина", value: "без ограничений — под ваше помещение" },
   { key: "Срок изготовления", value: "уточняется после замера" },
 ];
