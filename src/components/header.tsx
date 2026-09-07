@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { categories } from "@/lib/data";
+import { Category } from "@/lib/types";
 import { useRequestList } from "@/lib/request-list-context";
 
-export function Header() {
+export function Header({ categories }: { categories: Category[] }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { items } = useRequestList();

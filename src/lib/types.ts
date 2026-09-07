@@ -29,6 +29,7 @@ export interface Category {
 export interface Product {
   id: string;
   categoryId: string;
+  categorySlug: string;
   slug: string;
   name: string;
   specLine: string;
@@ -55,3 +56,21 @@ export interface RequestItem {
   widthMetres?: number;
   estimate?: number;
 }
+
+export const REQUEST_STATUSES = [
+  "new",
+  "contacted",
+  "measured",
+  "in_production",
+  "ready_delivered",
+] as const;
+
+export type RequestStatus = (typeof REQUEST_STATUSES)[number];
+
+export const REQUEST_STATUS_LABELS: Record<RequestStatus, string> = {
+  new: "Новая заявка",
+  contacted: "Связались",
+  measured: "Замер выполнен",
+  in_production: "В производстве",
+  ready_delivered: "Готово / доставлено",
+};

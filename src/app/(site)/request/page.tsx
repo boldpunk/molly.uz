@@ -2,22 +2,29 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { formatSum } from "@/lib/data";
+import { formatSum } from "@/lib/format";
 import { useRequestList } from "@/lib/request-list-context";
+import { submitRequest } from "@/lib/actions";
 
 export default function RequestPage() {
   const { items, removeItem, clear } = useRequestList();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
-  const [status, setStatus] = useState<"idle" | "submitted">("idle");
+  const [status, setStatus] = useState<"idle" | "submitting" | "submitted" | "error">(
+    "idle"
+  );
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // No backend yet — this is where the request would POST to
-    // Mebelflow's order intake endpoint (Section 7.2 / 8.3).
-    setStatus("submitted");
-    clear();
+    setStatus("submitting");
+    try {
+      await submitRequest(name, phone, notes, items);
+      setStatus("submitted");
+      clear();
+    } catch {
+      setStatus("error");
+    }
   }
 
   if (status === "submitted") {
@@ -137,11 +144,18 @@ export default function RequestPage() {
             </div>
           </div>
 
+          {status === "error" && (
+            <p className="text-sm font-medium text-red-600">
+              Не удалось отправить заявку. Попробуйте ещё раз.
+            </p>
+          )}
+
           <button
             type="submit"
-            className="rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white hover:bg-navy/90"
+            disabled={status === "submitting"}
+            className="rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white hover:bg-navy/90 disabled:opacity-60"
           >
-            Отправить заявку
+            {status === "submitting" ? "Отправляем…" : "Отправить заявку"}
           </button>
         </form>
       )}
