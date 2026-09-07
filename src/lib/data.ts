@@ -1,4 +1,4 @@
-import { eq, and, ne, asc } from "drizzle-orm";
+import { eq, and, ne, asc, or, ilike } from "drizzle-orm";
 import { db } from "@/db";
 import { categories as categoriesTable, products as productsTable } from "@/db/schema";
 import { Category, Product } from "./types";
@@ -99,6 +99,33 @@ export async function getFeaturedProducts(): Promise<Product[]> {
       eq(productsTable.categoryId, categoriesTable.id)
     )
     .where(eq(productsTable.isFeatured, true));
+  return rows.map((r) => toProduct(r.product, r.categorySlug));
+}
+
+export async function searchProducts(query: string): Promise<Product[]> {
+  const term = query.trim();
+  if (!term) return [];
+  const pattern = `%${term}%`;
+  const rows = await db
+    .select({
+      product: productsTable,
+      categorySlug: categoriesTable.slug,
+    })
+    .from(productsTable)
+    .innerJoin(
+      categoriesTable,
+      eq(productsTable.categoryId, categoriesTable.id)
+    )
+    .where(
+      or(
+        ilike(productsTable.name, pattern),
+        ilike(productsTable.specLine, pattern),
+        ilike(productsTable.description, pattern),
+        ilike(productsTable.collection, pattern),
+        ilike(categoriesTable.name, pattern)
+      )
+    )
+    .orderBy(asc(productsTable.name));
   return rows.map((r) => toProduct(r.product, r.categorySlug));
 }
 
