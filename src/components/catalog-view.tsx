@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Category, Product } from "@/lib/types";
-import { categories as allCategories } from "@/lib/data";
 import { ProductCard } from "@/components/product-card";
 
 type SortKey = "default" | "price-asc" | "price-desc" | "name";
@@ -17,9 +16,11 @@ function priceOf(p: Product) {
 
 export function CatalogView({
   category,
+  categories: allCategories,
   products,
 }: {
   category: Category;
+  categories: Category[];
   products: Product[];
 }) {
   const [colour, setColour] = useState<string | "all">("all");

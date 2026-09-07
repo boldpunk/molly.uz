@@ -1,10 +1,15 @@
 import Link from "next/link";
-import { categories, getFeaturedProducts } from "@/lib/data";
+import { getCategories, getFeaturedProducts } from "@/lib/data";
 import { ProductCard } from "@/components/product-card";
 import { PlaceholderImage } from "@/components/placeholder-image";
 
-export default function HomePage() {
-  const featured = getFeaturedProducts();
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const [categories, featured] = await Promise.all([
+    getCategories(),
+    getFeaturedProducts(),
+  ]);
 
   return (
     <div>

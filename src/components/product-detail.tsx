@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Category, Product } from "@/lib/types";
-import { formatSum } from "@/lib/data";
+import { formatSum } from "@/lib/format";
 import { PlaceholderImage } from "@/components/placeholder-image";
 import { ProductCard } from "@/components/product-card";
 import { useRequestList } from "@/lib/request-list-context";

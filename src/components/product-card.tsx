@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { Product } from "@/lib/types";
-import { categories, formatSum } from "@/lib/data";
+import { formatSum } from "@/lib/format";
 import { PlaceholderImage } from "./placeholder-image";
 
 export function ProductCard({ product }: { product: Product }) {
-  const category = categories.find((c) => c.id === product.categoryId);
-  const href = `/catalog/${category?.slug}/${product.slug}`;
+  const href = `/catalog/${product.categorySlug}/${product.slug}`;
 
   return (
     <Link
