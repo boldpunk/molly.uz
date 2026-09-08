@@ -1,7 +1,31 @@
 import { eq, and, ne, asc, or, ilike } from "drizzle-orm";
 import { db } from "@/db";
-import { categories as categoriesTable, products as productsTable } from "@/db/schema";
+import {
+  categories as categoriesTable,
+  products as productsTable,
+  pages as pagesTable,
+} from "@/db/schema";
 import { Category, Product } from "./types";
+
+export interface Page {
+  id: string;
+  slug: string;
+  title: string;
+  blocks: import("@/db/schema").PageBlock[];
+}
+
+export async function getPageBySlug(slug: string): Promise<Page | undefined> {
+  const rows = await db
+    .select()
+    .from(pagesTable)
+    .where(eq(pagesTable.slug, slug))
+    .limit(1);
+  return rows[0];
+}
+
+export async function getAllPages(): Promise<Page[]> {
+  return db.select().from(pagesTable).orderBy(asc(pagesTable.slug));
+}
 
 function toCategory(row: typeof categoriesTable.$inferSelect): Category {
   return {

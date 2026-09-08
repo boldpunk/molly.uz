@@ -11,6 +11,7 @@ import {
   ProductsIcon,
   CategoriesIcon,
   LogoutIcon,
+  PageIcon,
 } from "./icons";
 
 function BackIcon({ className = "h-[18px] w-[18px]" }: { className?: string }) {
@@ -32,6 +33,7 @@ const NAV_ITEMS = [
   { href: "/admin/requests", label: "Заявки", icon: RequestsIcon },
   { href: "/admin/products", label: "Товары", icon: ProductsIcon },
   { href: "/admin/categories", label: "Категории", icon: CategoriesIcon },
+  { href: "/admin/pages", label: "Страницы", icon: PageIcon },
 ];
 
 function SidebarLogo() {

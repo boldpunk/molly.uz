@@ -4,12 +4,13 @@ import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { categories, products, requests } from "@/db/schema";
+import { categories, products, requests, pages } from "@/db/schema";
 import type {
   HardwareOption,
   ColourOption,
   ProductAttribute,
   StatusHistoryEntry,
+  PageBlock,
 } from "@/db/schema";
 import { RequestStatus } from "./types";
 import { deleteProductImage } from "./upload-actions";
@@ -188,4 +189,21 @@ export async function deleteRequest(id: string) {
   revalidatePath("/admin/requests");
   revalidatePath("/admin");
   redirect("/admin/requests");
+}
+
+// --- Pages (content blocks) -----------------------------------------------
+
+export async function updatePage(slug: string, formData: FormData) {
+  const title = String(formData.get("title") ?? "");
+  const blocks = parseJsonArray<PageBlock>(formData.get("blocksJson"));
+
+  await db
+    .update(pages)
+    .set({ title, blocks, updatedAt: new Date() })
+    .where(eq(pages.slug, slug));
+
+  revalidatePath("/admin/pages");
+  revalidatePath(`/admin/pages/${slug}`);
+  revalidatePath(`/${slug}`);
+  redirect("/admin/pages");
 }
