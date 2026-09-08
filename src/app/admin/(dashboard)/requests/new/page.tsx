@@ -1,8 +1,11 @@
 import { RequestForm } from "@/components/admin/request-form";
 import { createManualOrder } from "@/lib/admin-actions";
 import { PageHeader } from "@/components/admin/page-header";
+import { getAllProducts } from "@/lib/data";
 
-export default function NewRequestPage() {
+export default async function NewRequestPage() {
+  const products = await getAllProducts();
+
   return (
     <div>
       <PageHeader
@@ -11,7 +14,14 @@ export default function NewRequestPage() {
         back={{ href: "/admin/requests", label: "Заявки" }}
       />
       <div className="mt-6">
-        <RequestForm action={createManualOrder} />
+        <RequestForm
+          action={createManualOrder}
+          products={products.map((p) => ({
+            id: p.id,
+            name: p.name,
+            categorySlug: p.categorySlug,
+          }))}
+        />
       </div>
     </div>
   );
