@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/admin/page-header";
 import { FormSection } from "@/components/admin/form-section";
 import { PageBlocksEditor } from "@/components/admin/page-blocks-editor";
 import { HomeContentForm } from "@/components/admin/home-content-form";
+import { ContactContentForm } from "@/components/admin/contact-content-form";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +41,8 @@ export default async function EditPagePage({
 
         {slug === "home" ? (
           <HomeContentForm name="blocksJson" initialBlocks={page.blocks} />
+        ) : slug === "contacts" ? (
+          <ContactContentForm name="blocksJson" initialBlocks={page.blocks} />
         ) : (
           <FormSection
             title="Содержимое"

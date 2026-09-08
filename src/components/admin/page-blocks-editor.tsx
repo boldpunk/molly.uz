@@ -5,7 +5,10 @@ import { PlusIcon, TrashIcon } from "./icons";
 import { uploadPageImage } from "@/lib/upload-actions";
 import type { PageBlock } from "@/db/schema";
 
-const BLOCK_LABELS: Record<PageBlock["type"], string> = {
+type EditableBlock = Exclude<PageBlock, { type: "contact_info" }>;
+type AddableBlockType = EditableBlock["type"];
+
+const BLOCK_LABELS: Record<AddableBlockType, string> = {
   heading: "Заголовок",
   paragraph: "Абзац",
   image: "Изображение",
@@ -13,7 +16,7 @@ const BLOCK_LABELS: Record<PageBlock["type"], string> = {
   cta: "Кнопка (CTA)",
 };
 
-function emptyBlock(type: PageBlock["type"]): PageBlock {
+function emptyBlock(type: AddableBlockType): EditableBlock {
   switch (type) {
     case "heading":
       return { type, text: "" };
@@ -35,9 +38,11 @@ export function PageBlocksEditor({
   name: string;
   initialBlocks: PageBlock[];
 }) {
-  const [blocks, setBlocks] = useState<PageBlock[]>(initialBlocks);
+  const [blocks, setBlocks] = useState<EditableBlock[]>(() =>
+    initialBlocks.filter((b): b is EditableBlock => b.type !== "contact_info")
+  );
 
-  function update(i: number, next: PageBlock) {
+  function update(i: number, next: EditableBlock) {
     setBlocks((prev) => prev.map((b, idx) => (idx === i ? next : b)));
   }
   function remove(i: number) {
@@ -52,7 +57,7 @@ export function PageBlocksEditor({
       return next;
     });
   }
-  function addBlock(type: PageBlock["type"]) {
+  function addBlock(type: AddableBlockType) {
     setBlocks((prev) => [...prev, emptyBlock(type)]);
   }
 
@@ -80,7 +85,7 @@ export function PageBlocksEditor({
       )}
 
       <div className="flex flex-wrap gap-2">
-        {(Object.keys(BLOCK_LABELS) as PageBlock["type"][]).map((type) => (
+        {(Object.keys(BLOCK_LABELS) as AddableBlockType[]).map((type) => (
           <button
             key={type}
             type="button"
@@ -127,8 +132,8 @@ function BlockCard({
   onMoveUp,
   onMoveDown,
 }: {
-  block: PageBlock;
-  onChange: (b: PageBlock) => void;
+  block: EditableBlock;
+  onChange: (b: EditableBlock) => void;
   onRemove: () => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
@@ -162,8 +167,8 @@ function BlockFields({
   block,
   onChange,
 }: {
-  block: PageBlock;
-  onChange: (b: PageBlock) => void;
+  block: EditableBlock;
+  onChange: (b: EditableBlock) => void;
 }) {
   switch (block.type) {
     case "heading":
@@ -186,7 +191,12 @@ function BlockFields({
         />
       );
     case "image":
-      return <BlockImageField block={block} onChange={onChange} />;
+      return (
+        <BlockImageField
+          block={block}
+          onChange={(b) => onChange(b as EditableBlock)}
+        />
+      );
     case "cta":
       return (
         <div className="grid grid-cols-2 gap-2">
@@ -205,7 +215,12 @@ function BlockFields({
         </div>
       );
     case "stat_list":
-      return <StatListFields block={block} onChange={onChange} />;
+      return (
+        <StatListFields
+          block={block}
+          onChange={(b) => onChange(b as EditableBlock)}
+        />
+      );
   }
 }
 

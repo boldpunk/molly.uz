@@ -82,7 +82,18 @@ export type PageBlock =
   | { type: "paragraph"; text: string }
   | { type: "image"; url: string; alt: string }
   | { type: "stat_list"; items: { label: string; value: string }[] }
-  | { type: "cta"; label: string; href: string };
+  | { type: "cta"; label: string; href: string }
+  | {
+      type: "contact_info";
+      phone: string;
+      hours: string;
+      telegram: string;
+      instagram: string;
+      address: string;
+      addressNote: string;
+      mapLat: number;
+      mapLng: number;
+    };
 
 export const pages = pgTable("pages", {
   id: uuid("id").primaryKey().defaultRandom(),
