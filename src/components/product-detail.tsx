@@ -10,8 +10,8 @@ import { ProductCard } from "@/components/product-card";
 import { useRequestList } from "@/lib/request-list-context";
 import { getHardwareBrandBadge } from "@/lib/hardware-brands";
 
-const MIN_WIDTH = 1.5;
-const MAX_WIDTH = 8;
+const MIN_WIDTH = 2;
+const MAX_WIDTH = 15;
 const DEFAULT_WIDTH = 3;
 
 export function ProductDetail({
@@ -30,12 +30,31 @@ export function ProductDetail({
   );
   const [colourId, setColourId] = useState(product.colourOptions?.[0]?.id);
   const [width, setWidth] = useState(DEFAULT_WIDTH);
+  const [widthText, setWidthText] = useState(String(DEFAULT_WIDTH));
   const [tab, setTab] = useState<"description" | "specs" | "delivery">(
     "description"
   );
   const [submitted, setSubmitted] = useState(false);
 
   const isConfigurable = product.pricingMode === "per_metre";
+
+  const parsedWidthText = parseFloat(widthText);
+  const widthBelowMin =
+    !Number.isNaN(parsedWidthText) && parsedWidthText < MIN_WIDTH;
+
+  function handleWidthTextChange(raw: string) {
+    setWidthText(raw);
+    const parsed = parseFloat(raw);
+    if (!Number.isNaN(parsed) && parsed >= MIN_WIDTH) {
+      setWidth(parsed);
+    }
+  }
+
+  function handleWidthSliderChange(raw: string) {
+    const parsed = parseFloat(raw);
+    setWidth(parsed);
+    setWidthText(String(parsed));
+  }
 
   const hardware = product.hardwareOptions?.find((h) => h.id === hardwareId);
   const colour = product.colourOptions?.find((c) => c.id === colourId);
@@ -174,27 +193,45 @@ export function ProductDetail({
               )}
 
               <div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3">
                   <h3 className="text-sm font-semibold text-navy">
                     Ширина (ширина без ограничений — под ваше помещение)
                   </h3>
-                  <span className="text-sm font-medium text-navy">
-                    {width.toFixed(1)} м
-                  </span>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      step={0.01}
+                      min={0}
+                      value={widthText}
+                      onChange={(e) => handleWidthTextChange(e.target.value)}
+                      className={`w-20 rounded-md border px-2 py-1 text-right text-sm font-medium focus:outline-none ${
+                        widthBelowMin
+                          ? "border-red-600 text-red-600"
+                          : "border-navy/15 text-navy"
+                      }`}
+                    />
+                    <span className="text-sm font-medium text-navy">м</span>
+                  </div>
                 </div>
                 <input
                   type="range"
                   min={MIN_WIDTH}
                   max={MAX_WIDTH}
-                  step={0.1}
+                  step={0.01}
                   value={width}
-                  onChange={(e) => setWidth(parseFloat(e.target.value))}
+                  onChange={(e) => handleWidthSliderChange(e.target.value)}
                   className="mt-2 w-full accent-sage-dark"
                 />
                 <div className="mt-1 flex justify-between text-xs text-navy/40">
                   <span>{MIN_WIDTH} м</span>
                   <span>{MAX_WIDTH} м</span>
                 </div>
+                {widthBelowMin && (
+                  <p className="mt-1.5 text-xs font-medium text-red-600">
+                    Минимальная ширина — {MIN_WIDTH} м
+                  </p>
+                )}
               </div>
 
               <div className="border-t border-navy/10 pt-4">

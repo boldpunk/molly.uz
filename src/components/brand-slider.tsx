@@ -2,8 +2,6 @@
 
 import { useRef } from "react";
 
-const BRANDS = ["HIGOLD", "BLUM", "MESAN", "STARAX", "GTV"];
-
 function ChevronIcon({ direction }: { direction: "left" | "right" }) {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -18,12 +16,18 @@ function ChevronIcon({ direction }: { direction: "left" | "right" }) {
   );
 }
 
-export function BrandSlider() {
+export function BrandSlider({
+  items,
+}: {
+  items: { name: string; logoUrl: string }[];
+}) {
   const trackRef = useRef<HTMLDivElement>(null);
 
   function scroll(dir: -1 | 1) {
     trackRef.current?.scrollBy({ left: dir * 240, behavior: "smooth" });
   }
+
+  if (items.length === 0) return null;
 
   return (
     <div className="relative border-y border-navy/10 py-6">
@@ -40,14 +44,24 @@ export function BrandSlider() {
         ref={trackRef}
         className="flex items-center gap-10 overflow-x-auto px-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        {BRANDS.map((brand) => (
-          <span
-            key={brand}
-            className="shrink-0 font-heading text-xl font-bold tracking-wide text-navy/35"
-          >
-            {brand}
-          </span>
-        ))}
+        {items.map((brand, i) =>
+          brand.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={i}
+              src={brand.logoUrl}
+              alt={brand.name}
+              className="h-8 w-auto shrink-0 object-contain opacity-70 grayscale transition hover:opacity-100 hover:grayscale-0"
+            />
+          ) : (
+            <span
+              key={i}
+              className="shrink-0 font-heading text-xl font-bold tracking-wide text-navy/35"
+            >
+              {brand.name}
+            </span>
+          )
+        )}
       </div>
 
       <button

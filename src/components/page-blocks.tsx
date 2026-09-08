@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { PageBlock } from "@/db/schema";
 import { PlaceholderImage } from "@/components/placeholder-image";
+import { BrandSlider } from "@/components/brand-slider";
 
 export function PageBlocks({ blocks }: { blocks: PageBlock[] }) {
   return (
@@ -63,6 +64,12 @@ function PageBlockView({ block }: { block: PageBlock }) {
         >
           {block.label}
         </Link>
+      );
+    case "brand_list":
+      return (
+        <div className="mt-6 first:mt-0">
+          <BrandSlider items={block.items} />
+        </div>
       );
   }
 }
