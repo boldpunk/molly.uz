@@ -37,6 +37,7 @@ export default async function AdminRequestsPage({
         description={`${rows.length} ${
           rows.length === 1 ? "заявка" : "заявок"
         }${activeStatus ? ` · ${REQUEST_STATUS_LABELS[activeStatus]}` : ""}`}
+        action={{ href: "/admin/requests/new", label: "Новый заказ" }}
       />
 
       <div className="mt-4 flex flex-wrap gap-2">
