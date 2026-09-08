@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useLayoutEffect } from "react";
+import { useState } from "react";
 
 function UzFlagIcon({ className }: { className?: string }) {
   return (
@@ -62,34 +62,19 @@ export function PhoneInput({
   className?: string;
   autoFocus?: boolean;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
   const [internal, setInternal] = useState(() =>
     extractLocalDigits(defaultValue ?? value ?? "")
   );
-  const [pendingCursor, setPendingCursor] = useState<number | null>(null);
 
   const digits = value !== undefined ? extractLocalDigits(value) : internal;
   const localDisplay = formatLocal(digits);
   const fullValue = `+998${digits.length ? " " + localDisplay : ""}`;
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const raw = e.target.value;
-    const selStart = e.target.selectionStart ?? raw.length;
-    const digitsBeforeCursor = raw.slice(0, selStart).replace(/\D/g, "").length;
-
-    const nextDigits = extractLocalDigits(raw);
+    const nextDigits = extractLocalDigits(e.target.value);
     if (value === undefined) setInternal(nextDigits);
     onChange?.(`+998${nextDigits.length ? " " + formatLocal(nextDigits) : ""}`);
-    setPendingCursor(Math.min(digitsBeforeCursor, nextDigits.length));
   }
-
-  useLayoutEffect(() => {
-    if (pendingCursor === null || !inputRef.current) return;
-    const pos = formatLocal(digits.slice(0, pendingCursor)).length;
-    inputRef.current.setSelectionRange(pos, pos);
-    setPendingCursor(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localDisplay]);
 
   return (
     <div
@@ -97,7 +82,6 @@ export function PhoneInput({
     >
       <span className="shrink-0 text-navy/60">+998</span>
       <input
-        ref={inputRef}
         type="text"
         inputMode="numeric"
         autoComplete="off"
