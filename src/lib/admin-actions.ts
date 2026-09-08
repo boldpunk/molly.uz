@@ -15,6 +15,11 @@ import type {
 import { deleteProductImage } from "./upload-actions";
 import { postNewOrderCard } from "./order-bot";
 import { getCurrentAdmin } from "./admin-users";
+import {
+  deleteTelegramMessage,
+  getStaffChatId,
+  isStaffNotifyConfigured,
+} from "./telegram";
 
 function parseJsonArray<T>(raw: FormDataEntryValue | null): T[] {
   if (!raw || typeof raw !== "string") return [];
@@ -244,6 +249,19 @@ export async function updateRequest(id: string, formData: FormData) {
 }
 
 export async function deleteRequest(id: string) {
+  if (isStaffNotifyConfigured()) {
+    const [current] = await db
+      .select({ telegramMessageId: requests.telegramMessageId })
+      .from(requests)
+      .where(eq(requests.id, id))
+      .limit(1);
+    if (current?.telegramMessageId) {
+      await deleteTelegramMessage(getStaffChatId()!, current.telegramMessageId).catch(
+        (err) => console.error("Telegram message delete failed", err)
+      );
+    }
+  }
+
   await db.delete(requests).where(eq(requests.id, id));
   revalidatePath("/admin/requests");
   revalidatePath("/admin");
