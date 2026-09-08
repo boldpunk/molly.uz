@@ -3,6 +3,7 @@
 import { db } from "@/db";
 import { requests, requestItems } from "@/db/schema";
 import { RequestItem } from "./types";
+import { notifyStaffNewRequest } from "./telegram";
 
 export async function submitRequest(
   name: string,
@@ -37,6 +38,20 @@ export async function submitRequest(
       }))
     );
   }
+
+  notifyStaffNewRequest({
+    id: request.id,
+    customerName: name,
+    customerPhone: phone,
+    notes,
+    items: items.map((item) => ({
+      productName: item.productName,
+      hardwareLabel: item.hardwareLabel,
+      colourLabel: item.colourLabel,
+      widthMetres: item.widthMetres,
+      estimate: item.estimate,
+    })),
+  }).catch((err) => console.error("Telegram staff notify failed", err));
 
   return { id: request.id };
 }
