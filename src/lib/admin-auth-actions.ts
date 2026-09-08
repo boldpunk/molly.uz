@@ -2,19 +2,20 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { verifyPassword } from "./auth";
+import { verifyAdminCredentials } from "./auth";
 import { createSessionToken, SESSION_COOKIE } from "./session";
 
 export async function login(formData: FormData) {
+  const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
   const next = String(formData.get("next") ?? "/admin");
 
-  const valid = await verifyPassword(password);
-  if (!valid) {
+  const user = await verifyAdminCredentials(email, password);
+  if (!user) {
     redirect(`/admin/login?error=1&next=${encodeURIComponent(next)}`);
   }
 
-  const token = await createSessionToken();
+  const token = await createSessionToken(user.id, user.role);
   const store = await cookies();
   store.set(SESSION_COOKIE.name, token, {
     httpOnly: true,

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { logout } from "@/lib/admin-auth-actions";
+import type { CurrentAdmin } from "@/lib/admin-users";
+import { ADMIN_ROLE_LABELS } from "@/lib/admin-role-labels";
 import { Logo } from "@/components/logo";
 import {
   DashboardIcon,
@@ -12,6 +14,7 @@ import {
   CategoriesIcon,
   LogoutIcon,
   PageIcon,
+  UsersIcon,
 } from "./icons";
 
 function BackIcon({ className = "h-[18px] w-[18px]" }: { className?: string }) {
@@ -29,11 +32,43 @@ function BackIcon({ className = "h-[18px] w-[18px]" }: { className?: string }) {
 }
 
 const NAV_ITEMS = [
-  { href: "/admin", label: "Дашборд", icon: DashboardIcon, exact: true },
-  { href: "/admin/requests", label: "Заявки", icon: RequestsIcon },
-  { href: "/admin/products", label: "Товары", icon: ProductsIcon },
-  { href: "/admin/categories", label: "Категории", icon: CategoriesIcon },
-  { href: "/admin/pages", label: "Страницы", icon: PageIcon },
+  {
+    href: "/admin",
+    label: "Дашборд",
+    icon: DashboardIcon,
+    exact: true,
+    roles: ["administrator", "sales_manager"],
+  },
+  {
+    href: "/admin/requests",
+    label: "Заявки",
+    icon: RequestsIcon,
+    roles: ["administrator", "sales_manager"],
+  },
+  {
+    href: "/admin/products",
+    label: "Товары",
+    icon: ProductsIcon,
+    roles: ["administrator", "catalog_manager"],
+  },
+  {
+    href: "/admin/categories",
+    label: "Категории",
+    icon: CategoriesIcon,
+    roles: ["administrator", "catalog_manager"],
+  },
+  {
+    href: "/admin/pages",
+    label: "Страницы",
+    icon: PageIcon,
+    roles: ["administrator", "content_editor"],
+  },
+  {
+    href: "/admin/users",
+    label: "Пользователи",
+    icon: UsersIcon,
+    roles: ["administrator"],
+  },
 ];
 
 function SidebarLogo() {
@@ -47,11 +82,18 @@ function SidebarLogo() {
   );
 }
 
-function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+function NavLinks({
+  role,
+  onNavigate,
+}: {
+  role: string;
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
+  const items = NAV_ITEMS.filter((item) => item.roles.includes(role));
   return (
     <nav className="flex flex-1 flex-col gap-1 px-4">
-      {NAV_ITEMS.map((item) => {
+      {items.map((item) => {
         const active = item.exact
           ? pathname === item.href
           : pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -80,18 +122,20 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-function AccountFooter() {
+function AccountFooter({ admin }: { admin: CurrentAdmin }) {
+  const initial = admin.name.trim().charAt(0).toUpperCase() || "A";
+  const roleLabel = ADMIN_ROLE_LABELS[admin.role] ?? admin.role;
   return (
     <div className="border-t border-navy/10 px-4 py-4">
       <div className="mb-2 flex items-center gap-2.5 rounded-lg px-3 py-2">
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sage/20 text-xs font-semibold text-sage-dark">
-          A
+          {initial}
         </span>
         <div className="min-w-0">
           <p className="truncate text-xs font-semibold text-navy">
-            Administrator
+            {admin.name}
           </p>
-          <p className="truncate text-[11px] text-navy/40">Molly Home</p>
+          <p className="truncate text-[11px] text-navy/40">{roleLabel}</p>
         </div>
       </div>
       <Link
@@ -114,7 +158,7 @@ function AccountFooter() {
   );
 }
 
-export function AdminSidebar() {
+export function AdminSidebar({ admin }: { admin: CurrentAdmin }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -167,8 +211,8 @@ export function AdminSidebar() {
                 </svg>
               </button>
             </div>
-            <NavLinks onNavigate={() => setOpen(false)} />
-            <AccountFooter />
+            <NavLinks role={admin.role} onNavigate={() => setOpen(false)} />
+            <AccountFooter admin={admin} />
           </div>
         </div>
       )}
@@ -178,8 +222,8 @@ export function AdminSidebar() {
         <div className="px-6 py-6">
           <SidebarLogo />
         </div>
-        <NavLinks />
-        <AccountFooter />
+        <NavLinks role={admin.role} />
+        <AccountFooter admin={admin} />
       </aside>
     </>
   );
