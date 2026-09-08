@@ -14,6 +14,7 @@ const BLOCK_LABELS: Record<AddableBlockType, string> = {
   image: "Изображение",
   stat_list: "Список показателей",
   cta: "Кнопка (CTA)",
+  brand_list: "Список брендов",
 };
 
 function emptyBlock(type: AddableBlockType): EditableBlock {
@@ -28,6 +29,8 @@ function emptyBlock(type: AddableBlockType): EditableBlock {
       return { type, items: [] };
     case "cta":
       return { type, label: "", href: "" };
+    case "brand_list":
+      return { type, items: [] };
   }
 }
 
@@ -221,6 +224,13 @@ function BlockFields({
           onChange={(b) => onChange(b as EditableBlock)}
         />
       );
+    case "brand_list":
+      return (
+        <BrandListFields
+          block={block}
+          onChange={(b) => onChange(b as EditableBlock)}
+        />
+      );
   }
 }
 
@@ -334,6 +344,100 @@ export function StatListFields({
       >
         <PlusIcon className="h-3 w-3" />
         Добавить пункт
+      </button>
+    </div>
+  );
+}
+
+function BrandLogoField({
+  logoUrl,
+  onChange,
+}: {
+  logoUrl: string;
+  onChange: (url: string) => void;
+}) {
+  const [status, setStatus] = useState<"idle" | "uploading" | "error">("idle");
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setStatus("uploading");
+    const formData = new FormData();
+    formData.set("file", file);
+    const result = await uploadPageImage(formData);
+    if ("error" in result) {
+      setStatus("error");
+      return;
+    }
+    onChange(result.url);
+    setStatus("idle");
+  }
+
+  return (
+    <label className="flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-md border border-navy/10 bg-navy/[0.02] hover:bg-navy/5">
+      {logoUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={logoUrl} alt="" className="h-full w-full object-contain p-1" />
+      ) : (
+        <span className="text-center text-[9px] leading-tight text-navy/30">
+          {status === "uploading" ? "…" : "Лого"}
+        </span>
+      )}
+      <input
+        type="file"
+        accept="image/png,image/svg+xml,image/webp,image/jpeg"
+        onChange={handleFileChange}
+        disabled={status === "uploading"}
+        className="hidden"
+      />
+    </label>
+  );
+}
+
+export function BrandListFields({
+  block,
+  onChange,
+}: {
+  block: Extract<PageBlock, { type: "brand_list" }>;
+  onChange: (b: PageBlock) => void;
+}) {
+  function updateItem(i: number, next: { name: string; logoUrl: string }) {
+    const items = block.items.map((item, idx) => (idx === i ? next : item));
+    onChange({ ...block, items });
+  }
+  function addItem() {
+    onChange({ ...block, items: [...block.items, { name: "", logoUrl: "" }] });
+  }
+  function removeItem(i: number) {
+    onChange({ ...block, items: block.items.filter((_, idx) => idx !== i) });
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      {block.items.map((item, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <BrandLogoField
+            logoUrl={item.logoUrl}
+            onChange={(logoUrl) => updateItem(i, { ...item, logoUrl })}
+          />
+          <input
+            value={item.name}
+            onChange={(e) => updateItem(i, { ...item, name: e.target.value })}
+            placeholder="Название бренда"
+            className="input flex-1"
+          />
+          <IconButton onClick={() => removeItem(i)} label="Удалить">
+            <TrashIcon className="h-3.5 w-3.5" />
+          </IconButton>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={addItem}
+        className="inline-flex w-fit items-center gap-1 rounded-full bg-navy/5 px-2.5 py-1 text-xs font-medium text-navy/60 transition hover:bg-navy/10"
+      >
+        <PlusIcon className="h-3 w-3" />
+        Добавить бренд
       </button>
     </div>
   );
