@@ -1,9 +1,10 @@
-import { eq, and, ne, asc, or, ilike } from "drizzle-orm";
+import { eq, and, ne, asc, desc, or, ilike } from "drizzle-orm";
 import { db } from "@/db";
 import {
   categories as categoriesTable,
   products as productsTable,
   pages as pagesTable,
+  favourites as favouritesTable,
 } from "@/db/schema";
 import { Category, Product } from "./types";
 
@@ -12,6 +13,8 @@ export interface Page {
   slug: string;
   title: string;
   blocks: import("@/db/schema").PageBlock[];
+  metaTitle: string | null;
+  metaDescription: string | null;
 }
 
 export async function getPageBySlug(slug: string): Promise<Page | undefined> {
@@ -60,6 +63,8 @@ function toProduct(
     isFeatured: row.isFeatured,
     imageUrl: row.imageUrl ?? undefined,
     galleryUrls: row.galleryUrls,
+    metaTitle: row.metaTitle ?? undefined,
+    metaDescription: row.metaDescription ?? undefined,
   };
 }
 
@@ -182,4 +187,40 @@ export async function getRelatedProducts(product: Product): Promise<Product[]> {
     )
     .orderBy(asc(productsTable.name));
   return rows.map((r) => toProduct(r, product.categorySlug));
+}
+
+export async function isFavourite(
+  customerId: string,
+  productId: string
+): Promise<boolean> {
+  const rows = await db
+    .select({ id: favouritesTable.id })
+    .from(favouritesTable)
+    .where(
+      and(
+        eq(favouritesTable.customerId, customerId),
+        eq(favouritesTable.productId, productId)
+      )
+    )
+    .limit(1);
+  return rows.length > 0;
+}
+
+export async function getFavouriteProducts(
+  customerId: string
+): Promise<Product[]> {
+  const rows = await db
+    .select({
+      product: productsTable,
+      categorySlug: categoriesTable.slug,
+    })
+    .from(favouritesTable)
+    .innerJoin(productsTable, eq(favouritesTable.productId, productsTable.id))
+    .innerJoin(
+      categoriesTable,
+      eq(productsTable.categoryId, categoriesTable.id)
+    )
+    .where(eq(favouritesTable.customerId, customerId))
+    .orderBy(desc(favouritesTable.createdAt));
+  return rows.map((r) => toProduct(r.product, r.categorySlug));
 }

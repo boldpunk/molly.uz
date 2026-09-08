@@ -3,9 +3,19 @@ import { getCategories, getFeaturedProducts, getPageBySlug } from "@/lib/data";
 import { ProductCard } from "@/components/product-card";
 import { PlaceholderImage } from "@/components/placeholder-image";
 import { getCategoryIcon } from "@/components/icons/categories";
+import { pageMetadata } from "@/lib/seo";
 import type { PageBlock } from "@/db/schema";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata() {
+  const home = await getPageBySlug("home");
+  return pageMetadata(
+    home,
+    "Molly Home — мебель для дома",
+    "Molly Home — производитель комфортной мебели для дома. Современные технологии, лояльный бренд."
+  );
+}
 
 function pick<T extends PageBlock["type"]>(
   blocks: PageBlock[],

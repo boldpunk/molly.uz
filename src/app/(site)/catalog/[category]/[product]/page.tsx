@@ -1,6 +1,29 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getCategoryBySlug, getProduct, getRelatedProducts } from "@/lib/data";
+import {
+  getCategoryBySlug,
+  getProduct,
+  getRelatedProducts,
+  isFavourite,
+} from "@/lib/data";
+import { getCurrentCustomer } from "@/lib/customers";
 import { ProductDetail } from "@/components/product-detail";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ category: string; product: string }>;
+}): Promise<Metadata> {
+  const { category: categorySlug, product: productSlug } = await params;
+  const product = await getProduct(categorySlug, productSlug);
+  if (!product) return {};
+
+  return {
+    title: product.metaTitle || `${product.name} — Molly Home`,
+    description:
+      product.metaDescription || product.specLine || product.description,
+  };
+}
 
 export default async function ProductPage({
   params,
@@ -15,8 +38,17 @@ export default async function ProductPage({
   if (!product) notFound();
 
   const related = await getRelatedProducts(product);
+  const customer = await getCurrentCustomer();
+  const initialIsFavourite = customer
+    ? await isFavourite(customer.id, product.id)
+    : false;
 
   return (
-    <ProductDetail category={category} product={product} related={related} />
+    <ProductDetail
+      category={category}
+      product={product}
+      related={related}
+      initialIsFavourite={initialIsFavourite}
+    />
   );
 }

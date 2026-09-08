@@ -1,9 +1,18 @@
 import Link from "next/link";
 import { getPageBySlug } from "@/lib/data";
+import { pageMetadata } from "@/lib/seo";
 import type { PageBlock } from "@/db/schema";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Контакты — Molly Home" };
+
+export async function generateMetadata() {
+  const page = await getPageBySlug("contacts");
+  return pageMetadata(
+    page,
+    "Контакты — Molly Home",
+    "Телефон, адрес и мессенджеры Molly Home в Ташкенте."
+  );
+}
 
 function pick<T extends PageBlock["type"]>(
   blocks: PageBlock[],

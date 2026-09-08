@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { createPortal } from "react-dom";
 import { Category } from "@/lib/types";
 import { useRequestList } from "@/lib/request-list-context";
@@ -9,10 +10,17 @@ import { Logo } from "@/components/logo";
 import { getCategoryIcon } from "@/components/icons/categories";
 import { LocationPicker } from "@/components/location-picker";
 
-export function Header({ categories }: { categories: Category[] }) {
+export function Header({
+  categories,
+  phone,
+}: {
+  categories: Category[];
+  phone: string;
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { items } = useRequestList();
+  const pathname = usePathname();
 
   return (
     <>
@@ -22,8 +30,11 @@ export function Header({ categories }: { categories: Category[] }) {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-2">
           <LocationPicker />
           <div className="flex items-center gap-4">
-            <a href="tel:+998000000000" className="hover:text-navy">
-              +998 00 000 00 00
+            <a
+              href={`tel:${phone.replace(/[^+\d]/g, "")}`}
+              className="hover:text-navy"
+            >
+              {phone}
             </a>
             <button
               type="button"
@@ -66,7 +77,11 @@ export function Header({ categories }: { categories: Category[] }) {
           >
             <button
               type="button"
-              className="text-sm font-medium text-navy hover:text-sage-dark"
+              className={`border-b-2 py-1 text-sm font-medium transition-colors ${
+                pathname === "/catalog"
+                  ? "border-sage-dark text-sage-dark"
+                  : "border-transparent text-navy hover:border-sage-dark/40 hover:text-sage-dark"
+              }`}
             >
               Каталог
             </button>
@@ -94,15 +109,22 @@ export function Header({ categories }: { categories: Category[] }) {
               </div>
             )}
           </div>
-          {categories.slice(0, 4).map((cat) => (
-            <Link
-              key={cat.id}
-              href={`/catalog/${cat.slug}`}
-              className="text-sm text-navy/70 hover:text-navy"
-            >
-              {cat.name}
-            </Link>
-          ))}
+          {categories.slice(0, 4).map((cat) => {
+            const isActive = pathname === `/catalog/${cat.slug}`;
+            return (
+              <Link
+                key={cat.id}
+                href={`/catalog/${cat.slug}`}
+                className={`border-b-2 py-1 text-sm font-medium transition-colors ${
+                  isActive
+                    ? "border-sage-dark text-sage-dark"
+                    : "border-transparent text-navy/70 hover:border-sage-dark/40 hover:text-navy"
+                }`}
+              >
+                {cat.name}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="ml-auto flex items-center gap-1">

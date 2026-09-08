@@ -103,6 +103,8 @@ function productValuesFromFormData(formData: FormData) {
     isFeatured: formData.get("isFeatured") === "on",
     imageUrl: String(formData.get("imageUrl") ?? "") || null,
     galleryUrls,
+    metaTitle: String(formData.get("metaTitle") ?? "") || null,
+    metaDescription: String(formData.get("metaDescription") ?? "") || null,
     updatedAt: new Date(),
   };
 }
@@ -205,10 +207,12 @@ export async function deleteRequest(id: string) {
 export async function updatePage(slug: string, formData: FormData) {
   const title = String(formData.get("title") ?? "");
   const blocks = parseJsonArray<PageBlock>(formData.get("blocksJson"));
+  const metaTitle = String(formData.get("metaTitle") ?? "") || null;
+  const metaDescription = String(formData.get("metaDescription") ?? "") || null;
 
   await db
     .update(pages)
-    .set({ title, blocks, updatedAt: new Date() })
+    .set({ title, blocks, metaTitle, metaDescription, updatedAt: new Date() })
     .where(eq(pages.slug, slug));
 
   revalidatePath("/admin/pages");

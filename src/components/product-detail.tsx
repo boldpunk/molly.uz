@@ -9,6 +9,9 @@ import { PlaceholderImage } from "@/components/placeholder-image";
 import { ProductCard } from "@/components/product-card";
 import { useRequestList } from "@/lib/request-list-context";
 import { getHardwareBrandBadge } from "@/lib/hardware-brands";
+import { SITE_URL } from "@/lib/site";
+import { FavouriteButton } from "@/components/favourite-button";
+import { ImageLightbox } from "@/components/image-lightbox";
 
 const MIN_WIDTH = 2;
 const MAX_WIDTH = 15;
@@ -18,10 +21,12 @@ export function ProductDetail({
   category,
   product,
   related,
+  initialIsFavourite,
 }: {
   category: Category;
   product: Product;
   related: Product[];
+  initialIsFavourite: boolean;
 }) {
   const router = useRouter();
   const { addItem } = useRequestList();
@@ -33,6 +38,7 @@ export function ProductDetail({
     (url): url is string => Boolean(url)
   );
   const [activeImage, setActiveImage] = useState(galleryImages[0]);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [width, setWidth] = useState(DEFAULT_WIDTH);
   const [widthText, setWidthText] = useState(String(DEFAULT_WIDTH));
   const [tab, setTab] = useState<"description" | "specs" | "delivery">(
@@ -85,8 +91,33 @@ export function ProductDetail({
     setTimeout(() => router.push("/request"), 600);
   }
 
+  const productJsonLd =
+    isConfigurable && hardware
+      ? {
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: product.name,
+          description: product.specLine || product.description || undefined,
+          image: product.imageUrl || undefined,
+          url: `${SITE_URL}/catalog/${category.slug}/${product.slug}`,
+          offers: {
+            "@type": "Offer",
+            priceCurrency: "UZS",
+            price: hardware.pricePerMetre,
+            availability: "https://schema.org/InStock",
+            url: `${SITE_URL}/catalog/${category.slug}/${product.slug}`,
+          },
+        }
+      : null;
+
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
+      {productJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+        />
+      )}
       <nav className="text-xs text-navy/50">
         <Link href="/" className="hover:underline">
           Главная
@@ -102,14 +133,28 @@ export function ProductDetail({
         {/* Gallery */}
         <div className="flex flex-col gap-3">
           {activeImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={activeImage}
-              alt={product.name}
-              className="aspect-[4/3] w-full rounded-lg object-cover"
-            />
+            <button
+              type="button"
+              onClick={() => setLightboxOpen(true)}
+              className="aspect-[4/3] w-full cursor-zoom-in overflow-hidden rounded-lg bg-navy/[0.03]"
+              aria-label="Открыть фото на весь экран"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={activeImage}
+                alt={product.name}
+                className="h-full w-full object-contain"
+              />
+            </button>
           ) : (
             <PlaceholderImage label={product.name} aspect="aspect-[4/3]" />
+          )}
+          {lightboxOpen && activeImage && (
+            <ImageLightbox
+              src={activeImage}
+              alt={product.name}
+              onClose={() => setLightboxOpen(false)}
+            />
           )}
           {galleryImages.length > 1 ? (
             <div className="grid grid-cols-4 gap-3">
@@ -275,13 +320,20 @@ export function ProductDetail({
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={handleAddToRequest}
-                className="w-full rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white hover:bg-navy/90"
-              >
-                {submitted ? "Добавлено ✓" : "Оставить заявку на замер"}
-              </button>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={handleAddToRequest}
+                  className="flex-1 rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white hover:bg-navy/90"
+                >
+                  {submitted ? "Добавлено ✓" : "Оставить заявку на замер"}
+                </button>
+                <FavouriteButton
+                  productId={product.id}
+                  productPath={`/catalog/${category.slug}/${product.slug}`}
+                  initialIsFavourite={initialIsFavourite}
+                />
+              </div>
             </div>
           ) : (
             <div className="mt-6 flex flex-col gap-4 rounded-xl border border-navy/10 bg-white p-5">
@@ -327,6 +379,11 @@ export function ProductDetail({
                 >
                   Написать в Telegram
                 </a>
+                <FavouriteButton
+                  productId={product.id}
+                  productPath={`/catalog/${category.slug}/${product.slug}`}
+                  initialIsFavourite={initialIsFavourite}
+                />
               </div>
             </div>
           )}

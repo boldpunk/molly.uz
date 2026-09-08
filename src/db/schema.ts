@@ -8,6 +8,7 @@ import {
   timestamp,
   uuid,
   pgEnum,
+  unique,
 } from "drizzle-orm/pg-core";
 
 export const pricingModeEnum = pgEnum("pricing_mode", [
@@ -74,6 +75,8 @@ export const products = pgTable("products", {
   attributes: jsonb("attributes").$type<ProductAttribute[]>().notNull().default([]),
   isSample: boolean("is_sample").notNull().default(false),
   isFeatured: boolean("is_featured").notNull().default(false),
+  metaTitle: text("meta_title"),
+  metaDescription: text("meta_description"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -104,6 +107,8 @@ export const pages = pgTable("pages", {
   slug: text("slug").notNull().unique(),
   title: text("title").notNull(),
   blocks: jsonb("blocks").$type<PageBlock[]>().notNull().default([]),
+  metaTitle: text("meta_title"),
+  metaDescription: text("meta_description"),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
@@ -114,6 +119,21 @@ export const customers = pgTable("customers", {
   passwordHash: text("password_hash").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+export const favourites = pgTable(
+  "favourites",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    customerId: uuid("customer_id")
+      .notNull()
+      .references(() => customers.id, { onDelete: "cascade" }),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [unique().on(table.customerId, table.productId)]
+);
 
 export interface StatusHistoryEntry {
   status: string;
