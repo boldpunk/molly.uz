@@ -43,6 +43,7 @@ export interface Product {
   isSample: boolean;
   isFeatured?: boolean;
   imageUrl?: string;
+  galleryUrls: string[];
 }
 
 export interface RequestItem {
