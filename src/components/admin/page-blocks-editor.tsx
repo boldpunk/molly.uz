@@ -209,7 +209,7 @@ function BlockFields({
   }
 }
 
-function BlockImageField({
+export function BlockImageField({
   block,
   onChange,
 }: {
@@ -271,7 +271,7 @@ function BlockImageField({
   );
 }
 
-function StatListFields({
+export function StatListFields({
   block,
   onChange,
 }: {
