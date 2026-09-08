@@ -34,6 +34,7 @@ function toProduct(
     attributes: row.attributes,
     isSample: row.isSample,
     isFeatured: row.isFeatured,
+    imageUrl: row.imageUrl ?? undefined,
   };
 }
 

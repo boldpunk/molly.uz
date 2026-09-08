@@ -78,7 +78,16 @@ export function ProductDetail({
       <div className="mt-6 grid gap-10 lg:grid-cols-2">
         {/* Gallery */}
         <div className="flex flex-col gap-3">
-          <PlaceholderImage label={product.name} aspect="aspect-[4/3]" />
+          {product.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={product.imageUrl}
+              alt={product.name}
+              className="aspect-[4/3] w-full rounded-lg object-cover"
+            />
+          ) : (
+            <PlaceholderImage label={product.name} aspect="aspect-[4/3]" />
+          )}
           <div className="grid grid-cols-4 gap-3">
             {Array.from({ length: 4 }).map((_, i) => (
               <PlaceholderImage
@@ -182,18 +191,10 @@ export function ProductDetail({
                   onChange={(e) => setWidth(parseFloat(e.target.value))}
                   className="mt-2 w-full accent-sage-dark"
                 />
-                <input
-                  type="number"
-                  min={MIN_WIDTH}
-                  step={0.1}
-                  value={width}
-                  onChange={(e) =>
-                    setWidth(
-                      Math.max(MIN_WIDTH, parseFloat(e.target.value) || MIN_WIDTH)
-                    )
-                  }
-                  className="mt-2 w-28 rounded-md border border-navy/15 px-2 py-1 text-sm"
-                />
+                <div className="mt-1 flex justify-between text-xs text-navy/40">
+                  <span>{MIN_WIDTH} м</span>
+                  <span>{MAX_WIDTH} м</span>
+                </div>
               </div>
 
               <div className="border-t border-navy/10 pt-4">

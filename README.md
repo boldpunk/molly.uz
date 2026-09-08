@@ -17,7 +17,9 @@ database, including a working submission that persists to `requests`.
   cookie, bcrypt-hashed password (`ADMIN_PASSWORD_HASH` env var), enforced
   by `src/proxy.ts`.
 - Category and product CRUD (`/admin/categories`, `/admin/products`),
-  including the hardware/colour-option and attribute editors.
+  including the hardware/colour-option and attribute editors, and a photo
+  uploader per product (Vercel Blob storage) that replaces the placeholder
+  image on the storefront as soon as one is uploaded.
 - Order/lead pipeline (`/admin/requests`): the New → Contacted → Measured →
   In production → Ready/Delivered stages from Section 7.2, with a status
   history log and notes/assigned-manager fields.
@@ -38,15 +40,23 @@ Other details:
   reordered product page (price/CTA before description) called for in
   Section 9.1.
 
-Product photography isn't available yet, so pages use clearly labeled
-placeholder image blocks rather than stock or fabricated photos.
+Product photos can be uploaded per product from `/admin/products`; until
+one is uploaded, pages fall back to a clearly labeled placeholder block
+rather than a stock or fabricated photo.
+
+Customer accounts (`/account`) — phone/password registration and login,
+with a request history scoped to the logged-in customer; the request form
+still supports anonymous/guest submission.
+
+Catalog search (`/search`) — matches product name, spec line, description,
+collection, and category name.
 
 ## Not yet built
 
-- The visual page-builder / CMS (Section 6) — static pages are still
-  hard-coded.
+- The visual page-builder / CMS (Section 6) for static pages — content is
+  still hard-coded; only product photos are editable from the admin so far.
 - Telegram integration (Section 8).
-- Customer accounts, real search, payments.
+- Payments.
 - Role-based permissions (Section 7.6) — the admin area currently has a
   single Administrator-level login, not the full role model from Section 3.
 
@@ -63,6 +73,9 @@ npm run db:seed     # (re)seed categories/products from src/db/seed-data.ts
 ```
 
 Requires `.env.local` with `DATABASE_URL` / `DATABASE_URL_UNPOOLED` (Neon),
-`ADMIN_PASSWORD_HASH` (bcrypt hash), and `SESSION_SECRET`. `$` characters in
-`.env.local` values must be escaped as `\$` — Next.js expands unescaped `$`
-as variable references when loading env files.
+`ADMIN_PASSWORD_HASH` (bcrypt hash), `SESSION_SECRET`, and
+`BLOB_READ_WRITE_TOKEN` (Vercel Blob, for product photo uploads). `$`
+characters in `.env.local` values must be escaped as `\$` — Next.js expands
+unescaped `$` as variable references when loading env files. Running
+`vercel env pull` / `vercel blob create-store` rewrites the whole file and
+will silently reintroduce this bug — re-check `ADMIN_PASSWORD_HASH` after.

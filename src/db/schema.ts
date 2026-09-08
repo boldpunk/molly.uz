@@ -64,6 +64,7 @@ export const products = pgTable("products", {
   name: text("name").notNull(),
   specLine: text("spec_line").notNull().default(""),
   description: text("description").notNull().default(""),
+  imageUrl: text("image_url"),
   pricingMode: pricingModeEnum("pricing_mode").notNull().default("on_request"),
   pricePerMetre: integer("price_per_metre"),
   hardwareOptions: jsonb("hardware_options").$type<HardwareOption[]>(),

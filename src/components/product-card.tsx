@@ -11,10 +11,19 @@ export function ProductCard({ product }: { product: Product }) {
       href={href}
       className="group flex flex-col gap-3 rounded-xl border border-navy/10 bg-white p-3 transition hover:border-navy/30 hover:shadow-md"
     >
-      <PlaceholderImage
-        label={product.name}
-        className="w-full transition group-hover:scale-[1.01]"
-      />
+      {product.imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={product.imageUrl}
+          alt={product.name}
+          className="aspect-[4/3] w-full rounded-lg object-cover transition group-hover:scale-[1.01]"
+        />
+      ) : (
+        <PlaceholderImage
+          label={product.name}
+          className="w-full transition group-hover:scale-[1.01]"
+        />
+      )}
       <div>
         <h3 className="font-heading text-base font-semibold text-navy">
           {product.name}

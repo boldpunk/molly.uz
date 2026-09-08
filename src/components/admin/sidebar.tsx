@@ -13,6 +13,20 @@ import {
   LogoutIcon,
 } from "./icons";
 
+function BackIcon({ className = "h-[18px] w-[18px]" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path
+        d="M19 12H5m0 0 6-6m-6 6 6 6"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 const NAV_ITEMS = [
   { href: "/admin", label: "Дашборд", icon: DashboardIcon, exact: true },
   { href: "/admin/requests", label: "Заявки", icon: RequestsIcon },
@@ -78,6 +92,13 @@ function AccountFooter() {
           <p className="truncate text-[11px] text-navy/40">Molly Home</p>
         </div>
       </div>
+      <Link
+        href="/"
+        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-navy/50 transition hover:bg-navy/5 hover:text-navy"
+      >
+        <BackIcon />
+        Вернуться на сайт
+      </Link>
       <form action={logout}>
         <button
           type="submit"

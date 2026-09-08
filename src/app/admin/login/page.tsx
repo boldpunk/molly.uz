@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { login } from "@/lib/admin-auth-actions";
 import { Logo } from "@/components/logo";
 
@@ -44,6 +45,27 @@ export default async function AdminLoginPage({
               Войти
             </button>
           </form>
+        </div>
+
+        <div className="mt-6 flex flex-col items-center gap-1 text-center">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-navy/60 hover:text-navy"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M19 12H5m0 0 6-6m-6 6 6 6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Вернуться на сайт
+          </Link>
+          <p className="mt-4 text-xs text-navy/30">
+            © {new Date().getFullYear()} Molly Home
+          </p>
         </div>
       </div>
     </div>

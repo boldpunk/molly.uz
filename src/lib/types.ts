@@ -42,6 +42,7 @@ export interface Product {
   attributes: ProductAttribute[];
   isSample: boolean;
   isFeatured?: boolean;
+  imageUrl?: string;
 }
 
 export interface RequestItem {
