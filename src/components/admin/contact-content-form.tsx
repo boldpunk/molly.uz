@@ -28,6 +28,7 @@ export function ContactContentForm({
   );
   const initialContact = pick(initialBlocks, 2, "contact_info");
   const [phone, setPhone] = useState(initialContact?.phone ?? "");
+  const [email, setEmail] = useState(initialContact?.email ?? "");
   const [hours, setHours] = useState(initialContact?.hours ?? "");
   const [telegram, setTelegram] = useState(initialContact?.telegram ?? "");
   const [instagram, setInstagram] = useState(initialContact?.instagram ?? "");
@@ -48,6 +49,7 @@ export function ContactContentForm({
     {
       type: "contact_info",
       phone,
+      email,
       hours,
       telegram,
       instagram,
@@ -104,6 +106,16 @@ export function ContactContentForm({
             value={hours}
             onChange={(e) => setHours(e.target.value)}
             placeholder="Пн–Сб: 09:00–19:00 · Вс: выходной"
+            className="input"
+          />
+        </label>
+        <label className="flex flex-col gap-1.5 text-sm">
+          <span className="font-medium text-navy">Email</span>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="info@molly.uz"
             className="input"
           />
         </label>
