@@ -3,6 +3,7 @@ import { getCategories, getFeaturedProducts, getPageBySlug } from "@/lib/data";
 import { ProductCard } from "@/components/product-card";
 import { PlaceholderImage } from "@/components/placeholder-image";
 import { getCategoryIcon } from "@/components/icons/categories";
+import { UspIcon } from "@/components/usp-icons";
 import { pageMetadata } from "@/lib/seo";
 import type { PageBlock } from "@/db/schema";
 
@@ -41,10 +42,10 @@ export default async function HomePage() {
     "Molly Home — производитель комфортной мебели для дома. Современные технологии, лояльный бренд.";
   const heroImage = pick(blocks, 2, "image");
   const uspStats = pick(blocks, 3, "stat_list")?.items ?? [
-    { label: "Высота фасадов", value: "любая под проект" },
-    { label: "Материал фасада", value: "МДФ, окраска" },
-    { label: "Клеевой состав", value: "влагостойкий" },
-    { label: "Фурнитура", value: "HIGOLD / BLUM" },
+    { label: "Высота фасадов", value: "любая под проект", icon: "ruler" },
+    { label: "Материал фасада", value: "МДФ, окраска", icon: "layers" },
+    { label: "Клеевой состав", value: "влагостойкий", icon: "droplet" },
+    { label: "Фурнитура", value: "HIGOLD / BLUM", icon: "wrench" },
   ];
   const brandHeading = pick(blocks, 4, "heading")?.text ?? "О бренде";
   const brandParagraph =
@@ -98,9 +99,14 @@ export default async function HomePage() {
       <section className="border-y border-navy/10 bg-white">
         <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-6 py-8 text-center md:grid-cols-4">
           {uspStats.map((item) => (
-            <div key={item.label}>
-              <p className="text-sm font-semibold text-navy">{item.value}</p>
-              <p className="mt-1 text-xs text-navy/60">{item.label}</p>
+            <div key={item.label} className="flex flex-col items-center gap-2">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-navy/5 text-navy">
+                <UspIcon icon={item.icon} className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-navy">{item.value}</p>
+                <p className="mt-1 text-xs text-navy/60">{item.label}</p>
+              </div>
             </div>
           ))}
         </div>
