@@ -12,6 +12,7 @@ import type {
   StatusHistoryEntry,
 } from "@/db/schema";
 import { RequestStatus } from "./types";
+import { deleteProductImage } from "./upload-actions";
 
 function parseJsonArray<T>(raw: FormDataEntryValue | null): T[] {
   if (!raw || typeof raw !== "string") return [];
@@ -98,6 +99,7 @@ function productValuesFromFormData(formData: FormData) {
     attributes,
     isSample: formData.get("isSample") === "on",
     isFeatured: formData.get("isFeatured") === "on",
+    imageUrl: String(formData.get("imageUrl") ?? "") || null,
     updatedAt: new Date(),
   };
 }
@@ -110,17 +112,37 @@ export async function createProduct(formData: FormData) {
 }
 
 export async function updateProduct(id: string, formData: FormData) {
-  await db
-    .update(products)
-    .set(productValuesFromFormData(formData))
-    .where(eq(products.id, id));
+  const [existing] = await db
+    .select({ imageUrl: products.imageUrl })
+    .from(products)
+    .where(eq(products.id, id))
+    .limit(1);
+
+  const values = productValuesFromFormData(formData);
+  await db.update(products).set(values).where(eq(products.id, id));
+
+  if (existing?.imageUrl && existing.imageUrl !== values.imageUrl) {
+    await deleteProductImage(existing.imageUrl);
+  }
+
   revalidatePath("/admin/products");
   revalidatePath("/", "layout");
   redirect("/admin/products");
 }
 
 export async function deleteProduct(id: string) {
+  const [existing] = await db
+    .select({ imageUrl: products.imageUrl })
+    .from(products)
+    .where(eq(products.id, id))
+    .limit(1);
+
   await db.delete(products).where(eq(products.id, id));
+
+  if (existing?.imageUrl) {
+    await deleteProductImage(existing.imageUrl);
+  }
+
   revalidatePath("/admin/products");
   revalidatePath("/", "layout");
   redirect("/admin/products");

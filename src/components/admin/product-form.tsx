@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { DynamicListField, Row } from "./dynamic-list-field";
 import { FormSection } from "./form-section";
+import { ImageUploadField } from "./image-upload-field";
 import { Category, Product, PricingMode } from "@/lib/types";
 
 export function ProductForm({
@@ -21,6 +22,10 @@ export function ProductForm({
   return (
     <form action={action} className="flex max-w-2xl flex-col gap-6">
       <FormSection title="Основное">
+        <Field label="Фото товара">
+          <ImageUploadField name="imageUrl" initialUrl={product?.imageUrl} />
+        </Field>
+
         <div className="grid grid-cols-2 gap-4">
           <Field label="Название">
             <input
