@@ -204,6 +204,6 @@ export async function updatePage(slug: string, formData: FormData) {
 
   revalidatePath("/admin/pages");
   revalidatePath(`/admin/pages/${slug}`);
-  revalidatePath(`/${slug}`);
+  revalidatePath(slug === "home" ? "/" : `/${slug}`);
   redirect("/admin/pages");
 }

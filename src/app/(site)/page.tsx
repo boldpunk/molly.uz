@@ -1,16 +1,46 @@
 import Link from "next/link";
-import { getCategories, getFeaturedProducts } from "@/lib/data";
+import { getCategories, getFeaturedProducts, getPageBySlug } from "@/lib/data";
 import { ProductCard } from "@/components/product-card";
 import { PlaceholderImage } from "@/components/placeholder-image";
 import { getCategoryIcon } from "@/components/icons/categories";
+import type { PageBlock } from "@/db/schema";
 
 export const dynamic = "force-dynamic";
 
+function pick<T extends PageBlock["type"]>(
+  blocks: PageBlock[],
+  index: number,
+  type: T
+): Extract<PageBlock, { type: T }> | undefined {
+  const b = blocks[index];
+  return b && b.type === type ? (b as Extract<PageBlock, { type: T }>) : undefined;
+}
+
 export default async function HomePage() {
-  const [categories, featured] = await Promise.all([
+  const [categories, featured, home] = await Promise.all([
     getCategories(),
     getFeaturedProducts(),
+    getPageBySlug("home"),
   ]);
+
+  const blocks = home?.blocks ?? [];
+  const heroHeading =
+    pick(blocks, 0, "heading")?.text ?? "Мебель для дома, сделанная под вас";
+  const heroSubtitle =
+    pick(blocks, 1, "paragraph")?.text ??
+    "Molly Home — производитель комфортной мебели для дома. Современные технологии, лояльный бренд.";
+  const heroImage = pick(blocks, 2, "image");
+  const uspStats = pick(blocks, 3, "stat_list")?.items ?? [
+    { label: "Высота фасадов", value: "любая под проект" },
+    { label: "Материал фасада", value: "МДФ, окраска" },
+    { label: "Клеевой состав", value: "влагостойкий" },
+    { label: "Фурнитура", value: "HIGOLD / BLUM / HETTICH / HAFELE" },
+  ];
+  const brandHeading = pick(blocks, 4, "heading")?.text ?? "О бренде";
+  const brandParagraph =
+    pick(blocks, 5, "paragraph")?.text ??
+    "Molly Home — производитель мебели в Ташкенте. Мы совмещаем современные технологии производства с индивидуальным подходом к каждому заказу — от кухни по размерам вашей комнаты до готовых моделей спален и гардеробов.";
+  const brandImage = pick(blocks, 6, "image");
 
   return (
     <div>
@@ -19,12 +49,9 @@ export default async function HomePage() {
         <div className="mx-auto grid max-w-7xl items-center gap-8 px-6 py-16 md:grid-cols-2 md:py-24">
           <div>
             <h1 className="font-heading text-3xl font-bold leading-tight text-navy md:text-5xl">
-              Мебель для дома, сделанная под вас
+              {heroHeading}
             </h1>
-            <p className="mt-4 max-w-md text-navy/70">
-              Molly Home — производитель комфортной мебели для дома.
-              Современные технологии, лояльный бренд.
-            </p>
+            <p className="mt-4 max-w-md text-navy/70">{heroSubtitle}</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href="/catalog/kuhonnaya-mebel"
@@ -40,22 +67,26 @@ export default async function HomePage() {
               </Link>
             </div>
           </div>
-          <PlaceholderImage
-            label="Молли Хоум — интерьер"
-            aspect="aspect-[4/3]"
-          />
+          {heroImage?.url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={heroImage.url}
+              alt={heroImage.alt}
+              className="aspect-[4/3] w-full rounded-lg object-cover"
+            />
+          ) : (
+            <PlaceholderImage
+              label={heroImage?.alt || "Молли Хоум — интерьер"}
+              aspect="aspect-[4/3]"
+            />
+          )}
         </div>
       </section>
 
       {/* USP strip */}
       <section className="border-y border-navy/10 bg-white">
         <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-6 py-8 text-center md:grid-cols-4">
-          {[
-            { label: "Высота фасадов", value: "любая под проект" },
-            { label: "Материал фасада", value: "МДФ, окраска" },
-            { label: "Клеевой состав", value: "влагостойкий" },
-            { label: "Фурнитура", value: "HIGOLD / BLUM / HETTICH" },
-          ].map((item) => (
+          {uspStats.map((item) => (
             <div key={item.label}>
               <p className="text-sm font-semibold text-navy">{item.value}</p>
               <p className="mt-1 text-xs text-navy/60">{item.label}</p>
@@ -154,17 +185,24 @@ export default async function HomePage() {
 
       {/* Brand band */}
       <section className="mx-auto grid max-w-7xl items-center gap-8 px-6 py-14 md:grid-cols-2">
-        <PlaceholderImage label="О бренде Molly Home" aspect="aspect-[4/3]" />
+        {brandImage?.url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={brandImage.url}
+            alt={brandImage.alt}
+            className="aspect-[4/3] w-full rounded-lg object-cover"
+          />
+        ) : (
+          <PlaceholderImage
+            label={brandImage?.alt || "О бренде Molly Home"}
+            aspect="aspect-[4/3]"
+          />
+        )}
         <div>
           <h2 className="font-heading text-2xl font-bold text-navy">
-            О бренде
+            {brandHeading}
           </h2>
-          <p className="mt-4 text-sm text-navy/70">
-            Molly Home — производитель мебели в Ташкенте. Мы совмещаем
-            современные технологии производства с индивидуальным подходом к
-            каждому заказу — от кухни по размерам вашей комнаты до готовых
-            моделей спален и гардеробов.
-          </p>
+          <p className="mt-4 text-sm text-navy/70">{brandParagraph}</p>
           <Link
             href="/about"
             className="mt-4 inline-block text-sm font-medium text-navy hover:underline"

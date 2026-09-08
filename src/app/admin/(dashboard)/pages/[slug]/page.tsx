@@ -4,6 +4,7 @@ import { updatePage } from "@/lib/admin-actions";
 import { PageHeader } from "@/components/admin/page-header";
 import { FormSection } from "@/components/admin/form-section";
 import { PageBlocksEditor } from "@/components/admin/page-blocks-editor";
+import { HomeContentForm } from "@/components/admin/home-content-form";
 
 export const dynamic = "force-dynamic";
 
@@ -17,12 +18,13 @@ export default async function EditPagePage({
   if (!page) notFound();
 
   const updateWithSlug = updatePage.bind(null, slug);
+  const liveUrl = slug === "home" ? "/" : `/${page.slug}`;
 
   return (
     <div>
       <PageHeader
         title={page.title}
-        description={`/${page.slug}`}
+        description={liveUrl}
         back={{ href: "/admin/pages", label: "Страницы" }}
       />
 
@@ -36,12 +38,16 @@ export default async function EditPagePage({
           />
         </FormSection>
 
-        <FormSection
-          title="Содержимое"
-          description="Добавляйте, удаляйте и переставляйте блоки — изменения появятся на сайте после сохранения"
-        >
-          <PageBlocksEditor name="blocksJson" initialBlocks={page.blocks} />
-        </FormSection>
+        {slug === "home" ? (
+          <HomeContentForm name="blocksJson" initialBlocks={page.blocks} />
+        ) : (
+          <FormSection
+            title="Содержимое"
+            description="Добавляйте, удаляйте и переставляйте блоки — изменения появятся на сайте после сохранения"
+          >
+            <PageBlocksEditor name="blocksJson" initialBlocks={page.blocks} />
+          </FormSection>
+        )}
 
         <div className="flex items-center gap-3">
           <button
@@ -51,7 +57,7 @@ export default async function EditPagePage({
             Сохранить
           </button>
           <a
-            href={`/${page.slug}`}
+            href={liveUrl}
             target="_blank"
             rel="noreferrer"
             className="text-sm font-medium text-navy/50 hover:text-navy"
