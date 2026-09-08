@@ -10,8 +10,11 @@ import type {
   ColourOption,
   ProductAttribute,
   PageBlock,
+  StatusHistoryEntry,
 } from "@/db/schema";
 import { deleteProductImage } from "./upload-actions";
+import { postNewOrderCard } from "./order-bot";
+import { getCurrentAdmin } from "./admin-users";
 
 function parseJsonArray<T>(raw: FormDataEntryValue | null): T[] {
   if (!raw || typeof raw !== "string") return [];
@@ -160,6 +163,44 @@ export async function deleteProduct(id: string) {
 
 // --- Requests (MebelFlow order funnel — status is driven by the Telegram
 // bot; the admin panel can only edit notes) --------------------------------
+
+export async function createManualOrder(formData: FormData) {
+  const customerName = String(formData.get("customerName") ?? "").trim();
+  const customerPhone = String(formData.get("customerPhone") ?? "").trim();
+  const source = String(formData.get("source") ?? "").trim() || "Ручной ввод";
+  const notes = String(formData.get("notes") ?? "").trim();
+
+  if (!customerName || !customerPhone) {
+    throw new Error("Имя клиента и телефон обязательны");
+  }
+
+  const admin = await getCurrentAdmin();
+  const historyEntry: StatusHistoryEntry = {
+    status: "new_order",
+    changedAt: new Date().toISOString(),
+    employeeName: admin ? `${admin.name} (админ-панель)` : "Админ-панель",
+    note: "Создано вручную в админ-панели",
+  };
+
+  const [created] = await db
+    .insert(requests)
+    .values({
+      customerName,
+      customerPhone,
+      source,
+      notes,
+      statusHistory: [historyEntry],
+    })
+    .returning({ id: requests.id });
+
+  await postNewOrderCard(created.id).catch((err) =>
+    console.error("Telegram order card post failed", err)
+  );
+
+  revalidatePath("/admin/requests");
+  revalidatePath("/admin");
+  redirect(`/admin/requests/${created.id}`);
+}
 
 export async function updateRequest(id: string, formData: FormData) {
   const notes = String(formData.get("notes") ?? "");
