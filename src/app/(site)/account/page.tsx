@@ -9,6 +9,7 @@ import {
 import { removeFavourite } from "@/lib/favourites-actions";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { PlaceholderImage } from "@/components/placeholder-image";
+import { PhoneInput } from "@/components/phone-input";
 import { RequestStatus } from "@/lib/types";
 
 export const metadata = { title: "Аккаунт — Molly Home" };
@@ -164,13 +165,7 @@ export default async function AccountPage({
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-navy">Телефон</span>
-            <input
-              required
-              type="tel"
-              name="phone"
-              className="input"
-              placeholder="+998 __ ___ __ __"
-            />
+            <PhoneInput required name="phone" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-navy">Пароль</span>
@@ -207,13 +202,7 @@ export default async function AccountPage({
         <form action={loginCustomer} className="mt-6 flex flex-col gap-4">
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-navy">Телефон</span>
-            <input
-              required
-              type="tel"
-              name="phone"
-              className="input"
-              placeholder="+998 __ ___ __ __"
-            />
+            <PhoneInput required name="phone" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-navy">Пароль</span>

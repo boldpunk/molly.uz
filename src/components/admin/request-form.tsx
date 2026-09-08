@@ -1,5 +1,7 @@
 "use client";
 
+import { PhoneInput } from "@/components/phone-input";
+
 export function RequestForm({
   action,
 }: {
@@ -23,12 +25,7 @@ export function RequestForm({
 
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-navy">Телефон</span>
-          <input
-            required
-            name="customerPhone"
-            className="input"
-            placeholder="+998 90 123 45 67"
-          />
+          <PhoneInput required name="customerPhone" />
         </label>
 
         <label className="flex flex-col gap-1.5 text-sm sm:col-span-2">

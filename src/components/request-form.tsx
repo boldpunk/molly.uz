@@ -5,6 +5,7 @@ import { useState } from "react";
 import { formatSum } from "@/lib/format";
 import { useRequestList } from "@/lib/request-list-context";
 import { submitRequest } from "@/lib/actions";
+import { PhoneInput } from "@/components/phone-input";
 
 export function RequestForm({
   initialName = "",
@@ -129,13 +130,11 @@ export function RequestForm({
             </div>
             <div>
               <label className="text-sm font-medium text-navy">Телефон</label>
-              <input
+              <PhoneInput
                 required
-                type="tel"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={setPhone}
                 className="mt-1 w-full rounded-md border border-navy/15 px-3 py-2 text-sm"
-                placeholder="+998 __ ___ __ __"
               />
             </div>
             <div>
