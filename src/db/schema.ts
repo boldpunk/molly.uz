@@ -209,7 +209,7 @@ export const requests = pgTable("requests", {
 export const telegramPendingActions = pgTable("telegram_pending_actions", {
   key: text("key").primaryKey(),
   kind: text("kind", {
-    enum: ["register_name", "amount_deposit", "amount_paid_full"],
+    enum: ["register_name", "amount_deposit", "amount_paid_full", "new_order_entry"],
   }).notNull(),
   requestId: uuid("request_id").references(() => requests.id, {
     onDelete: "cascade",

@@ -377,18 +377,59 @@ export async function startAmountPrompt(
     });
 }
 
-export async function resolveAmountPrompt(
+export async function startNewOrderPrompt(actor: Actor): Promise<void> {
+  const chatId = getStaffChatId();
+  if (!chatId) return;
+  const sent = await sendTelegramMessage(
+    chatId,
+    `📝 ${actor.name}, ответьте на это сообщение с данными заказа, каждое поле на новой строке:\n\nИмя клиента\nТелефон\nИсточник (необязательно)\nЗаметки (необязательно)\n\nНапример:\nИван Иванов\n+998901234567\nInstagram\nХочет кухню, 3 метра`
+  );
+  if (!sent) return;
+  await db.insert(telegramPendingActions).values({
+    key: `msg:${sent.message_id}`,
+    kind: "new_order_entry",
+  });
+}
+
+export type ReplyPromptResult =
+  | { kind: "amount_ok" }
+  | { kind: "amount_invalid" }
+  | { kind: "new_order_ok"; requestId: string }
+  | { kind: "new_order_invalid"; reason: string }
+  | { kind: "not_found" };
+
+export async function resolveReplyPrompt(
   promptMessageId: number,
   actor: Actor,
   text: string
-): Promise<"ok" | "invalid" | "not_found"> {
+): Promise<ReplyPromptResult> {
   const key = `msg:${promptMessageId}`;
   const [pending] = await db
     .select()
     .from(telegramPendingActions)
     .where(eq(telegramPendingActions.key, key))
     .limit(1);
-  if (!pending || !pending.requestId) return "not_found";
+  if (!pending) return { kind: "not_found" };
+
+  if (pending.kind === "new_order_entry") {
+    return resolveNewOrderPrompt(key, actor, text);
+  }
+
+  const outcome = await resolveAmountPrompt(pending, key, actor, text);
+  return outcome === "ok"
+    ? { kind: "amount_ok" }
+    : outcome === "invalid"
+      ? { kind: "amount_invalid" }
+      : { kind: "not_found" };
+}
+
+async function resolveAmountPrompt(
+  pending: typeof telegramPendingActions.$inferSelect,
+  key: string,
+  actor: Actor,
+  text: string
+): Promise<"ok" | "invalid" | "not_found"> {
+  if (!pending.requestId) return "not_found";
 
   const digits = text.replace(/[^\d]/g, "");
   const amount = digits ? parseInt(digits, 10) : NaN;
@@ -444,4 +485,63 @@ export async function resolveAmountPrompt(
   await refreshOrderCard(pending.requestId);
   await notifyCustomerIfLinked(current.customerId, targetStatus);
   return "ok";
+}
+
+async function resolveNewOrderPrompt(
+  key: string,
+  actor: Actor,
+  text: string
+): Promise<ReplyPromptResult> {
+  const lines = text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+
+  const name = lines[0];
+  const phone = lines[1];
+  const source = lines[2] || "Ручной ввод";
+  const notes = lines.slice(3).join("\n");
+
+  if (!name || !phone || phone.replace(/[^\d]/g, "").length < 7) {
+    return {
+      kind: "new_order_invalid",
+      reason:
+        "Нужно минимум 2 строки: имя клиента и телефон (номер должен содержать хотя бы 7 цифр).",
+    };
+  }
+
+  const employeeName = await getOrCreateEmployeeName(
+    actor.telegramId,
+    actor.name
+  );
+  const [employeeRow] = await db
+    .select({ id: employees.id })
+    .from(employees)
+    .where(eq(employees.telegramId, actor.telegramId))
+    .limit(1);
+
+  const [created] = await db
+    .insert(requests)
+    .values({
+      customerName: name,
+      customerPhone: phone,
+      notes,
+      source,
+      assignedManagerId: employeeRow?.id,
+      statusHistory: [
+        {
+          status: "new_order",
+          changedAt: new Date().toISOString(),
+          employeeTelegramId: actor.telegramId,
+          employeeName,
+          note: "Создано вручную в Telegram",
+        },
+      ],
+    })
+    .returning({ id: requests.id });
+
+  await db.delete(telegramPendingActions).where(eq(telegramPendingActions.key, key));
+
+  await postNewOrderCard(created.id);
+  return { kind: "new_order_ok", requestId: created.id };
 }

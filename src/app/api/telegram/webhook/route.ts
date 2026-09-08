@@ -13,7 +13,8 @@ import {
 import {
   handleOrderAction,
   startAmountPrompt,
-  resolveAmountPrompt,
+  startNewOrderPrompt,
+  resolveReplyPrompt,
   registerEmployeeName,
   setPendingRegistration,
   consumePendingRegistration,
@@ -119,23 +120,39 @@ async function handleMessage(message: TelegramMessage) {
   const chatId = message.chat.id;
 
   if (staffChatId && String(chatId) === String(staffChatId)) {
+    if (message.text && /^\/new(@\w+)?\s*$/i.test(message.text.trim()) && message.from) {
+      const actor = {
+        telegramId: String(message.from.id),
+        name: displayName(message.from),
+      };
+      await startNewOrderPrompt(actor);
+      return;
+    }
+
     if (message.reply_to_message && message.text && message.from) {
       const actor = {
         telegramId: String(message.from.id),
         name: displayName(message.from),
       };
-      const outcome = await resolveAmountPrompt(
+      const result = await resolveReplyPrompt(
         message.reply_to_message.message_id,
         actor,
         message.text
       );
-      if (outcome === "invalid") {
+      if (result.kind === "amount_invalid") {
         await sendTelegramMessage(
           chatId,
           "⚠️ Не удалось распознать сумму. Ответьте на то же сообщение и укажите число, например: 15000000",
           { replyToMessageId: message.message_id }
         );
-      } else if (outcome === "ok") {
+      } else if (result.kind === "amount_ok") {
+        revalidatePath("/admin/requests");
+        revalidatePath("/admin");
+      } else if (result.kind === "new_order_invalid") {
+        await sendTelegramMessage(chatId, `⚠️ ${result.reason}`, {
+          replyToMessageId: message.message_id,
+        });
+      } else if (result.kind === "new_order_ok") {
         revalidatePath("/admin/requests");
         revalidatePath("/admin");
       }
