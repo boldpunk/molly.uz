@@ -110,6 +110,15 @@ export function InboxIcon({ className = "h-8 w-8" }: IconProps) {
   );
 }
 
+export function PageIcon({ className = base }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" strokeWidth="1.75" />
+      <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function SparkIcon({ className = "h-8 w-8" }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className}>

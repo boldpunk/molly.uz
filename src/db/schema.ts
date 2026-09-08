@@ -77,6 +77,21 @@ export const products = pgTable("products", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export type PageBlock =
+  | { type: "heading"; text: string }
+  | { type: "paragraph"; text: string }
+  | { type: "image"; url: string; alt: string }
+  | { type: "stat_list"; items: { label: string; value: string }[] }
+  | { type: "cta"; label: string; href: string };
+
+export const pages = pgTable("pages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  slug: text("slug").notNull().unique(),
+  title: text("title").notNull(),
+  blocks: jsonb("blocks").$type<PageBlock[]>().notNull().default([]),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const customers = pgTable("customers", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
