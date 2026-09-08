@@ -108,6 +108,28 @@ export const REQUEST_CONTACT_KEYBOARD = {
   resize_keyboard: true,
 };
 
+export const CLIENT_LINKS_KEYBOARD = {
+  inline_keyboard: [
+    [{ text: "🛋 Каталог мебели", url: `${SITE_URL}/catalog` }],
+    [{ text: "📝 Оставить заявку на замер", url: `${SITE_URL}/request` }],
+    [{ text: "📞 Контакты", url: `${SITE_URL}/contacts` }],
+  ],
+};
+
+export async function setBotProfile(): Promise<void> {
+  await callTelegramApi("setMyShortDescription", {
+    short_description:
+      "Официальный бот мебельной фабрики Molly Home. Проверяйте статус заказа и получайте уведомления, не звоня нам.",
+  });
+  await callTelegramApi("setMyDescription", {
+    description:
+      "Molly Home — мебельная фабрика в Ташкенте.\n\nЧерез этого бота вы можете:\n✅ Проверить статус своего заказа в любое время\n🔔 Получать уведомления, когда статус меняется\n🛋 Открыть каталог и оставить заявку на замер\n\nНажмите «Запустить», чтобы начать.",
+  });
+  await callTelegramApi("setMyCommands", {
+    commands: [{ command: "start", description: "Начать / проверить статус заказа" }],
+  });
+}
+
 // --- Order funnel (§3 of the MebelFlow bot spec) ------------------------
 
 type ActionCode =

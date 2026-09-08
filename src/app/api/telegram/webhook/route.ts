@@ -9,6 +9,7 @@ import {
   parseCallbackData,
   getStaffChatId,
   REQUEST_CONTACT_KEYBOARD,
+  CLIENT_LINKS_KEYBOARD,
 } from "@/lib/telegram";
 import {
   handleOrderAction,
@@ -171,7 +172,12 @@ async function handleMessage(message: TelegramMessage) {
   if (message.text === "/start") {
     await sendTelegramMessage(
       chatId,
-      "👋 Здравствуйте! Я бот Molly Home.\n\nЕсли вы <b>менеджер</b> — напишите своё имя в ответ, чтобы вас узнавали в истории заказов.\nЕсли вы <b>клиент</b> — поделитесь номером телефона кнопкой ниже, чтобы проверить статус заявки.",
+      "👋 Добро пожаловать в Molly Home — мебельную фабрику в Ташкенте!\n\nЧерез этого бота вы можете:\n✅ Проверить статус своего заказа в любое время\n🔔 Получать уведомления, когда статус меняется — не нужно звонить и уточнять\n🛋 Посмотреть каталог и оставить заявку на замер",
+      { replyMarkup: CLIENT_LINKS_KEYBOARD }
+    );
+    await sendTelegramMessage(
+      chatId,
+      "Если вы <b>менеджер</b> — напишите своё имя в ответ, чтобы вас узнавали в истории заказов.\nЕсли вы <b>клиент</b> — поделитесь номером телефона кнопкой ниже, чтобы проверить статус заявки.",
       { replyMarkup: REQUEST_CONTACT_KEYBOARD }
     );
     await setPendingRegistration(chatId);
@@ -213,7 +219,8 @@ async function handleCustomerContact(chatId: number, contact: TelegramContact) {
   if (!latest) {
     await sendTelegramMessage(
       chatId,
-      "Заявок с этим номером не найдено. Оставить заявку можно на molly.uz/request"
+      "Заявок с этим номером не найдено. Вы можете посмотреть каталог или оставить заявку на замер:",
+      { replyMarkup: CLIENT_LINKS_KEYBOARD }
     );
     return;
   }
@@ -228,6 +235,7 @@ async function handleCustomerContact(chatId: number, contact: TelegramContact) {
   const label = REQUEST_STATUS_LABELS[latest.status as RequestStatus];
   await sendTelegramMessage(
     chatId,
-    `Статус вашей последней заявки: <b>${label}</b>\n\nМы уведомим вас здесь, когда статус изменится.`
+    `Статус вашей последней заявки: <b>${label}</b>\n\nМы уведомим вас здесь, когда статус изменится.`,
+    { replyMarkup: CLIENT_LINKS_KEYBOARD }
   );
 }
