@@ -31,15 +31,16 @@ export default async function ContactsPage() {
     "Свяжитесь с нами удобным способом или оставьте заявку — мы перезвоним и согласуем замер.";
   const contact = pick(blocks, 2, "contact_info") ?? {
     type: "contact_info" as const,
-    phone: "+998 00 000 00 00",
+    phone: "+998 94 608 50 05",
+    email: "info@molly.uz",
     hours: "Пн–Сб: 09:00–19:00 · Вс: выходной",
     telegram: "mollyhome",
     instagram: "mollyhome",
-    address: "Ташкент, Узбекистан",
+    address: "Ташкент, ул. Янги Олмазор, 17/23",
     addressNote:
       "Работаем по всему Ташкенту и области — выезд замерщика бесплатный.",
-    mapLat: 41.2995,
-    mapLng: 69.2401,
+    mapLat: 41.350703,
+    mapLng: 69.245558,
   };
   const telHref = `tel:${contact.phone.replace(/[^+\d]/g, "")}`;
 
@@ -61,6 +62,14 @@ export default async function ContactsPage() {
               {contact.phone}
             </a>
             <p className="mt-1 text-xs text-navy/50">{contact.hours}</p>
+            {contact.email && (
+              <a
+                href={`mailto:${contact.email}`}
+                className="mt-2 block text-sm font-medium text-navy/70 hover:underline"
+              >
+                {contact.email}
+              </a>
+            )}
           </div>
 
           <div className="rounded-xl border border-navy/10 bg-white p-5">

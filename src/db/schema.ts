@@ -86,6 +86,7 @@ export type PageBlock =
   | {
       type: "contact_info";
       phone: string;
+      email: string;
       hours: string;
       telegram: string;
       instagram: string;
