@@ -76,6 +76,16 @@ export async function answerCallbackQuery(
   });
 }
 
+export async function deleteTelegramMessage(
+  chatId: string | number,
+  messageId: string | number
+): Promise<void> {
+  await callTelegramApi("deleteMessage", {
+    chat_id: chatId,
+    message_id: messageId,
+  });
+}
+
 export async function editTelegramMessage(
   chatId: string | number,
   messageId: string | number,
