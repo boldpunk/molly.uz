@@ -98,9 +98,11 @@ export function PhoneInput({
       <span className="shrink-0 text-navy/60">+998</span>
       <input
         ref={inputRef}
-        type="tel"
+        type="text"
         inputMode="numeric"
-        autoComplete="tel"
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
         required={required}
         autoFocus={autoFocus}
         value={localDisplay}
