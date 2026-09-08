@@ -42,26 +42,27 @@ export function BrandSlider({
 
       <div
         ref={trackRef}
-        className="flex items-center gap-10 overflow-x-auto px-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex items-center gap-6 overflow-x-auto px-10 sm:gap-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        {items.map((brand, i) =>
-          brand.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={i}
-              src={brand.logoUrl}
-              alt={brand.name}
-              className="h-8 w-auto shrink-0 object-contain opacity-70 grayscale transition hover:opacity-100 hover:grayscale-0"
-            />
-          ) : (
-            <span
-              key={i}
-              className="shrink-0 font-heading text-xl font-bold tracking-wide text-navy/35"
-            >
-              {brand.name}
-            </span>
-          )
-        )}
+        {items.map((brand, i) => (
+          <div
+            key={i}
+            className="flex h-14 w-28 shrink-0 items-center justify-center sm:w-32"
+          >
+            {brand.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={brand.logoUrl}
+                alt={brand.name}
+                className="max-h-full max-w-full object-contain opacity-60 grayscale transition-all duration-300 ease-out hover:scale-110 hover:opacity-100 hover:grayscale-0 hover:drop-shadow-[0_4px_14px_rgba(124,154,104,0.45)]"
+              />
+            ) : (
+              <span className="font-heading text-xl font-bold tracking-wide text-navy/35 transition-colors duration-300 hover:text-sage-dark">
+                {brand.name}
+              </span>
+            )}
+          </div>
+        ))}
       </div>
 
       <button
