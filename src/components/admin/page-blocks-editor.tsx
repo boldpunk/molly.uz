@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { PlusIcon, TrashIcon } from "./icons";
 import { uploadPageImage } from "@/lib/upload-actions";
+import { USP_ICON_OPTIONS, UspIcon } from "@/components/usp-icons";
 import type { PageBlock } from "@/db/schema";
 
 type EditableBlock = Exclude<
@@ -309,14 +310,14 @@ export function StatListFields({
   block: Extract<PageBlock, { type: "stat_list" }>;
   onChange: (b: PageBlock) => void;
 }) {
-  function updateItem(i: number, key: "label" | "value", value: string) {
+  function updateItem(i: number, key: "label" | "value" | "icon", value: string) {
     const items = block.items.map((item, idx) =>
       idx === i ? { ...item, [key]: value } : item
     );
     onChange({ ...block, items });
   }
   function addItem() {
-    onChange({ ...block, items: [...block.items, { label: "", value: "" }] });
+    onChange({ ...block, items: [...block.items, { label: "", value: "", icon: "" }] });
   }
   function removeItem(i: number) {
     onChange({ ...block, items: block.items.filter((_, idx) => idx !== i) });
@@ -326,6 +327,21 @@ export function StatListFields({
     <div className="flex flex-col gap-2">
       {block.items.map((item, i) => (
         <div key={i} className="flex items-center gap-2">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy/5 text-navy">
+            <UspIcon icon={item.icon} className="h-4 w-4" />
+          </span>
+          <select
+            value={item.icon ?? ""}
+            onChange={(e) => updateItem(i, "icon", e.target.value)}
+            className="input shrink-0 basis-40"
+          >
+            <option value="">Без иконки</option>
+            {USP_ICON_OPTIONS.map((opt) => (
+              <option key={opt.key} value={opt.key}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
           <input
             value={item.value}
             onChange={(e) => updateItem(i, "value", e.target.value)}

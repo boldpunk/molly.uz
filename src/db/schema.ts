@@ -101,7 +101,7 @@ export type PageBlock =
   | { type: "heading"; text: string }
   | { type: "paragraph"; text: string }
   | { type: "image"; url: string; alt: string }
-  | { type: "stat_list"; items: { label: string; value: string }[] }
+  | { type: "stat_list"; items: { label: string; value: string; icon?: string }[] }
   | { type: "cta"; label: string; href: string }
   | { type: "brand_list"; items: { name: string; logoUrl: string }[] }
   | { type: "instagram_strip"; urls: string[] }

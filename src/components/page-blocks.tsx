@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { PageBlock } from "@/db/schema";
 import { PlaceholderImage } from "@/components/placeholder-image";
 import { BrandSlider } from "@/components/brand-slider";
+import { UspIcon } from "@/components/usp-icons";
 
 export function PageBlocks({ blocks }: { blocks: PageBlock[] }) {
   return (
@@ -49,9 +50,14 @@ function PageBlockView({ block }: { block: PageBlock }) {
       return (
         <div className="mt-6 grid grid-cols-2 gap-6 border-y border-navy/10 py-6 first:mt-0 sm:grid-cols-4">
           {block.items.map((item, i) => (
-            <div key={i}>
-              <p className="text-sm font-semibold text-navy">{item.value}</p>
-              <p className="mt-1 text-xs text-navy/60">{item.label}</p>
+            <div key={i} className="flex flex-col gap-2">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-navy/5 text-navy">
+                <UspIcon icon={item.icon} className="h-4.5 w-4.5" />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-navy">{item.value}</p>
+                <p className="mt-1 text-xs text-navy/60">{item.label}</p>
+              </div>
             </div>
           ))}
         </div>
