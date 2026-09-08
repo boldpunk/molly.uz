@@ -188,7 +188,7 @@ async function handleCustomerContact(chatId: number, contact: TelegramContact) {
     .select()
     .from(requests)
     .where(
-      sql`regexp_replace(${requests.customerPhone}, '\D', '', 'g') = ${digits}`
+      sql`regexp_replace(${requests.customerPhone}, '[^0-9]', '', 'g') = ${digits}`
     )
     .orderBy(desc(requests.createdAt))
     .limit(1);
@@ -205,7 +205,7 @@ async function handleCustomerContact(chatId: number, contact: TelegramContact) {
     .update(customers)
     .set({ telegramId: String(chatId), telegramNotifyOptIn: true })
     .where(
-      sql`regexp_replace(${customers.phone}, '\D', '', 'g') = ${digits}`
+      sql`regexp_replace(${customers.phone}, '[^0-9]', '', 'g') = ${digits}`
     );
 
   const label = REQUEST_STATUS_LABELS[latest.status as RequestStatus];
