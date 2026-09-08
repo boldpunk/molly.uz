@@ -30,9 +30,11 @@ export function CatalogView({
   const [sort, setSort] = useState<SortKey>("default");
 
   const colourOptions = useMemo(() => {
-    const map = new Map<string, string>();
+    const map = new Map<string, { label: string; swatch: string }>();
     products.forEach((p) =>
-      p.colourOptions?.forEach((c) => map.set(c.id, c.label))
+      p.colourOptions?.forEach((c) =>
+        map.set(c.id, { label: c.label, swatch: c.swatch })
+      )
     );
     return Array.from(map.entries());
   }, [products]);
@@ -226,7 +228,7 @@ function FilterOption({
       type="button"
       onClick={onClick}
       className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm transition ${
-        active ? "bg-sage/25 font-medium text-navy" : "text-navy/60 hover:bg-navy/5"
+        active ? "bg-accent font-medium text-navy" : "text-navy/60 hover:bg-navy/5"
       }`}
     >
       {badge}
@@ -247,6 +249,15 @@ function BrandBadge({ id, label }: { id: string; label: string }) {
   );
 }
 
+function ColourSwatch({ swatch }: { swatch: string }) {
+  return (
+    <span
+      className="h-3.5 w-3.5 shrink-0 rounded-full border border-navy/15"
+      style={{ backgroundColor: swatch }}
+    />
+  );
+}
+
 function FiltersBody({
   hardwareOptions,
   colourOptions,
@@ -257,7 +268,7 @@ function FiltersBody({
   showKitchenNote,
 }: {
   hardwareOptions: [string, string][];
-  colourOptions: [string, string][];
+  colourOptions: [string, { label: string; swatch: string }][];
   hardware: string;
   colour: string;
   setHardware: (id: string) => void;
@@ -300,12 +311,13 @@ function FiltersBody({
               label="Все"
               onClick={() => setColour("all")}
             />
-            {colourOptions.map(([id, label]) => (
+            {colourOptions.map(([id, { label, swatch }]) => (
               <FilterOption
                 key={id}
                 active={colour === id}
                 label={label}
                 onClick={() => setColour(id)}
+                badge={<ColourSwatch swatch={swatch} />}
               />
             ))}
           </div>
