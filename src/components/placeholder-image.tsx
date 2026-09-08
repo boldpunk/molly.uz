@@ -9,7 +9,7 @@ export function PlaceholderImage({
 }) {
   return (
     <div
-      className={`${aspect} ${className} flex items-center justify-center rounded-lg border border-navy/10 bg-gradient-to-br from-navy/5 to-sage/10 text-center`}
+      className={`${aspect} ${className} flex items-center justify-center rounded-lg border border-navy/10 bg-gradient-to-br from-navy/5 to-accent/10 text-center`}
       role="img"
       aria-label={`Заглушка изображения: ${label}`}
     >

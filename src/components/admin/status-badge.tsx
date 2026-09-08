@@ -3,9 +3,9 @@ import { RequestStatus, REQUEST_STATUS_LABELS } from "@/lib/types";
 const STATUS_STYLES: Record<RequestStatus, { bg: string; text: string; dot: string }> = {
   new: { bg: "bg-navy/10", text: "text-navy", dot: "bg-navy" },
   contacted: { bg: "bg-navy/10", text: "text-navy", dot: "bg-navy" },
-  measured: { bg: "bg-sage/15", text: "text-sage-dark", dot: "bg-sage-dark" },
-  in_production: { bg: "bg-sage/15", text: "text-sage-dark", dot: "bg-sage-dark" },
-  ready_delivered: { bg: "bg-sage/25", text: "text-sage-dark", dot: "bg-sage-dark" },
+  measured: { bg: "bg-accent/15", text: "text-accent-dark", dot: "bg-accent-dark" },
+  in_production: { bg: "bg-accent/15", text: "text-accent-dark", dot: "bg-accent-dark" },
+  ready_delivered: { bg: "bg-accent/25", text: "text-accent-dark", dot: "bg-accent-dark" },
 };
 
 export function StatusBadge({ status }: { status: RequestStatus }) {

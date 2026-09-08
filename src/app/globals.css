@@ -2,16 +2,14 @@
 
 :root {
   --color-navy: #182b4c;
-  --color-sage: #9caf88;
-  --color-sage-dark: #7c9a68;
   --color-accent: #f9e8d8;
+  --color-accent-dark: #946438;
 }
 
 @theme inline {
   --color-navy: var(--color-navy);
-  --color-sage: var(--color-sage);
-  --color-sage-dark: var(--color-sage-dark);
   --color-accent: var(--color-accent);
+  --color-accent-dark: var(--color-accent-dark);
   --font-sans: var(--font-inter);
   --font-heading: var(--font-golos-text);
 }

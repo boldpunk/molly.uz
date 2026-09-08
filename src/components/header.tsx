@@ -79,8 +79,8 @@ export function Header({
               type="button"
               className={`border-b-2 py-1 text-sm font-medium transition-colors ${
                 pathname === "/catalog"
-                  ? "border-sage-dark text-sage-dark"
-                  : "border-transparent text-navy hover:border-sage-dark/40 hover:text-sage-dark"
+                  ? "border-accent-dark text-accent-dark"
+                  : "border-transparent text-navy hover:border-accent-dark/40 hover:text-accent-dark"
               }`}
             >
               Каталог
@@ -96,10 +96,10 @@ export function Header({
                         href={`/catalog/${cat.slug}`}
                         className="group flex flex-col gap-2"
                       >
-                        <div className="flex aspect-square items-center justify-center rounded-md border border-navy/10 bg-navy/[0.03] transition group-hover:bg-sage/10">
-                          <Icon className="h-8 w-8 text-navy/40 transition group-hover:text-sage-dark" />
+                        <div className="flex aspect-square items-center justify-center rounded-md border border-navy/10 bg-navy/[0.03] transition group-hover:bg-accent/10">
+                          <Icon className="h-8 w-8 text-navy/40 transition group-hover:text-accent-dark" />
                         </div>
-                        <span className="text-sm font-medium text-navy group-hover:text-sage-dark">
+                        <span className="text-sm font-medium text-navy group-hover:text-accent-dark">
                           {cat.name}
                         </span>
                       </Link>
@@ -117,8 +117,8 @@ export function Header({
                 href={`/catalog/${cat.slug}`}
                 className={`border-b-2 py-1 text-sm font-medium transition-colors ${
                   isActive
-                    ? "border-sage-dark text-sage-dark"
-                    : "border-transparent text-navy/70 hover:border-sage-dark/40 hover:text-navy"
+                    ? "border-accent-dark text-accent-dark"
+                    : "border-transparent text-navy/70 hover:border-accent-dark/40 hover:text-navy"
                 }`}
               >
                 {cat.name}
@@ -187,7 +187,7 @@ export function Header({
               <circle cx="17" cy="20" r="1.5" fill="currentColor" />
             </svg>
             {items.length > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-sage-dark text-[10px] font-semibold text-white">
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-accent-dark text-[10px] font-semibold text-white">
                 {items.length}
               </span>
             )}

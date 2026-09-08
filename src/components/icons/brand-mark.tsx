@@ -16,7 +16,7 @@ export function CornerJointMark({
       />
       <path
         d="M36 16 V33 H19"
-        stroke="#7c9a68"
+        stroke="#946438"
         strokeWidth="4.2"
         strokeLinecap="round"
         strokeLinejoin="round"

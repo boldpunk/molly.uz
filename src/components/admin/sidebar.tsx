@@ -128,7 +128,7 @@ function AccountFooter({ admin }: { admin: CurrentAdmin }) {
   return (
     <div className="border-t border-navy/10 px-4 py-4">
       <div className="mb-2 flex items-center gap-2.5 rounded-lg px-3 py-2">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sage/20 text-xs font-semibold text-sage-dark">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/20 text-xs font-semibold text-accent-dark">
           {initial}
         </span>
         <div className="min-w-0">

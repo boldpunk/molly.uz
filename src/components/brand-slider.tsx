@@ -57,7 +57,7 @@ export function BrandSlider({
                 className="max-h-full max-w-full object-contain opacity-60 grayscale transition-all duration-300 ease-out hover:scale-110 hover:opacity-100 hover:grayscale-0 hover:drop-shadow-[0_4px_14px_rgba(124,154,104,0.45)]"
               />
             ) : (
-              <span className="font-heading text-xl font-bold tracking-wide text-navy/35 transition-colors duration-300 hover:text-sage-dark">
+              <span className="font-heading text-xl font-bold tracking-wide text-navy/35 transition-colors duration-300 hover:text-accent-dark">
                 {brand.name}
               </span>
             )}

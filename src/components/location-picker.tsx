@@ -99,7 +99,7 @@ export function LocationPicker() {
               onClick={() => select(loc)}
               className={`flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs transition ${
                 loc === location
-                  ? "bg-sage/20 font-medium text-navy"
+                  ? "bg-accent/20 font-medium text-navy"
                   : "text-navy/70 hover:bg-navy/5"
               }`}
             >

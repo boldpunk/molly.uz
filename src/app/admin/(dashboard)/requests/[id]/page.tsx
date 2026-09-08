@@ -176,7 +176,7 @@ export default async function RequestDetailPage({
                   )}
                   <span
                     className={`relative mt-1 h-[11px] w-[11px] shrink-0 rounded-full border-2 border-white ring-2 ${
-                      i === 0 ? "bg-sage-dark ring-sage/30" : "bg-navy/20 ring-transparent"
+                      i === 0 ? "bg-accent-dark ring-accent/30" : "bg-navy/20 ring-transparent"
                     }`}
                   />
                   <div>

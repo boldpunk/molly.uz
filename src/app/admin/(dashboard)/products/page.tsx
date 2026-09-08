@@ -58,7 +58,7 @@ export default async function AdminProductsPage() {
                       <div>
                         <span className="font-medium text-navy">{p.name}</span>
                         {p.isFeatured && (
-                          <span className="ml-2 rounded-full bg-sage/15 px-2 py-0.5 text-[11px] font-medium text-sage-dark">
+                          <span className="ml-2 rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-medium text-accent-dark">
                             популярное
                           </span>
                         )}

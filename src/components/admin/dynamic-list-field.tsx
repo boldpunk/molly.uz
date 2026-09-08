@@ -61,7 +61,7 @@ export function DynamicListField({
         <button
           type="button"
           onClick={addRow}
-          className="inline-flex items-center gap-1 rounded-full bg-sage/15 px-2.5 py-1 text-xs font-semibold text-sage-dark transition hover:bg-sage/25"
+          className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-2.5 py-1 text-xs font-semibold text-accent-dark transition hover:bg-accent/25"
         >
           <PlusIcon className="h-3 w-3" />
           Добавить

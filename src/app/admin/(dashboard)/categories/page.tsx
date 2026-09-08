@@ -58,7 +58,7 @@ export default async function AdminCategoriesPage() {
                   <td className="px-5 py-3.5 text-navy/60">{c.sortOrder}</td>
                   <td className="px-5 py-3.5">
                     {c.isPlaceholder ? (
-                      <span className="rounded-full bg-sage/15 px-2.5 py-1 text-xs font-medium text-sage-dark">
+                      <span className="rounded-full bg-accent/15 px-2.5 py-1 text-xs font-medium text-accent-dark">
                         наполняется
                       </span>
                     ) : (
