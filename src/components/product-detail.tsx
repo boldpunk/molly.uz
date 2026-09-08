@@ -29,6 +29,10 @@ export function ProductDetail({
     product.hardwareOptions?.[0]?.id
   );
   const [colourId, setColourId] = useState(product.colourOptions?.[0]?.id);
+  const galleryImages = [product.imageUrl, ...product.galleryUrls].filter(
+    (url): url is string => Boolean(url)
+  );
+  const [activeImage, setActiveImage] = useState(galleryImages[0]);
   const [width, setWidth] = useState(DEFAULT_WIDTH);
   const [widthText, setWidthText] = useState(String(DEFAULT_WIDTH));
   const [tab, setTab] = useState<"description" | "specs" | "delivery">(
@@ -97,25 +101,49 @@ export function ProductDetail({
       <div className="mt-6 grid gap-10 lg:grid-cols-2">
         {/* Gallery */}
         <div className="flex flex-col gap-3">
-          {product.imageUrl ? (
+          {activeImage ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={product.imageUrl}
+              src={activeImage}
               alt={product.name}
               className="aspect-[4/3] w-full rounded-lg object-cover"
             />
           ) : (
             <PlaceholderImage label={product.name} aspect="aspect-[4/3]" />
           )}
-          <div className="grid grid-cols-4 gap-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <PlaceholderImage
-                key={i}
-                label="Ракурс"
-                aspect="aspect-square"
-              />
-            ))}
-          </div>
+          {galleryImages.length > 1 ? (
+            <div className="grid grid-cols-4 gap-3">
+              {galleryImages.map((url) => (
+                <button
+                  key={url}
+                  type="button"
+                  onClick={() => setActiveImage(url)}
+                  className={`overflow-hidden rounded-lg border-2 transition ${
+                    activeImage === url
+                      ? "border-sage-dark"
+                      : "border-transparent hover:border-navy/15"
+                  }`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={url}
+                    alt=""
+                    className="aspect-square w-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-4 gap-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <PlaceholderImage
+                  key={i}
+                  label="Ракурс"
+                  aspect="aspect-square"
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Buy box — appears before description on mobile too, since it's DOM-first */}

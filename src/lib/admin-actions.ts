@@ -86,6 +86,7 @@ function productValuesFromFormData(formData: FormData) {
   const attributes = parseJsonArray<ProductAttribute>(
     formData.get("attributesJson")
   );
+  const galleryUrls = parseJsonArray<string>(formData.get("galleryUrlsJson"));
 
   return {
     categoryId: String(formData.get("categoryId")),
@@ -101,6 +102,7 @@ function productValuesFromFormData(formData: FormData) {
     isSample: formData.get("isSample") === "on",
     isFeatured: formData.get("isFeatured") === "on",
     imageUrl: String(formData.get("imageUrl") ?? "") || null,
+    galleryUrls,
     updatedAt: new Date(),
   };
 }
@@ -114,7 +116,7 @@ export async function createProduct(formData: FormData) {
 
 export async function updateProduct(id: string, formData: FormData) {
   const [existing] = await db
-    .select({ imageUrl: products.imageUrl })
+    .select({ imageUrl: products.imageUrl, galleryUrls: products.galleryUrls })
     .from(products)
     .where(eq(products.id, id))
     .limit(1);
@@ -125,6 +127,10 @@ export async function updateProduct(id: string, formData: FormData) {
   if (existing?.imageUrl && existing.imageUrl !== values.imageUrl) {
     await deleteProductImage(existing.imageUrl);
   }
+  const removedGalleryUrls = (existing?.galleryUrls ?? []).filter(
+    (url) => !values.galleryUrls.includes(url)
+  );
+  await Promise.all(removedGalleryUrls.map((url) => deleteProductImage(url)));
 
   revalidatePath("/admin/products");
   revalidatePath("/", "layout");
@@ -133,7 +139,7 @@ export async function updateProduct(id: string, formData: FormData) {
 
 export async function deleteProduct(id: string) {
   const [existing] = await db
-    .select({ imageUrl: products.imageUrl })
+    .select({ imageUrl: products.imageUrl, galleryUrls: products.galleryUrls })
     .from(products)
     .where(eq(products.id, id))
     .limit(1);
@@ -143,6 +149,9 @@ export async function deleteProduct(id: string) {
   if (existing?.imageUrl) {
     await deleteProductImage(existing.imageUrl);
   }
+  await Promise.all(
+    (existing?.galleryUrls ?? []).map((url) => deleteProductImage(url))
+  );
 
   revalidatePath("/admin/products");
   revalidatePath("/", "layout");

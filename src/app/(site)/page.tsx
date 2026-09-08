@@ -34,7 +34,7 @@ export default async function HomePage() {
     { label: "Высота фасадов", value: "любая под проект" },
     { label: "Материал фасада", value: "МДФ, окраска" },
     { label: "Клеевой состав", value: "влагостойкий" },
-    { label: "Фурнитура", value: "HIGOLD / BLUM / HETTICH / HAFELE" },
+    { label: "Фурнитура", value: "HIGOLD / BLUM" },
   ];
   const brandHeading = pick(blocks, 4, "heading")?.text ?? "О бренде";
   const brandParagraph =

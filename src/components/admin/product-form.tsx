@@ -4,6 +4,7 @@ import { useState } from "react";
 import { DynamicListField, Row } from "./dynamic-list-field";
 import { FormSection } from "./form-section";
 import { ImageUploadField } from "./image-upload-field";
+import { GalleryUploadField } from "./gallery-upload-field";
 import { Category, Product, PricingMode } from "@/lib/types";
 
 export function ProductForm({
@@ -24,6 +25,13 @@ export function ProductForm({
       <FormSection title="Основное">
         <Field label="Фото товара">
           <ImageUploadField name="imageUrl" initialUrl={product?.imageUrl} />
+        </Field>
+
+        <Field label="Дополнительные фото (галерея)">
+          <GalleryUploadField
+            name="galleryUrlsJson"
+            initialUrls={product?.galleryUrls ?? []}
+          />
         </Field>
 
         <div className="grid grid-cols-2 gap-4">

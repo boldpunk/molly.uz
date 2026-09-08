@@ -59,6 +59,7 @@ function toProduct(
     isSample: row.isSample,
     isFeatured: row.isFeatured,
     imageUrl: row.imageUrl ?? undefined,
+    galleryUrls: row.galleryUrls,
   };
 }
 

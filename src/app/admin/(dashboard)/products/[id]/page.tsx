@@ -40,6 +40,8 @@ export default async function EditProductPage({
     attributes: row.attributes,
     isSample: row.isSample,
     isFeatured: row.isFeatured,
+    imageUrl: row.imageUrl ?? undefined,
+    galleryUrls: row.galleryUrls,
   };
 
   const updateWithId = updateProduct.bind(null, id);
