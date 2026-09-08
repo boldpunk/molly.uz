@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { FormSection } from "./form-section";
 import { BlockImageField, StatListFields } from "./page-blocks-editor";
+import { GalleryUploadField } from "./gallery-upload-field";
+import { uploadPageImage } from "@/lib/upload-actions";
 import type { PageBlock } from "@/db/schema";
 
 function pick<T extends PageBlock["type"]>(
@@ -44,6 +46,9 @@ export function HomeContentForm({
     const b = pick(initialBlocks, 6, "image");
     return { url: b?.url ?? "", alt: b?.alt ?? "" };
   });
+  const [instagramUrls, setInstagramUrls] = useState(
+    pick(initialBlocks, 7, "instagram_strip")?.urls ?? []
+  );
 
   const blocks: PageBlock[] = [
     { type: "heading", text: heroHeading },
@@ -53,6 +58,7 @@ export function HomeContentForm({
     { type: "heading", text: brandHeading },
     { type: "paragraph", text: brandParagraph },
     { type: "image", url: brandImage.url, alt: brandImage.alt },
+    { type: "instagram_strip", urls: instagramUrls },
   ];
 
   return (
@@ -137,6 +143,18 @@ export function HomeContentForm({
             />
           </div>
         </div>
+      </FormSection>
+
+      <FormSection
+        title="Instagram-лента"
+        description="Вручную подобранные фото со ссылкой на Instagram — до подключения официальной интеграции"
+      >
+        <GalleryUploadField
+          initialUrls={instagramUrls}
+          uploadAction={uploadPageImage}
+          onChange={setInstagramUrls}
+          hint="Квадратные фото для ленты — JPEG, PNG, WebP или AVIF, до 8 МБ каждое"
+        />
       </FormSection>
     </div>
   );

@@ -85,6 +85,7 @@ export type PageBlock =
   | { type: "stat_list"; items: { label: string; value: string }[] }
   | { type: "cta"; label: string; href: string }
   | { type: "brand_list"; items: { name: string; logoUrl: string }[] }
+  | { type: "instagram_strip"; urls: string[] }
   | {
       type: "contact_info";
       phone: string;

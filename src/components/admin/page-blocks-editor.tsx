@@ -5,7 +5,10 @@ import { PlusIcon, TrashIcon } from "./icons";
 import { uploadPageImage } from "@/lib/upload-actions";
 import type { PageBlock } from "@/db/schema";
 
-type EditableBlock = Exclude<PageBlock, { type: "contact_info" }>;
+type EditableBlock = Exclude<
+  PageBlock,
+  { type: "contact_info" } | { type: "instagram_strip" }
+>;
 type AddableBlockType = EditableBlock["type"];
 
 const BLOCK_LABELS: Record<AddableBlockType, string> = {
@@ -42,7 +45,10 @@ export function PageBlocksEditor({
   initialBlocks: PageBlock[];
 }) {
   const [blocks, setBlocks] = useState<EditableBlock[]>(() =>
-    initialBlocks.filter((b): b is EditableBlock => b.type !== "contact_info")
+    initialBlocks.filter(
+      (b): b is EditableBlock =>
+        b.type !== "contact_info" && b.type !== "instagram_strip"
+    )
   );
 
   function update(i: number, next: EditableBlock) {
