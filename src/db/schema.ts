@@ -25,6 +25,22 @@ export const requestStatusEnum = pgEnum("request_status", [
   "ready_delivered",
 ]);
 
+export const adminRoleEnum = pgEnum("admin_role", [
+  "administrator",
+  "content_editor",
+  "catalog_manager",
+  "sales_manager",
+]);
+
+export const adminUsers = pgTable("admin_users", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  role: adminRoleEnum("role").notNull().default("administrator"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const categories = pgTable("categories", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),

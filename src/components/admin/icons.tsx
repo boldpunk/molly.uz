@@ -119,6 +119,26 @@ export function PageIcon({ className = base }: IconProps) {
   );
 }
 
+export function UsersIcon({ className = base }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <circle cx="9" cy="8" r="3.25" stroke="currentColor" strokeWidth="1.75" />
+      <path
+        d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+      />
+      <path
+        d="M15.5 4.5a3.25 3.25 0 0 1 0 6.5M18 14c2.3.4 4 2.2 4 4.5"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function SparkIcon({ className = "h-8 w-8" }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className}>

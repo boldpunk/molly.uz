@@ -36,18 +36,27 @@ async function sign(value: string): Promise<string> {
   return toHex(signature);
 }
 
-export async function createSessionToken(): Promise<string> {
+export interface AdminSession {
+  userId: string;
+  role: string;
+}
+
+export async function createSessionToken(
+  userId: string,
+  role: string
+): Promise<string> {
   const issuedAt = Date.now().toString();
-  const signature = await sign(issuedAt);
-  return `${issuedAt}.${signature}`;
+  const payload = `${userId}.${role}.${issuedAt}`;
+  const signature = await sign(payload);
+  return `${payload}.${signature}`;
 }
 
 export async function verifySessionToken(
   token: string | undefined
-): Promise<boolean> {
-  if (!token) return false;
-  const [issuedAt, signature] = token.split(".");
-  if (!issuedAt || !signature) return false;
+): Promise<AdminSession | null> {
+  if (!token) return null;
+  const [userId, role, issuedAt, signature] = token.split(".");
+  if (!userId || !role || !issuedAt || !signature) return null;
 
   try {
     const key = await importSigningKey();
@@ -55,17 +64,17 @@ export async function verifySessionToken(
       "HMAC",
       key,
       fromHex(signature),
-      new TextEncoder().encode(issuedAt)
+      new TextEncoder().encode(`${userId}.${role}.${issuedAt}`)
     );
-    if (!valid) return false;
+    if (!valid) return null;
   } catch {
-    return false;
+    return null;
   }
 
   const age = Date.now() - Number(issuedAt);
-  if (age < 0 || age > MAX_AGE_SECONDS * 1000) return false;
+  if (age < 0 || age > MAX_AGE_SECONDS * 1000) return null;
 
-  return true;
+  return { userId, role };
 }
 
 export const SESSION_COOKIE = {
