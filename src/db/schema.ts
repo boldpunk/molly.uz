@@ -18,11 +18,15 @@ export const pricingModeEnum = pgEnum("pricing_mode", [
 ]);
 
 export const requestStatusEnum = pgEnum("request_status", [
-  "new",
+  "new_order",
   "contacted",
-  "measured",
+  "meeting_scheduled",
+  "meeting_done",
+  "purchase_request",
+  "deposit_received",
+  "paid_full",
   "in_production",
-  "ready_delivered",
+  "ready_shipment",
 ]);
 
 export const adminRoleEnum = pgEnum("admin_role", [
@@ -156,7 +160,23 @@ export const favourites = pgTable(
 export interface StatusHistoryEntry {
   status: string;
   changedAt: string;
+  employeeTelegramId?: string;
+  employeeName?: string;
+  amount?: number;
+  note?: string;
 }
+
+export const employees = pgTable("employees", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  telegramId: text("telegram_id").notNull().unique(),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const orderCounters = pgTable("order_counters", {
+  year: integer("year").primaryKey(),
+  seq: integer("seq").notNull().default(0),
+});
 
 export const requests = pgTable("requests", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -166,14 +186,35 @@ export const requests = pgTable("requests", {
   customerName: text("customer_name").notNull(),
   customerPhone: text("customer_phone").notNull(),
   notes: text("notes").notNull().default(""),
-  status: requestStatusEnum("status").notNull().default("new"),
+  source: text("source").notNull().default("Сайт"),
+  status: requestStatusEnum("status").notNull().default("new_order"),
   statusHistory: jsonb("status_history")
     .$type<StatusHistoryEntry[]>()
     .notNull()
     .default([]),
-  assignedManager: text("assigned_manager"),
+  orderNumber: text("order_number").unique(),
+  assignedManagerId: uuid("assigned_manager_id").references(() => employees.id, {
+    onDelete: "set null",
+  }),
+  totalAmount: integer("total_amount"),
+  depositAmount: integer("deposit_amount"),
+  paidAmount: integer("paid_amount"),
+  paidAt: timestamp("paid_at"),
+  productionStartedAt: timestamp("production_started_at"),
+  telegramMessageId: text("telegram_message_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const telegramPendingActions = pgTable("telegram_pending_actions", {
+  key: text("key").primaryKey(),
+  kind: text("kind", {
+    enum: ["register_name", "amount_deposit", "amount_paid_full"],
+  }).notNull(),
+  requestId: uuid("request_id").references(() => requests.id, {
+    onDelete: "cascade",
+  }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const requestItems = pgTable("request_items", {

@@ -94,9 +94,16 @@ export default async function AdminRequestsPage({
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-navy/[0.06] text-xs font-semibold text-navy/60">
                         {r.customerName.charAt(0).toUpperCase()}
                       </span>
-                      <span className="font-medium text-navy">
-                        {r.customerName}
-                      </span>
+                      <div>
+                        <span className="font-medium text-navy">
+                          {r.customerName}
+                        </span>
+                        {r.orderNumber && (
+                          <span className="ml-1.5 text-xs text-navy/40">
+                            {r.orderNumber}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td className="px-5 py-3.5 text-navy/60">

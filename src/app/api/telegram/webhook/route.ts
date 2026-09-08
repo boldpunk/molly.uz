@@ -1,32 +1,51 @@
 import { NextRequest, NextResponse } from "next/server";
-import { eq, desc, sql } from "drizzle-orm";
+import { desc, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { requests, customers, StatusHistoryEntry } from "@/db/schema";
+import { requests, customers } from "@/db/schema";
 import {
   sendTelegramMessage,
   answerCallbackQuery,
-  editTelegramMessage,
-  parseStatusCallbackData,
-  notifyCustomerStatusChange,
+  parseCallbackData,
+  getStaffChatId,
   REQUEST_CONTACT_KEYBOARD,
 } from "@/lib/telegram";
+import {
+  handleOrderAction,
+  startAmountPrompt,
+  resolveAmountPrompt,
+  registerEmployeeName,
+  setPendingRegistration,
+  consumePendingRegistration,
+  clearPendingRegistration,
+} from "@/lib/order-bot";
 import { REQUEST_STATUS_LABELS, RequestStatus } from "@/lib/types";
 
 interface TelegramContact {
   phone_number: string;
 }
 
+interface TelegramFrom {
+  id: number;
+  first_name?: string;
+  last_name?: string;
+  username?: string;
+}
+
 interface TelegramMessage {
-  chat: { id: number };
+  message_id: number;
+  chat: { id: number; type: string };
+  from?: TelegramFrom;
   text?: string;
   contact?: TelegramContact;
+  reply_to_message?: { message_id: number };
 }
 
 interface TelegramCallbackQuery {
   id: string;
   data?: string;
-  message?: { chat: { id: number }; message_id: number; text?: string };
+  from: TelegramFrom;
+  message?: { chat: { id: number }; message_id: number };
 }
 
 interface TelegramUpdate {
@@ -59,122 +78,139 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
-async function handleMessage(message: TelegramMessage) {
-  const chatId = message.chat.id;
-
-  if (message.contact) {
-    // Compare digits only: Telegram's contact number has no "+"/spaces,
-    // while stored phone numbers keep whatever format the customer typed.
-    const digits = message.contact.phone_number.replace(/\D/g, "");
-
-    const [latest] = await db
-      .select()
-      .from(requests)
-      .where(
-        sql`regexp_replace(${requests.customerPhone}, '\D', '', 'g') = ${digits}`
-      )
-      .orderBy(desc(requests.createdAt))
-      .limit(1);
-
-    if (!latest) {
-      await sendTelegramMessage(
-        chatId,
-        "Заявок с этим номером не найдено. Оставить заявку можно на molly.uz/request"
-      );
-      return;
-    }
-
-    await db
-      .update(customers)
-      .set({ telegramId: String(chatId), telegramNotifyOptIn: true })
-      .where(
-        sql`regexp_replace(${customers.phone}, '\D', '', 'g') = ${digits}`
-      );
-
-    const label = REQUEST_STATUS_LABELS[latest.status as RequestStatus];
-    await sendTelegramMessage(
-      chatId,
-      `Статус вашей последней заявки: <b>${label}</b>\n\nМы уведомим вас здесь, когда статус изменится.`
-    );
-    return;
-  }
-
-  await sendTelegramMessage(
-    chatId,
-    "👋 Здравствуйте! Я бот Molly Home.\n\nПоделитесь номером телефона, чтобы проверить статус заявки, или свяжитесь с менеджером напрямую: +998 94 608 50 05",
-    { replyMarkup: REQUEST_CONTACT_KEYBOARD }
-  );
+function displayName(from: TelegramFrom): string {
+  const name = [from.first_name, from.last_name].filter(Boolean).join(" ").trim();
+  return name || (from.username ? `@${from.username}` : `Пользователь ${from.id}`);
 }
 
-async function handleCallbackQuery(callbackQuery: TelegramCallbackQuery) {
-  const parsed = callbackQuery.data
-    ? parseStatusCallbackData(callbackQuery.data)
-    : null;
+async function handleCallbackQuery(cq: TelegramCallbackQuery) {
+  const staffChatId = getStaffChatId();
+  const chatId = cq.message?.chat.id;
+  if (!chatId || !staffChatId || String(chatId) !== String(staffChatId)) {
+    await answerCallbackQuery(cq.id);
+    return;
+  }
 
+  const parsed = cq.data ? parseCallbackData(cq.data) : null;
   if (!parsed) {
-    await answerCallbackQuery(callbackQuery.id);
+    await answerCallbackQuery(cq.id);
     return;
   }
 
-  const { requestId, status } = parsed;
+  const actor = { telegramId: String(cq.from.id), name: displayName(cq.from) };
+  const result = await handleOrderAction(parsed.requestId, parsed.action, actor);
 
-  const [current] = await db
-    .select({
-      status: requests.status,
-      statusHistory: requests.statusHistory,
-      customerId: requests.customerId,
-    })
-    .from(requests)
-    .where(eq(requests.id, requestId))
-    .limit(1);
-
-  if (!current) {
-    await answerCallbackQuery(callbackQuery.id, "Заявка не найдена");
-    return;
-  }
-
-  const statusHistory: StatusHistoryEntry[] = current.statusHistory ?? [];
-  const nextHistory = [
-    ...statusHistory,
-    { status, changedAt: new Date().toISOString() },
-  ];
-
-  await db
-    .update(requests)
-    .set({ status, statusHistory: nextHistory, updatedAt: new Date() })
-    .where(eq(requests.id, requestId));
-
-  await answerCallbackQuery(
-    callbackQuery.id,
-    `Статус: ${REQUEST_STATUS_LABELS[status]}`
-  );
-
-  const originalMessage = callbackQuery.message;
-  if (originalMessage) {
-    const updatedText = `${originalMessage.text ?? ""}\n\n✅ Статус обновлён: ${REQUEST_STATUS_LABELS[status]}`;
-    await editTelegramMessage(
-      originalMessage.chat.id,
-      originalMessage.message_id,
-      updatedText
-    );
-  }
-
-  if (current.customerId) {
-    const [customer] = await db
-      .select({
-        telegramId: customers.telegramId,
-        telegramNotifyOptIn: customers.telegramNotifyOptIn,
-      })
-      .from(customers)
-      .where(eq(customers.id, current.customerId))
-      .limit(1);
-
-    if (customer?.telegramId && customer.telegramNotifyOptIn) {
-      await notifyCustomerStatusChange(customer.telegramId, status);
-    }
+  if (result.kind === "amount_prompt") {
+    await answerCallbackQuery(cq.id, "Введите сумму сообщением ниже");
+    await startAmountPrompt(parsed.requestId, result.promptKind, actor);
+  } else if (result.kind === "updated") {
+    await answerCallbackQuery(cq.id, "Статус обновлён");
+  } else {
+    await answerCallbackQuery(cq.id);
   }
 
   revalidatePath("/admin/requests");
-  revalidatePath(`/admin/requests/${requestId}`);
+  revalidatePath(`/admin/requests/${parsed.requestId}`);
   revalidatePath("/admin");
+}
+
+async function handleMessage(message: TelegramMessage) {
+  const staffChatId = getStaffChatId();
+  const chatId = message.chat.id;
+
+  if (staffChatId && String(chatId) === String(staffChatId)) {
+    if (message.reply_to_message && message.text && message.from) {
+      const actor = {
+        telegramId: String(message.from.id),
+        name: displayName(message.from),
+      };
+      const outcome = await resolveAmountPrompt(
+        message.reply_to_message.message_id,
+        actor,
+        message.text
+      );
+      if (outcome === "invalid") {
+        await sendTelegramMessage(
+          chatId,
+          "⚠️ Не удалось распознать сумму. Ответьте на то же сообщение и укажите число, например: 15000000",
+          { replyToMessageId: message.message_id }
+        );
+      } else if (outcome === "ok") {
+        revalidatePath("/admin/requests");
+        revalidatePath("/admin");
+      }
+    }
+    return;
+  }
+
+  if (message.chat.type !== "private") return;
+
+  if (message.contact) {
+    await handleCustomerContact(chatId, message.contact);
+    await clearPendingRegistration(chatId);
+    return;
+  }
+
+  if (message.text === "/start") {
+    await sendTelegramMessage(
+      chatId,
+      "👋 Здравствуйте! Я бот Molly Home.\n\nЕсли вы <b>менеджер</b> — напишите своё имя в ответ, чтобы вас узнавали в истории заказов.\nЕсли вы <b>клиент</b> — поделитесь номером телефона кнопкой ниже, чтобы проверить статус заявки.",
+      { replyMarkup: REQUEST_CONTACT_KEYBOARD }
+    );
+    await setPendingRegistration(chatId);
+    return;
+  }
+
+  if (message.text && message.from) {
+    const wasPending = await consumePendingRegistration(chatId);
+    if (wasPending) {
+      const name = message.text.trim().slice(0, 80);
+      await registerEmployeeName(String(message.from.id), name);
+      await sendTelegramMessage(
+        chatId,
+        `✅ Записал вас как «${name}». Ваши действия в заказах теперь будут подписаны этим именем.`
+      );
+      return;
+    }
+    await sendTelegramMessage(
+      chatId,
+      "👋 Если вы менеджер — напишите своё имя. Если вы клиент — поделитесь номером телефона кнопкой ниже.",
+      { replyMarkup: REQUEST_CONTACT_KEYBOARD }
+    );
+    await setPendingRegistration(chatId);
+  }
+}
+
+async function handleCustomerContact(chatId: number, contact: TelegramContact) {
+  const digits = contact.phone_number.replace(/\D/g, "");
+
+  const [latest] = await db
+    .select()
+    .from(requests)
+    .where(
+      sql`regexp_replace(${requests.customerPhone}, '\D', '', 'g') = ${digits}`
+    )
+    .orderBy(desc(requests.createdAt))
+    .limit(1);
+
+  if (!latest) {
+    await sendTelegramMessage(
+      chatId,
+      "Заявок с этим номером не найдено. Оставить заявку можно на molly.uz/request"
+    );
+    return;
+  }
+
+  await db
+    .update(customers)
+    .set({ telegramId: String(chatId), telegramNotifyOptIn: true })
+    .where(
+      sql`regexp_replace(${customers.phone}, '\D', '', 'g') = ${digits}`
+    );
+
+  const label = REQUEST_STATUS_LABELS[latest.status as RequestStatus];
+  await sendTelegramMessage(
+    chatId,
+    `Статус вашей последней заявки: <b>${label}</b>\n\nМы уведомим вас здесь, когда статус изменится.`
+  );
 }
