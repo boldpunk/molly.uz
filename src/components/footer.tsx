@@ -2,7 +2,13 @@ import Link from "next/link";
 import { Category } from "@/lib/types";
 import { Logo } from "@/components/logo";
 
-export function Footer({ categories }: { categories: Category[] }) {
+export function Footer({
+  categories,
+  phone,
+}: {
+  categories: Category[];
+  phone: string;
+}) {
   return (
     <footer className="mt-16 border-t border-navy/10 bg-white text-navy">
       <div className="mx-auto grid max-w-7xl grid-cols-2 gap-8 px-6 py-12 md:grid-cols-4">
@@ -55,8 +61,11 @@ export function Footer({ categories }: { categories: Category[] }) {
           </h3>
           <ul className="mt-3 flex flex-col gap-2 text-sm text-navy/70">
             <li>
-              <a href="tel:+998000000000" className="hover:text-navy hover:underline">
-                +998 00 000 00 00
+              <a
+                href={`tel:${phone.replace(/[^+\d]/g, "")}`}
+                className="hover:text-navy hover:underline"
+              >
+                {phone}
               </a>
             </li>
             <li>

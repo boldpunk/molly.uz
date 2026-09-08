@@ -52,6 +52,30 @@ export default async function EditPagePage({
           </FormSection>
         )}
 
+        <FormSection
+          title="SEO"
+          description="Заголовок и описание для поисковиков — необязательно, по умолчанию используется название страницы"
+        >
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="font-medium text-navy">Meta-заголовок</span>
+            <input
+              name="metaTitle"
+              defaultValue={page.metaTitle ?? ""}
+              className="input"
+              placeholder={`${page.title} — Molly Home`}
+            />
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="font-medium text-navy">Meta-описание</span>
+            <textarea
+              name="metaDescription"
+              defaultValue={page.metaDescription ?? ""}
+              rows={2}
+              className="input"
+            />
+          </label>
+        </FormSection>
+
         <div className="flex items-center gap-3">
           <button
             type="submit"

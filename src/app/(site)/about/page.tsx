@@ -1,8 +1,17 @@
 import { getPageBySlug } from "@/lib/data";
 import { PageBlocks } from "@/components/page-blocks";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata = { title: "О бренде — Molly Home" };
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata() {
+  const page = await getPageBySlug("about");
+  return pageMetadata(
+    page,
+    "О бренде — Molly Home",
+    "Molly Home — производитель комфортной мебели для дома в Ташкенте."
+  );
+}
 
 export default async function AboutPage() {
   const page = await getPageBySlug("about");

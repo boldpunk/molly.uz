@@ -186,6 +186,29 @@ export function ProductForm({
         />
       </FormSection>
 
+      <FormSection
+        title="SEO"
+        description="Заголовок и описание для поисковиков — необязательно, по умолчанию используются название и краткое описание товара"
+      >
+        <Field label="Meta-заголовок">
+          <input
+            name="metaTitle"
+            defaultValue={product?.metaTitle}
+            className="input"
+            placeholder={product?.name ? `${product.name} — Molly Home` : ""}
+          />
+        </Field>
+        <Field label="Meta-описание">
+          <textarea
+            name="metaDescription"
+            defaultValue={product?.metaDescription}
+            rows={2}
+            className="input"
+            placeholder={product?.specLine || ""}
+          />
+        </Field>
+      </FormSection>
+
       <div className="flex items-center gap-3">
         <button
           type="submit"

@@ -42,6 +42,8 @@ export default async function EditProductPage({
     isFeatured: row.isFeatured,
     imageUrl: row.imageUrl ?? undefined,
     galleryUrls: row.galleryUrls,
+    metaTitle: row.metaTitle ?? undefined,
+    metaDescription: row.metaDescription ?? undefined,
   };
 
   const updateWithId = updateProduct.bind(null, id);

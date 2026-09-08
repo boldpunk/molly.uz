@@ -44,6 +44,8 @@ export interface Product {
   isFeatured?: boolean;
   imageUrl?: string;
   galleryUrls: string[];
+  metaTitle?: string;
+  metaDescription?: string;
 }
 
 export interface RequestItem {

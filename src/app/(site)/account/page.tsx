@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { getCurrentCustomer, getCustomerRequests } from "@/lib/customers";
+import { getFavouriteProducts } from "@/lib/data";
 import {
   loginCustomer,
   logoutCustomer,
   registerCustomer,
 } from "@/lib/customer-auth-actions";
+import { removeFavourite } from "@/lib/favourites-actions";
 import { StatusBadge } from "@/components/admin/status-badge";
+import { PlaceholderImage } from "@/components/placeholder-image";
 import { RequestStatus } from "@/lib/types";
 
 export const metadata = { title: "Аккаунт — Molly Home" };
@@ -26,7 +29,10 @@ export default async function AccountPage({
   const { mode, error } = await searchParams;
 
   if (customer) {
-    const myRequests = await getCustomerRequests(customer.id);
+    const [myRequests, favourites] = await Promise.all([
+      getCustomerRequests(customer.id),
+      getFavouriteProducts(customer.id),
+    ]);
     return (
       <div className="mx-auto max-w-3xl px-6 py-14">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -80,6 +86,49 @@ export default async function AccountPage({
                   </p>
                 </div>
                 <StatusBadge status={r.status as RequestStatus} />
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <h2 className="font-heading mt-10 text-lg font-bold text-navy">
+          Избранное
+        </h2>
+        {favourites.length === 0 ? (
+          <p className="mt-4 text-sm text-navy/60">
+            Пока ничего не добавлено — нажмите «В избранное» на странице
+            товара.
+          </p>
+        ) : (
+          <ul className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
+            {favourites.map((p) => (
+              <li key={p.id}>
+                <Link
+                  href={`/catalog/${p.categorySlug}/${p.slug}`}
+                  className="group flex flex-col gap-2"
+                >
+                  {p.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={p.imageUrl}
+                      alt={p.name}
+                      className="aspect-square w-full rounded-lg object-cover transition group-hover:scale-[1.01]"
+                    />
+                  ) : (
+                    <PlaceholderImage label={p.name} aspect="aspect-square" />
+                  )}
+                  <span className="text-sm font-medium text-navy">
+                    {p.name}
+                  </span>
+                </Link>
+                <form action={removeFavourite.bind(null, p.id)} className="mt-1">
+                  <button
+                    type="submit"
+                    className="text-xs font-medium text-navy/40 hover:text-red-600"
+                  >
+                    Убрать из избранного
+                  </button>
+                </form>
               </li>
             ))}
           </ul>
