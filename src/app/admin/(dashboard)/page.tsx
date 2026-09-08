@@ -72,7 +72,7 @@ export default async function AdminDashboardPage() {
         />
         <StatTile
           label="Новые"
-          value={String(statusMap.get("new") ?? 0)}
+          value={String(statusMap.get("new_order") ?? 0)}
           icon={SparkIcon}
           tone="accent"
         />

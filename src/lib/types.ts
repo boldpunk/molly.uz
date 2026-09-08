@@ -62,19 +62,27 @@ export interface RequestItem {
 }
 
 export const REQUEST_STATUSES = [
-  "new",
+  "new_order",
   "contacted",
-  "measured",
+  "meeting_scheduled",
+  "meeting_done",
+  "purchase_request",
+  "deposit_received",
+  "paid_full",
   "in_production",
-  "ready_delivered",
+  "ready_shipment",
 ] as const;
 
 export type RequestStatus = (typeof REQUEST_STATUSES)[number];
 
 export const REQUEST_STATUS_LABELS: Record<RequestStatus, string> = {
-  new: "Новая заявка",
-  contacted: "Связались",
-  measured: "Замер выполнен",
-  in_production: "В производстве",
-  ready_delivered: "Готово / доставлено",
+  new_order: "🟡 Новая заявка",
+  contacted: "🟢 Связался",
+  meeting_scheduled: "📅 Назначена встреча",
+  meeting_done: "🏠 Встреча состоялась",
+  purchase_request: "📝 Заявка на покупку",
+  deposit_received: "💵 Получен залог",
+  paid_full: "💰 Полностью оплачено",
+  in_production: "🏭 В производстве",
+  ready_shipment: "📦 Готов к отгрузке",
 };

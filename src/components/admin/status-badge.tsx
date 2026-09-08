@@ -1,11 +1,15 @@
 import { RequestStatus, REQUEST_STATUS_LABELS } from "@/lib/types";
 
 const STATUS_STYLES: Record<RequestStatus, { bg: string; text: string; dot: string }> = {
-  new: { bg: "bg-navy/10", text: "text-navy", dot: "bg-navy" },
+  new_order: { bg: "bg-navy/10", text: "text-navy", dot: "bg-navy" },
   contacted: { bg: "bg-navy/10", text: "text-navy", dot: "bg-navy" },
-  measured: { bg: "bg-accent/15", text: "text-accent-dark", dot: "bg-accent-dark" },
-  in_production: { bg: "bg-accent/15", text: "text-accent-dark", dot: "bg-accent-dark" },
-  ready_delivered: { bg: "bg-accent/25", text: "text-accent-dark", dot: "bg-accent-dark" },
+  meeting_scheduled: { bg: "bg-navy/10", text: "text-navy", dot: "bg-navy" },
+  meeting_done: { bg: "bg-accent/15", text: "text-accent-dark", dot: "bg-accent-dark" },
+  purchase_request: { bg: "bg-accent/15", text: "text-accent-dark", dot: "bg-accent-dark" },
+  deposit_received: { bg: "bg-accent/20", text: "text-accent-dark", dot: "bg-accent-dark" },
+  paid_full: { bg: "bg-accent/25", text: "text-accent-dark", dot: "bg-accent-dark" },
+  in_production: { bg: "bg-accent/25", text: "text-accent-dark", dot: "bg-accent-dark" },
+  ready_shipment: { bg: "bg-navy/90", text: "text-white", dot: "bg-white" },
 };
 
 export function StatusBadge({ status }: { status: RequestStatus }) {

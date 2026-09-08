@@ -2,9 +2,9 @@ import Link from "next/link";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
-import { requests, requestItems } from "@/db/schema";
+import { requests, requestItems, employees } from "@/db/schema";
 import { formatSum } from "@/lib/format";
-import { REQUEST_STATUSES, REQUEST_STATUS_LABELS } from "@/lib/types";
+import { REQUEST_STATUS_LABELS } from "@/lib/types";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { updateRequest, deleteRequest } from "@/lib/admin-actions";
 import { DeleteButton } from "@/components/admin/delete-button";
@@ -29,6 +29,16 @@ export default async function RequestDetailPage({
     .from(requestItems)
     .where(eq(requestItems.requestId, id));
 
+  let managerName: string | null = null;
+  if (request.assignedManagerId) {
+    const [mgr] = await db
+      .select({ name: employees.name })
+      .from(employees)
+      .where(eq(employees.id, request.assignedManagerId))
+      .limit(1);
+    managerName = mgr?.name ?? null;
+  }
+
   const updateWithId = updateRequest.bind(null, id);
   const deleteWithId = deleteRequest.bind(null, id);
 
@@ -52,6 +62,11 @@ export default async function RequestDetailPage({
                 {request.customerName}
               </h1>
               <StatusBadge status={request.status} />
+              {request.orderNumber && (
+                <span className="rounded-full bg-navy/5 px-2.5 py-1 text-xs font-semibold text-navy/60">
+                  {request.orderNumber}
+                </span>
+              )}
             </div>
             <a
               href={`tel:${request.customerPhone}`}
@@ -66,6 +81,31 @@ export default async function RequestDetailPage({
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-6 lg:col-span-2">
+          <FormSection title="Сведения о заказе">
+            <div className="grid gap-3 text-sm sm:grid-cols-2">
+              <InfoRow label="Источник" value={request.source} />
+              <InfoRow
+                label="Менеджер"
+                value={managerName ?? "— (назначится автоматически в Telegram)"}
+              />
+              {request.totalAmount && (
+                <InfoRow label="Сумма заказа" value={formatSum(request.totalAmount)} />
+              )}
+              {request.depositAmount && (
+                <InfoRow label="Залог" value={formatSum(request.depositAmount)} />
+              )}
+              {request.paidAmount && (
+                <InfoRow label="Оплачено" value={formatSum(request.paidAmount)} />
+              )}
+              {request.productionStartedAt && (
+                <InfoRow
+                  label="В производстве с"
+                  value={new Date(request.productionStartedAt).toLocaleDateString("ru-RU")}
+                />
+              )}
+            </div>
+          </FormSection>
+
           <FormSection title="Товары в заявке">
             {items.length === 0 ? (
               <div className="flex flex-col items-center gap-2 py-6 text-center">
@@ -106,41 +146,11 @@ export default async function RequestDetailPage({
             )}
           </FormSection>
 
-          <form
-            key={`${request.status}-${String(request.updatedAt)}`}
-            action={updateWithId}
-          >
+          <form action={updateWithId}>
             <FormSection
-              title="Управление заявкой"
-              description="Изменения сохраняются и попадают в историю статусов"
+              title="Заметки"
+              description="Статус и сумма заказа управляются через Telegram-бота Mebelflow"
             >
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="flex flex-col gap-1.5 text-sm">
-                  <span className="font-medium text-navy">Статус</span>
-                  <select
-                    name="status"
-                    defaultValue={request.status}
-                    className="input"
-                  >
-                    {REQUEST_STATUSES.map((s) => (
-                      <option key={s} value={s}>
-                        {REQUEST_STATUS_LABELS[s]}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="flex flex-col gap-1.5 text-sm">
-                  <span className="font-medium text-navy">Менеджер</span>
-                  <input
-                    name="assignedManager"
-                    defaultValue={request.assignedManager ?? ""}
-                    placeholder="Кто ведёт заявку"
-                    className="input"
-                  />
-                </label>
-              </div>
-
               <label className="flex flex-col gap-1.5 text-sm">
                 <span className="font-medium text-navy">Заметки</span>
                 <textarea
@@ -184,9 +194,20 @@ export default async function RequestDetailPage({
                       {REQUEST_STATUS_LABELS[
                         entry.status as keyof typeof REQUEST_STATUS_LABELS
                       ] ?? entry.status}
+                      {entry.note && (
+                        <span className="ml-1.5 text-xs font-normal text-navy/50">
+                          {entry.note}
+                        </span>
+                      )}
                     </p>
+                    {entry.amount && (
+                      <p className="text-xs font-medium text-accent-dark">
+                        {formatSum(entry.amount)}
+                      </p>
+                    )}
                     <p className="text-xs text-navy/40">
                       {new Date(entry.changedAt).toLocaleString("ru-RU")}
+                      {entry.employeeName && ` · ${entry.employeeName}`}
                     </p>
                   </div>
                 </li>
@@ -195,6 +216,17 @@ export default async function RequestDetailPage({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs font-medium uppercase tracking-wide text-navy/40">
+        {label}
+      </p>
+      <p className="mt-0.5 font-medium text-navy">{value}</p>
     </div>
   );
 }

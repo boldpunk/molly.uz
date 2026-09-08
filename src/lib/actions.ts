@@ -3,7 +3,7 @@
 import { db } from "@/db";
 import { requests, requestItems } from "@/db/schema";
 import { RequestItem } from "./types";
-import { notifyStaffNewRequest } from "./telegram";
+import { postNewOrderCard } from "./order-bot";
 
 export async function submitRequest(
   name: string,
@@ -19,7 +19,9 @@ export async function submitRequest(
       customerName: name,
       customerPhone: phone,
       notes,
-      statusHistory: [{ status: "new", changedAt: new Date().toISOString() }],
+      statusHistory: [
+        { status: "new_order", changedAt: new Date().toISOString() },
+      ],
     })
     .returning({ id: requests.id });
 
@@ -39,19 +41,9 @@ export async function submitRequest(
     );
   }
 
-  notifyStaffNewRequest({
-    id: request.id,
-    customerName: name,
-    customerPhone: phone,
-    notes,
-    items: items.map((item) => ({
-      productName: item.productName,
-      hardwareLabel: item.hardwareLabel,
-      colourLabel: item.colourLabel,
-      widthMetres: item.widthMetres,
-      estimate: item.estimate,
-    })),
-  }).catch((err) => console.error("Telegram staff notify failed", err));
+  postNewOrderCard(request.id).catch((err) =>
+    console.error("Telegram order card post failed", err)
+  );
 
   return { id: request.id };
 }
