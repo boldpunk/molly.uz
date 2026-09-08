@@ -134,7 +134,7 @@ export function RequestForm({
                 required
                 value={phone}
                 onChange={setPhone}
-                className="mt-1 w-full rounded-md border border-navy/15 px-3 py-2 text-sm"
+                className="mt-1"
               />
             </div>
             <div>
