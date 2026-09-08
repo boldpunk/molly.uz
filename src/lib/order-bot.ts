@@ -7,6 +7,8 @@ import {
   orderCounters,
   telegramPendingActions,
   customers,
+  products,
+  categories,
 } from "@/db/schema";
 import type { StatusHistoryEntry } from "@/db/schema";
 import { RequestStatus } from "./types";
@@ -382,7 +384,7 @@ export async function startNewOrderPrompt(actor: Actor): Promise<void> {
   if (!chatId) return;
   const sent = await sendTelegramMessage(
     chatId,
-    `📝 ${actor.name}, ответьте на это сообщение с данными заказа, каждое поле на новой строке:\n\nИмя клиента\nТелефон\nИсточник (необязательно)\nЗаметки (необязательно)\n\nНапример:\nИван Иванов\n+998901234567\nInstagram\nХочет кухню, 3 метра`
+    `📝 ${actor.name}, ответьте на это сообщение с данными заказа, каждое поле на новой строке:\n\nИмя клиента\nТелефон\nИсточник (необязательно)\nЗаметки (необязательно)\nТовары: Название1, Название2 (необязательно)\n\nНапример:\nИван Иванов\n+998901234567\nInstagram\nХочет кухню, 3 метра\nТовары: Кухня Модерн, Стол Лофт`
   );
   if (!sent) return;
   await db.insert(telegramPendingActions).values({
@@ -500,7 +502,19 @@ async function resolveNewOrderPrompt(
   const name = lines[0];
   const phone = lines[1];
   const source = lines[2] || "Ручной ввод";
-  const notes = lines.slice(3).join("\n");
+
+  const remainingLines = lines.slice(3);
+  const productsLineIndex = remainingLines.findIndex((l) => /^товары\s*:/i.test(l));
+  let requestedProductNames: string[] = [];
+  if (productsLineIndex !== -1) {
+    requestedProductNames = remainingLines[productsLineIndex]
+      .replace(/^товары\s*:\s*/i, "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    remainingLines.splice(productsLineIndex, 1);
+  }
+  let notes = remainingLines.join("\n");
 
   if (!name || !phone || phone.replace(/[^\d]/g, "").length < 7) {
     return {
@@ -508,6 +522,37 @@ async function resolveNewOrderPrompt(
       reason:
         "Нужно минимум 2 строки: имя клиента и телефон (номер должен содержать хотя бы 7 цифр).",
     };
+  }
+
+  const matchedProducts: {
+    id: string;
+    name: string;
+    slug: string;
+    categorySlug: string;
+  }[] = [];
+  if (requestedProductNames.length > 0) {
+    const catalog = await db
+      .select({
+        id: products.id,
+        name: products.name,
+        slug: products.slug,
+        categorySlug: categories.slug,
+      })
+      .from(products)
+      .innerJoin(categories, eq(products.categoryId, categories.id));
+
+    const unmatched: string[] = [];
+    for (const requestedName of requestedProductNames) {
+      const found = catalog.find(
+        (p) => p.name.toLowerCase() === requestedName.toLowerCase()
+      );
+      if (found) matchedProducts.push(found);
+      else unmatched.push(requestedName);
+    }
+    if (unmatched.length > 0) {
+      const unmatchedNote = `Товары (не найдены в каталоге): ${unmatched.join(", ")}`;
+      notes = notes ? `${notes}\n${unmatchedNote}` : unmatchedNote;
+    }
   }
 
   const employeeName = await getOrCreateEmployeeName(
@@ -539,6 +584,18 @@ async function resolveNewOrderPrompt(
       ],
     })
     .returning({ id: requests.id });
+
+  if (matchedProducts.length > 0) {
+    await db.insert(requestItems).values(
+      matchedProducts.map((p) => ({
+        requestId: created.id,
+        productId: p.id,
+        productName: p.name,
+        categorySlug: p.categorySlug,
+        productSlug: p.slug,
+      }))
+    );
+  }
 
   await db.delete(telegramPendingActions).where(eq(telegramPendingActions.key, key));
 

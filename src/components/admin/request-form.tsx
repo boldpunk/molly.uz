@@ -1,11 +1,14 @@
 "use client";
 
 import { PhoneInput } from "@/components/phone-input";
+import { ProductPicker, PickableProduct } from "./product-picker";
 
 export function RequestForm({
   action,
+  products,
 }: {
   action: (formData: FormData) => void;
+  products: PickableProduct[];
 }) {
   return (
     <form
@@ -42,6 +45,10 @@ export function RequestForm({
           <span className="font-medium text-navy">Заметки</span>
           <textarea name="notes" rows={3} className="input" />
         </label>
+
+        <div className="sm:col-span-2">
+          <ProductPicker name="productIdsJson" products={products} />
+        </div>
       </div>
 
       <div className="mt-6 flex items-center gap-3 border-t border-navy/10 pt-5">

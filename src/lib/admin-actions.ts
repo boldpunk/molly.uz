@@ -1,10 +1,10 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { categories, products, requests, pages } from "@/db/schema";
+import { categories, products, requests, requestItems, pages } from "@/db/schema";
 import type {
   HardwareOption,
   ColourOption,
@@ -169,6 +169,9 @@ export async function createManualOrder(formData: FormData) {
   const customerPhone = String(formData.get("customerPhone") ?? "").trim();
   const source = String(formData.get("source") ?? "").trim() || "Ручной ввод";
   const notes = String(formData.get("notes") ?? "").trim();
+  const productIds = parseJsonArray<string>(formData.get("productIdsJson")).filter(
+    (id) => typeof id === "string" && id.length > 0
+  );
 
   if (!customerName || !customerPhone) {
     throw new Error("Имя клиента и телефон обязательны");
@@ -192,6 +195,31 @@ export async function createManualOrder(formData: FormData) {
       statusHistory: [historyEntry],
     })
     .returning({ id: requests.id });
+
+  if (productIds.length > 0) {
+    const pickedProducts = await db
+      .select({
+        id: products.id,
+        name: products.name,
+        slug: products.slug,
+        categorySlug: categories.slug,
+      })
+      .from(products)
+      .innerJoin(categories, eq(products.categoryId, categories.id))
+      .where(inArray(products.id, productIds));
+
+    if (pickedProducts.length > 0) {
+      await db.insert(requestItems).values(
+        pickedProducts.map((p) => ({
+          requestId: created.id,
+          productId: p.id,
+          productName: p.name,
+          categorySlug: p.categorySlug,
+          productSlug: p.slug,
+        }))
+      );
+    }
+  }
 
   await postNewOrderCard(created.id).catch((err) =>
     console.error("Telegram order card post failed", err)
