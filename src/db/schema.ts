@@ -133,6 +133,8 @@ export const customers = pgTable("customers", {
   name: text("name").notNull(),
   phone: text("phone").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
+  telegramId: text("telegram_id").unique(),
+  telegramNotifyOptIn: boolean("telegram_notify_opt_in").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

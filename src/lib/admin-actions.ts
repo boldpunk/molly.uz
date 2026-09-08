@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { categories, products, requests, pages } from "@/db/schema";
+import { categories, products, requests, pages, customers } from "@/db/schema";
 import type {
   HardwareOption,
   ColourOption,
@@ -14,6 +14,7 @@ import type {
 } from "@/db/schema";
 import { RequestStatus } from "./types";
 import { deleteProductImage } from "./upload-actions";
+import { notifyCustomerStatusChange } from "./telegram";
 
 function parseJsonArray<T>(raw: FormDataEntryValue | null): T[] {
   if (!raw || typeof raw !== "string") return [];
@@ -168,7 +169,11 @@ export async function updateRequest(id: string, formData: FormData) {
   const assignedManager = String(formData.get("assignedManager") ?? "") || null;
 
   const [current] = await db
-    .select({ status: requests.status, statusHistory: requests.statusHistory })
+    .select({
+      status: requests.status,
+      statusHistory: requests.statusHistory,
+      customerId: requests.customerId,
+    })
     .from(requests)
     .where(eq(requests.id, id))
     .limit(1);
@@ -189,6 +194,22 @@ export async function updateRequest(id: string, formData: FormData) {
       updatedAt: new Date(),
     })
     .where(eq(requests.id, id));
+
+  if (statusChanged && current?.customerId) {
+    const [customer] = await db
+      .select({
+        telegramId: customers.telegramId,
+        telegramNotifyOptIn: customers.telegramNotifyOptIn,
+      })
+      .from(customers)
+      .where(eq(customers.id, current.customerId))
+      .limit(1);
+    if (customer?.telegramId && customer.telegramNotifyOptIn) {
+      notifyCustomerStatusChange(customer.telegramId, status).catch((err) =>
+        console.error("Telegram customer notify failed", err)
+      );
+    }
+  }
 
   revalidatePath("/admin/requests");
   revalidatePath(`/admin/requests/${id}`);
