@@ -1,5 +1,6 @@
 "use server";
 
+import { after } from "next/server";
 import { db } from "@/db";
 import { requests, requestItems } from "@/db/schema";
 import { RequestItem } from "./types";
@@ -41,8 +42,10 @@ export async function submitRequest(
     );
   }
 
-  postNewOrderCard(request.id).catch((err) =>
-    console.error("Telegram order card post failed", err)
+  after(() =>
+    postNewOrderCard(request.id).catch((err) =>
+      console.error("Telegram order card post failed", err)
+    )
   );
 
   return { id: request.id };
