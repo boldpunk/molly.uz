@@ -41,6 +41,7 @@ export default async function HomePage() {
     pick(blocks, 5, "paragraph")?.text ??
     "Molly Home — производитель мебели в Ташкенте. Мы совмещаем современные технологии производства с индивидуальным подходом к каждому заказу — от кухни по размерам вашей комнаты до готовых моделей спален и гардеробов.";
   const brandImage = pick(blocks, 6, "image");
+  const instagramUrls = pick(blocks, 7, "instagram_strip")?.urls ?? [];
 
   return (
     <div>
@@ -228,13 +229,30 @@ export default async function HomePage() {
           </a>
         </div>
         <div className="mt-4 grid grid-cols-3 gap-2 md:grid-cols-6">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <PlaceholderImage
-              key={i}
-              label="Instagram"
-              aspect="aspect-square"
-            />
-          ))}
+          {instagramUrls.length > 0
+            ? instagramUrls.map((url) => (
+                <a
+                  key={url}
+                  href="https://instagram.com/mollyhome"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block aspect-square overflow-hidden rounded-lg"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={url}
+                    alt="Molly Home в Instagram"
+                    className="h-full w-full object-cover transition hover:scale-105"
+                  />
+                </a>
+              ))
+            : Array.from({ length: 6 }).map((_, i) => (
+                <PlaceholderImage
+                  key={i}
+                  label="Instagram"
+                  aspect="aspect-square"
+                />
+              ))}
         </div>
       </section>
     </div>

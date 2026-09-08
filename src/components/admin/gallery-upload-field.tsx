@@ -3,17 +3,30 @@
 import { useRef, useState } from "react";
 import { uploadProductImage } from "@/lib/upload-actions";
 
+type UploadResult = { url: string } | { error: string };
+
 export function GalleryUploadField({
   name,
   initialUrls,
+  uploadAction = uploadProductImage,
+  hint = "Дополнительные ракурсы товара — JPEG, PNG, WebP или AVIF, до 8 МБ каждое",
+  onChange,
 }: {
-  name: string;
+  name?: string;
   initialUrls: string[];
+  uploadAction?: (formData: FormData) => Promise<UploadResult>;
+  hint?: string;
+  onChange?: (urls: string[]) => void;
 }) {
   const [urls, setUrls] = useState<string[]>(initialUrls);
   const [status, setStatus] = useState<"idle" | "uploading" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  function updateUrls(next: string[]) {
+    setUrls(next);
+    onChange?.(next);
+  }
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -24,7 +37,7 @@ export function GalleryUploadField({
 
     const formData = new FormData();
     formData.set("file", file);
-    const result = await uploadProductImage(formData);
+    const result = await uploadAction(formData);
 
     if ("error" in result) {
       setStatus("error");
@@ -32,18 +45,18 @@ export function GalleryUploadField({
       return;
     }
 
-    setUrls((prev) => [...prev, result.url]);
+    updateUrls([...urls, result.url]);
     setStatus("idle");
     if (inputRef.current) inputRef.current.value = "";
   }
 
   function handleRemove(url: string) {
-    setUrls((prev) => prev.filter((u) => u !== url));
+    updateUrls(urls.filter((u) => u !== url));
   }
 
   return (
     <div className="flex flex-col gap-3">
-      <input type="hidden" name={name} value={JSON.stringify(urls)} />
+      {name && <input type="hidden" name={name} value={JSON.stringify(urls)} />}
       <div className="flex flex-wrap gap-3">
         {urls.map((url) => (
           <div
@@ -78,9 +91,7 @@ export function GalleryUploadField({
         </label>
       </div>
       {error && <p className="text-xs text-red-600">{error}</p>}
-      <p className="text-xs text-navy/40">
-        Дополнительные ракурсы товара — JPEG, PNG, WebP или AVIF, до 8 МБ каждое
-      </p>
+      <p className="text-xs text-navy/40">{hint}</p>
     </div>
   );
 }
