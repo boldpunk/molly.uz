@@ -64,7 +64,7 @@ export default async function AdminUsersPage({
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-navy">{u.name}</span>
                       {current?.id === u.id && (
-                        <span className="rounded-full bg-sage/15 px-2 py-0.5 text-[11px] font-medium text-sage-dark">
+                        <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-medium text-accent-dark">
                           это вы
                         </span>
                       )}

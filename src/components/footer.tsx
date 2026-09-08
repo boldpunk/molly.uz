@@ -73,7 +73,7 @@ export function Footer({
                 href="https://t.me/mollyhome"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 font-medium text-sage-dark hover:underline"
+                className="inline-flex items-center gap-1.5 font-medium text-accent-dark hover:underline"
               >
                 Проверить заявку в Telegram
               </a>

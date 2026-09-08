@@ -180,7 +180,7 @@ export default async function HomePage() {
       {/* Configurator teaser */}
       <section className="bg-white">
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-6 rounded-2xl border border-navy/10 px-6 py-14 text-center">
-          <span className="rounded-full bg-sage/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sage-dark">
+          <span className="rounded-full bg-accent/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent-dark">
             Онлайн-конфигуратор
           </span>
           <h2 className="font-heading text-2xl font-bold text-navy">

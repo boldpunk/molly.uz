@@ -74,7 +74,7 @@ export default async function AdminDashboardPage() {
           label="Новые"
           value={String(statusMap.get("new") ?? 0)}
           icon={SparkIcon}
-          tone="sage"
+          tone="accent"
         />
         <StatTile
           label="В производстве"
@@ -86,7 +86,7 @@ export default async function AdminDashboardPage() {
           label="Сумма по оценкам заявок"
           value={estimateSum > 0 ? formatSum(estimateSum) : "—"}
           icon={CategoriesIcon}
-          tone="sage"
+          tone="accent"
         />
       </div>
 
@@ -195,18 +195,18 @@ function StatTile({
   label: string;
   value: string;
   icon: React.ComponentType<{ className?: string }>;
-  tone: "navy" | "sage";
+  tone: "navy" | "accent";
 }) {
   return (
     <div className="group relative overflow-hidden rounded-xl border border-navy/10 bg-white p-4 transition hover:shadow-md">
       <div
         className={`absolute -right-3 -top-3 flex h-16 w-16 items-center justify-center rounded-full ${
-          tone === "sage" ? "bg-sage/10" : "bg-navy/[0.04]"
+          tone === "accent" ? "bg-accent/10" : "bg-navy/[0.04]"
         }`}
       >
         <Icon
           className={`h-6 w-6 translate-x-2 translate-y-2 ${
-            tone === "sage" ? "text-sage-dark" : "text-navy/30"
+            tone === "accent" ? "text-accent-dark" : "text-navy/30"
           }`}
         />
       </div>

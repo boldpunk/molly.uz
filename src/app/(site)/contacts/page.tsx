@@ -91,7 +91,7 @@ export default async function ContactsPage() {
                   href={`https://t.me/${contact.telegram}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-2 font-medium text-sage-dark hover:underline"
+                  className="flex items-center gap-2 font-medium text-accent-dark hover:underline"
                 >
                   Telegram — @{contact.telegram}
                 </a>

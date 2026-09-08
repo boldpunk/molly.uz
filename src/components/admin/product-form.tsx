@@ -126,7 +126,7 @@ export function ProductForm({
               type="checkbox"
               name="isFeatured"
               defaultChecked={product?.isFeatured}
-              className="h-4 w-4 accent-sage-dark"
+              className="h-4 w-4 accent-accent-dark"
             />
             Показывать в «Популярных моделях»
           </label>
@@ -135,7 +135,7 @@ export function ProductForm({
               type="checkbox"
               name="isSample"
               defaultChecked={product?.isSample}
-              className="h-4 w-4 accent-sage-dark"
+              className="h-4 w-4 accent-accent-dark"
             />
             Образец / плейсхолдер
           </label>

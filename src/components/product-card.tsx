@@ -38,7 +38,7 @@ export function ProductCard({ product }: { product: Product }) {
             / пог.м
           </p>
         ) : (
-          <span className="mt-2 inline-block rounded-full bg-sage/15 px-2.5 py-1 text-xs font-semibold text-sage-dark">
+          <span className="mt-2 inline-block rounded-full bg-accent/15 px-2.5 py-1 text-xs font-semibold text-accent-dark">
             Цена по запросу
           </span>
         )}

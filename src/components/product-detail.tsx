@@ -165,7 +165,7 @@ export function ProductDetail({
                   onClick={() => setActiveImage(url)}
                   className={`overflow-hidden rounded-lg border-2 transition ${
                     activeImage === url
-                      ? "border-sage-dark"
+                      ? "border-accent-dark"
                       : "border-transparent hover:border-navy/15"
                   }`}
                 >
@@ -215,7 +215,7 @@ export function ProductDetail({
                           onClick={() => setHardwareId(h.id)}
                           className={`flex items-center gap-2 rounded-lg border px-4 py-2 text-sm transition ${
                             hardwareId === h.id
-                              ? "border-sage-dark bg-sage/20 font-medium text-navy"
+                              ? "border-accent-dark bg-accent/20 font-medium text-navy"
                               : "border-navy/15 text-navy/70 hover:bg-navy/5"
                           }`}
                         >
@@ -253,7 +253,7 @@ export function ProductDetail({
                         style={{ backgroundColor: c.swatch }}
                         className={`h-9 w-9 rounded-full border-2 transition ${
                           colourId === c.id
-                            ? "border-sage-dark"
+                            ? "border-accent-dark"
                             : "border-transparent hover:border-navy/20"
                         }`}
                       />
@@ -294,7 +294,7 @@ export function ProductDetail({
                   step={0.01}
                   value={width}
                   onChange={(e) => handleWidthSliderChange(e.target.value)}
-                  className="mt-2 w-full accent-sage-dark"
+                  className="mt-2 w-full accent-accent-dark"
                 />
                 <div className="mt-1 flex justify-between text-xs text-navy/40">
                   <span>{MIN_WIDTH} м</span>
@@ -352,7 +352,7 @@ export function ProductDetail({
                         style={{ backgroundColor: c.swatch }}
                         className={`h-9 w-9 rounded-full border-2 transition ${
                           colourId === c.id
-                            ? "border-sage-dark"
+                            ? "border-accent-dark"
                             : "border-transparent hover:border-navy/20"
                         }`}
                       />
@@ -360,7 +360,7 @@ export function ProductDetail({
                   </div>
                 </div>
               )}
-              <span className="inline-block w-fit rounded-full bg-sage/15 px-3 py-1 text-xs font-semibold text-sage-dark">
+              <span className="inline-block w-fit rounded-full bg-accent/15 px-3 py-1 text-xs font-semibold text-accent-dark">
                 Цена по запросу
               </span>
               <div className="flex flex-wrap gap-3">

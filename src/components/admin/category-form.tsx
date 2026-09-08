@@ -70,7 +70,7 @@ export function CategoryForm({
           type="checkbox"
           name="isPlaceholder"
           defaultChecked={category?.isPlaceholder}
-          className="mt-0.5 h-4 w-4 accent-sage-dark"
+          className="mt-0.5 h-4 w-4 accent-accent-dark"
         />
         <span>
           <span className="font-medium">Каталог пока наполняется</span>
