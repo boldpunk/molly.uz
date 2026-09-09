@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { createPortal } from "react-dom";
 import { Category } from "@/lib/types";
@@ -21,6 +21,25 @@ export function Header({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { items } = useRequestList();
   const pathname = usePathname();
+  const closeMenuTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (closeMenuTimer.current) clearTimeout(closeMenuTimer.current);
+    };
+  }, []);
+
+  function openMenu() {
+    if (closeMenuTimer.current) {
+      clearTimeout(closeMenuTimer.current);
+      closeMenuTimer.current = null;
+    }
+    setMenuOpen(true);
+  }
+
+  function scheduleCloseMenu() {
+    closeMenuTimer.current = setTimeout(() => setMenuOpen(false), 200);
+  }
 
   return (
     <>
@@ -72,8 +91,9 @@ export function Header({
         {/* Desktop nav */}
         <nav className="relative ml-6 hidden flex-1 items-center gap-6 md:flex">
           <div
-            onMouseEnter={() => setMenuOpen(true)}
-            onMouseLeave={() => setMenuOpen(false)}
+            className="relative"
+            onMouseEnter={openMenu}
+            onMouseLeave={scheduleCloseMenu}
           >
             <Link
               href="/catalog"
@@ -86,7 +106,7 @@ export function Header({
               Каталог
             </Link>
             {menuOpen && (
-              <div className="absolute left-0 top-full z-50 mt-2 w-full rounded-lg border border-navy/10 bg-white p-6 shadow-lg">
+              <div className="absolute left-0 top-full z-50 w-[56rem] max-w-[calc(100vw-3rem)] rounded-lg border border-navy/10 bg-white p-6 pt-8 shadow-lg">
                 <div className="grid grid-cols-5 gap-4">
                   {categories.map((cat) => {
                     const Icon = getCategoryIcon(cat.slug);
