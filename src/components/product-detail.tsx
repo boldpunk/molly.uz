@@ -12,6 +12,8 @@ import { getHardwareBrandBadge } from "@/lib/hardware-brands";
 import { SITE_URL } from "@/lib/site";
 import { FavouriteButton } from "@/components/favourite-button";
 import { ImageLightbox } from "@/components/image-lightbox";
+import { PageBlocks } from "@/components/page-blocks";
+import type { PageBlock } from "@/db/schema";
 
 const MIN_WIDTH = 2;
 const MAX_WIDTH = 15;
@@ -22,11 +24,13 @@ export function ProductDetail({
   product,
   related,
   initialIsFavourite,
+  deliveryBlocks,
 }: {
   category: Category;
   product: Product;
   related: Product[];
   initialIsFavourite: boolean;
+  deliveryBlocks: PageBlock[];
 }) {
   const router = useRouter();
   const { addItem } = useRequestList();
@@ -433,12 +437,15 @@ export function ProductDetail({
               </tbody>
             </table>
           )}
-          {tab === "delivery" && (
-            <p>
-              Сроки доставки и условия оплаты уточняются менеджером после
-              подтверждения заказа.
-            </p>
-          )}
+          {tab === "delivery" &&
+            (deliveryBlocks.length > 0 ? (
+              <PageBlocks blocks={deliveryBlocks} />
+            ) : (
+              <p>
+                Сроки доставки и условия оплаты уточняются менеджером после
+                подтверждения заказа.
+              </p>
+            ))}
         </div>
       </div>
 
