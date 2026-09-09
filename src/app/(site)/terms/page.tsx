@@ -1,4 +1,9 @@
-export const metadata = { title: "Условия использования — Molly Home" };
+import { SITE_URL } from "@/lib/site";
+
+export const metadata = {
+  title: "Условия использования — Molly Home",
+  alternates: { canonical: `${SITE_URL}/terms` },
+};
 
 function Section({
   title,

@@ -19,6 +19,9 @@ export const metadata: Metadata = {
   title: "Molly Home — мебель для дома",
   description:
     "Molly Home — производитель комфортной мебели для дома. Современные технологии, лояльный бренд.",
+  verification: process.env.GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+    : undefined,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

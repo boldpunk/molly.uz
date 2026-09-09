@@ -13,7 +13,8 @@ export async function generateMetadata() {
     page,
     "О бренде — Molly Home",
     "Molly Home — производитель комфортной мебели для дома в Ташкенте.",
-    image
+    image,
+    "/about"
   );
 }
 

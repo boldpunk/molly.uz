@@ -69,24 +69,26 @@ export default async function AccountPage({
         ) : (
           <ul className="mt-4 flex flex-col gap-3">
             {myRequests.map((r) => (
-              <li
-                key={r.id}
-                className="flex items-center justify-between gap-4 rounded-xl border border-navy/10 bg-white p-4"
-              >
-                <div>
-                  <p className="text-sm font-medium text-navy">
-                    {new Date(r.createdAt).toLocaleDateString("ru-RU", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </p>
-                  <p className="mt-1 text-xs text-navy/60">
-                    {r.itemCount} {r.itemCount === 1 ? "товар" : "товара(ов)"}
-                    {r.notes ? ` · ${r.notes}` : ""}
-                  </p>
-                </div>
-                <StatusBadge status={r.status as RequestStatus} />
+              <li key={r.id}>
+                <Link
+                  href={`/account/orders/${r.id}`}
+                  className="flex items-center justify-between gap-4 rounded-xl border border-navy/10 bg-white p-4 transition hover:border-navy/20"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-navy">
+                      {new Date(r.createdAt).toLocaleDateString("ru-RU", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </p>
+                    <p className="mt-1 text-xs text-navy/60">
+                      {r.itemCount} {r.itemCount === 1 ? "товар" : "товара(ов)"}
+                      {r.notes ? ` · ${r.notes}` : ""}
+                    </p>
+                  </div>
+                  <StatusBadge status={r.status as RequestStatus} />
+                </Link>
               </li>
             ))}
           </ul>

@@ -1,4 +1,9 @@
-export const metadata = { title: "Политика конфиденциальности — Molly Home" };
+import { SITE_URL } from "@/lib/site";
+
+export const metadata = {
+  title: "Политика конфиденциальности — Molly Home",
+  alternates: { canonical: `${SITE_URL}/privacy` },
+};
 
 function Section({
   title,

@@ -2,7 +2,10 @@ import Link from "next/link";
 import { searchProducts } from "@/lib/data";
 import { ProductCard } from "@/components/product-card";
 
-export const metadata = { title: "Поиск — Molly Home" };
+export const metadata = {
+  title: "Поиск — Molly Home",
+  robots: { index: false, follow: true },
+};
 export const dynamic = "force-dynamic";
 
 export default async function SearchPage({

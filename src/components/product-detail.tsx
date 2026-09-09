@@ -103,6 +103,7 @@ export function ProductDetail({
     description: product.specLine || product.description || undefined,
     image: product.imageUrl || undefined,
     url: productUrl,
+    brand: { "@type": "Brand", name: "Molly Home" },
     offers:
       isConfigurable && hardware
         ? {
@@ -118,12 +119,30 @@ export function ProductDetail({
             url: productUrl,
           },
   };
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Главная", item: SITE_URL },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: category.name,
+        item: `${SITE_URL}/catalog/${category.slug}`,
+      },
+      { "@type": "ListItem", position: 3, name: product.name, item: productUrl },
+    ],
+  };
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       <nav className="text-xs text-navy/50">
         <Link href="/" className="hover:underline">

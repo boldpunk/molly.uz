@@ -53,7 +53,8 @@ export async function generateMetadata() {
     home,
     "Molly Home — мебель для дома",
     "Molly Home — производитель комфортной мебели для дома. Современные технологии, лояльный бренд.",
-    heroImageUrl
+    heroImageUrl,
+    "/"
   );
 }
 
