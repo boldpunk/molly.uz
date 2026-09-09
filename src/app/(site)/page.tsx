@@ -346,12 +346,12 @@ export default async function HomePage() {
             Мы в Instagram
           </h2>
           <a
-            href="https://instagram.com/mollyhome"
+            href="https://www.instagram.com/molly_home.uz"
             target="_blank"
             rel="noreferrer"
             className="text-sm font-medium text-navy hover:underline"
           >
-            @mollyhome
+            @molly_home.uz
           </a>
         </div>
         </Reveal>
@@ -360,7 +360,7 @@ export default async function HomePage() {
             ? instagramUrls.map((url) => (
                 <a
                   key={url}
-                  href="https://instagram.com/mollyhome"
+                  href="https://www.instagram.com/molly_home.uz"
                   target="_blank"
                   rel="noreferrer"
                   className="block aspect-square overflow-hidden rounded-lg"

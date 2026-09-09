@@ -98,12 +98,12 @@ export default function PrivacyPage() {
           </a>{" "}
           или в Telegram{" "}
           <a
-            href="https://t.me/mollyhome"
+            href="https://t.me/mollyhomeuzbot"
             target="_blank"
             rel="noreferrer"
             className="text-navy underline"
           >
-            @mollyhome
+            @mollyhomeuzbot
           </a>
           .
         </p>

@@ -70,7 +70,7 @@ export function Footer({
             </li>
             <li>
               <a
-                href="https://t.me/mollyhome"
+                href="https://t.me/mollyhomeuzbot"
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-1.5 font-medium text-accent-dark hover:underline"

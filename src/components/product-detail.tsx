@@ -372,7 +372,7 @@ export function ProductDetail({
                   {submitted ? "Добавлено ✓" : "Узнать цену"}
                 </button>
                 <a
-                  href="https://t.me/mollyhome"
+                  href="https://t.me/mollyhomeuzbot"
                   target="_blank"
                   rel="noreferrer"
                   className="rounded-full border border-navy/20 px-6 py-3 text-sm font-semibold text-navy hover:bg-navy/5"

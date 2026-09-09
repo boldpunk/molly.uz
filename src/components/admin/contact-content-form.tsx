@@ -123,14 +123,14 @@ export function ContactContentForm({
 
       <FormSection
         title="Мессенджеры"
-        description="Только имя пользователя, без ссылки — например mollyhome"
+        description="Только имя пользователя, без ссылки — например mollyhomeuzbot"
       >
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-navy">Telegram</span>
           <input
             value={telegram}
             onChange={(e) => setTelegram(e.target.value)}
-            placeholder="mollyhome"
+            placeholder="mollyhomeuzbot"
             className="input"
           />
         </label>
@@ -139,7 +139,7 @@ export function ContactContentForm({
           <input
             value={instagram}
             onChange={(e) => setInstagram(e.target.value)}
-            placeholder="mollyhome"
+            placeholder="molly_home.uz"
             className="input"
           />
         </label>
