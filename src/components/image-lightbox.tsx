@@ -21,7 +21,7 @@ export function ImageLightbox({
   }, [onClose]);
 
   return createPortal(
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-navy/90 p-6">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-6 backdrop-blur-xl">
       <button
         type="button"
         className="absolute inset-0"
