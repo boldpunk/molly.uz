@@ -91,33 +91,36 @@ export function ProductDetail({
     setTimeout(() => router.push("/request"), 600);
   }
 
-  const productJsonLd =
-    isConfigurable && hardware
-      ? {
-          "@context": "https://schema.org",
-          "@type": "Product",
-          name: product.name,
-          description: product.specLine || product.description || undefined,
-          image: product.imageUrl || undefined,
-          url: `${SITE_URL}/catalog/${category.slug}/${product.slug}`,
-          offers: {
+  const productUrl = `${SITE_URL}/catalog/${category.slug}/${product.slug}`;
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.specLine || product.description || undefined,
+    image: product.imageUrl || undefined,
+    url: productUrl,
+    offers:
+      isConfigurable && hardware
+        ? {
             "@type": "Offer",
             priceCurrency: "UZS",
             price: hardware.pricePerMetre,
             availability: "https://schema.org/InStock",
-            url: `${SITE_URL}/catalog/${category.slug}/${product.slug}`,
+            url: productUrl,
+          }
+        : {
+            "@type": "Offer",
+            availability: "https://schema.org/InStock",
+            url: productUrl,
           },
-        }
-      : null;
+  };
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
-      {productJsonLd && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
-        />
-      )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
       <nav className="text-xs text-navy/50">
         <Link href="/" className="hover:underline">
           Главная

@@ -8,17 +8,10 @@ import { Reveal } from "@/components/reveal";
 import { PhotoSlider } from "@/components/photo-slider";
 import { BrandSlider } from "@/components/brand-slider";
 import { pageMetadata } from "@/lib/seo";
+import { CATEGORY_IMAGES } from "@/lib/category-images";
 import type { PageBlock } from "@/db/schema";
 
 export const dynamic = "force-dynamic";
-
-const CATEGORY_IMAGES: Record<string, string> = {
-  "kuhonnaya-mebel": "/images/categories/kuhonnaya-mebel.jpg",
-  "myagkaya-mebel": "/images/categories/myagkaya-mebel.jpg",
-  "spalnye-garnitury": "/images/categories/spalnye-garnitury.jpg",
-  garderoby: "/images/categories/garderoby.jpg",
-  krovati: "/images/categories/krovati.jpg",
-};
 
 const PROCESS_STEPS = [
   {
@@ -52,10 +45,14 @@ const GALLERY_PHOTOS = [
 
 export async function generateMetadata() {
   const home = await getPageBySlug("home");
+  const heroImage = home?.blocks?.[2];
+  const heroImageUrl =
+    heroImage?.type === "image" && heroImage.url ? heroImage.url : "/images/hero.jpg";
   return pageMetadata(
     home,
     "Molly Home — мебель для дома",
-    "Molly Home — производитель комфортной мебели для дома. Современные технологии, лояльный бренд."
+    "Molly Home — производитель комфортной мебели для дома. Современные технологии, лояльный бренд.",
+    heroImageUrl
   );
 }
 

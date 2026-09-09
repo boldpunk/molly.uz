@@ -8,6 +8,8 @@ import {
 } from "@/lib/data";
 import { getCurrentCustomer } from "@/lib/customers";
 import { ProductDetail } from "@/components/product-detail";
+import { productMetadata } from "@/lib/seo";
+import { SITE_URL } from "@/lib/site";
 
 export async function generateMetadata({
   params,
@@ -18,11 +20,13 @@ export async function generateMetadata({
   const product = await getProduct(categorySlug, productSlug);
   if (!product) return {};
 
-  return {
+  return productMetadata({
     title: product.metaTitle || `${product.name} — Molly Home`,
     description:
       product.metaDescription || product.specLine || product.description,
-  };
+    image: product.imageUrl || undefined,
+    url: `${SITE_URL}/catalog/${categorySlug}/${productSlug}`,
+  });
 }
 
 export default async function ProductPage({

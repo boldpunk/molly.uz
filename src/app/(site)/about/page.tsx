@@ -6,10 +6,14 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata() {
   const page = await getPageBySlug("about");
+  const imageBlock = page?.blocks?.[0];
+  const image =
+    imageBlock?.type === "image" && imageBlock.url ? imageBlock.url : "/images/about.jpg";
   return pageMetadata(
     page,
     "О бренде — Molly Home",
-    "Molly Home — производитель комфортной мебели для дома в Ташкенте."
+    "Molly Home — производитель комфортной мебели для дома в Ташкенте.",
+    image
   );
 }
 
