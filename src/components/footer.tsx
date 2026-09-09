@@ -91,6 +91,7 @@ export function Footer({
             Условия использования
           </Link>
         </div>
+        <span>Сделано с ❤️ от @boldpunk</span>
       </div>
     </footer>
   );

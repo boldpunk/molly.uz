@@ -4,6 +4,9 @@ import { ProductCard } from "@/components/product-card";
 import { PlaceholderImage } from "@/components/placeholder-image";
 import { getCategoryIcon } from "@/components/icons/categories";
 import { UspIcon } from "@/components/usp-icons";
+import { Reveal } from "@/components/reveal";
+import { PhotoSlider } from "@/components/photo-slider";
+import { BrandSlider } from "@/components/brand-slider";
 import { pageMetadata } from "@/lib/seo";
 import type { PageBlock } from "@/db/schema";
 
@@ -16,6 +19,36 @@ const CATEGORY_IMAGES: Record<string, string> = {
   garderoby: "/images/categories/garderoby.jpg",
   krovati: "/images/categories/krovati.jpg",
 };
+
+const PROCESS_STEPS = [
+  {
+    icon: "box",
+    title: "Заявка",
+    text: "Оставляете заявку на сайте, в Telegram или по телефону — менеджер свяжется в течение дня.",
+  },
+  {
+    icon: "ruler",
+    title: "Замер",
+    text: "Бесплатно выезжаем на объект и снимаем точные размеры под ваше помещение.",
+  },
+  {
+    icon: "wrench",
+    title: "Производство",
+    text: "Изготавливаем мебель по вашим размерам с выбранной фурнитурой и отделкой.",
+  },
+  {
+    icon: "truck",
+    title: "Доставка и монтаж",
+    text: "Привозим и собираем мебель на месте — остаётся только пользоваться.",
+  },
+] as const;
+
+const GALLERY_PHOTOS = [
+  { src: "/images/gallery/kitchen-island.jpg", caption: "Кухня" },
+  { src: "/images/gallery/reading-nook.jpg", caption: "Гостиная" },
+  { src: "/images/gallery/entryway.jpg", caption: "Прихожая" },
+  { src: "/images/gallery/office.jpg", caption: "Кабинет" },
+];
 
 export async function generateMetadata() {
   const home = await getPageBySlug("home");
@@ -61,13 +94,14 @@ export default async function HomePage() {
     "Molly Home — производитель мебели в Ташкенте. Мы совмещаем современные технологии производства с индивидуальным подходом к каждому заказу — от кухни по размерам вашей комнаты до готовых моделей спален и гардеробов.";
   const brandImage = pick(blocks, 6, "image");
   const instagramUrls = pick(blocks, 7, "instagram_strip")?.urls ?? [];
+  const partnerBrands = pick(blocks, 8, "brand_list")?.items ?? [];
 
   return (
     <div>
       {/* Hero */}
       <section className="relative overflow-hidden bg-white">
         <div className="mx-auto grid max-w-7xl items-center gap-8 px-6 py-16 md:grid-cols-2 md:py-24">
-          <div>
+          <Reveal>
             <h1 className="font-heading text-3xl font-bold leading-tight text-navy md:text-5xl">
               {heroHeading}
             </h1>
@@ -75,31 +109,33 @@ export default async function HomePage() {
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href="/catalog/kuhonnaya-mebel"
-                className="rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white hover:bg-navy/90"
+                className="rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white transition hover:bg-navy/90 hover:shadow-lg hover:shadow-navy/20"
               >
                 Смотреть каталог
               </Link>
               <Link
                 href="/request"
-                className="rounded-full border border-navy/20 px-6 py-3 text-sm font-semibold text-navy hover:bg-navy/5"
+                className="rounded-full border border-navy/20 px-6 py-3 text-sm font-semibold text-navy transition hover:bg-navy/5"
               >
                 Оставить заявку на замер
               </Link>
             </div>
-          </div>
-          {heroImage?.url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={heroImage.url}
-              alt={heroImage.alt}
-              className="aspect-[4/3] w-full rounded-lg object-cover"
-            />
-          ) : (
-            <PlaceholderImage
-              label={heroImage?.alt || "Молли Хоум — интерьер"}
-              aspect="aspect-[4/3]"
-            />
-          )}
+          </Reveal>
+          <Reveal delay={150}>
+            {heroImage?.url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={heroImage.url}
+                alt={heroImage.alt}
+                className="aspect-[4/3] w-full rounded-lg object-cover shadow-xl shadow-navy/10"
+              />
+            ) : (
+              <PlaceholderImage
+                label={heroImage?.alt || "Молли Хоум — интерьер"}
+                aspect="aspect-[4/3]"
+              />
+            )}
+          </Reveal>
         </div>
       </section>
 
@@ -122,15 +158,17 @@ export default async function HomePage() {
 
       {/* Category grid */}
       <section className="mx-auto max-w-7xl px-6 py-14">
-        <h2 className="font-heading text-2xl font-bold text-navy">
-          Каталог
-        </h2>
+        <Reveal>
+          <h2 className="font-heading text-2xl font-bold text-navy">
+            Каталог
+          </h2>
+        </Reveal>
         <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-5">
-          {categories.map((cat) => {
+          {categories.map((cat, i) => {
             const Icon = getCategoryIcon(cat.slug);
             return (
+              <Reveal key={cat.id} delay={i * 60}>
               <Link
-                key={cat.id}
                 href={`/catalog/${cat.slug}`}
                 className="group flex flex-col gap-3"
               >
@@ -169,13 +207,46 @@ export default async function HomePage() {
                   {cat.name}
                 </span>
               </Link>
+              </Reveal>
             );
           })}
         </div>
       </section>
 
+      {/* Process steps */}
+      <section className="border-y border-navy/10 bg-navy/[0.015]">
+        <div className="mx-auto max-w-7xl px-6 py-14">
+          <Reveal>
+            <h2 className="font-heading text-2xl font-bold text-navy">
+              Как мы работаем
+            </h2>
+          </Reveal>
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {PROCESS_STEPS.map((step, i) => (
+              <Reveal key={step.title} delay={i * 100}>
+                <div className="relative flex flex-col gap-3 rounded-xl border border-navy/10 bg-white p-5">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/25 text-accent-dark">
+                    <UspIcon icon={step.icon} className="h-5 w-5" />
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-heading text-sm font-bold text-navy/30">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <h3 className="font-heading text-base font-bold text-navy">
+                      {step.title}
+                    </h3>
+                  </div>
+                  <p className="text-sm text-navy/60">{step.text}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Featured products */}
       <section className="mx-auto max-w-7xl px-6 py-14">
+        <Reveal>
         <div className="flex items-center justify-between">
           <h2 className="font-heading text-2xl font-bold text-navy">
             Популярные модели
@@ -187,6 +258,7 @@ export default async function HomePage() {
             Смотреть все →
           </Link>
         </div>
+        </Reveal>
         <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
           {featured.map((p) => (
             <ProductCard key={p.id} product={p} />
@@ -196,7 +268,7 @@ export default async function HomePage() {
 
       {/* Configurator teaser */}
       <section className="bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col items-center gap-6 rounded-2xl border border-navy/10 px-6 py-14 text-center">
+        <Reveal className="mx-auto flex max-w-7xl flex-col items-center gap-6 rounded-2xl border border-navy/10 px-6 py-14 text-center">
           <span className="rounded-full bg-accent/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent-dark">
             Онлайн-конфигуратор
           </span>
@@ -214,11 +286,28 @@ export default async function HomePage() {
           >
             Открыть конфигуратор
           </Link>
-        </div>
+        </Reveal>
+      </section>
+
+      {/* Gallery slider */}
+      <section className="mx-auto max-w-7xl px-6 py-14">
+        <Reveal>
+          <h2 className="font-heading text-2xl font-bold text-navy">
+            Мебель Molly Home в интерьере
+          </h2>
+          <p className="mt-2 max-w-lg text-sm text-navy/60">
+            Подборка вдохновляющих интерьеров — идеи для тех, кто выбирает
+            мебель под свой дом.
+          </p>
+        </Reveal>
+        <Reveal delay={120} className="mt-6">
+          <PhotoSlider items={GALLERY_PHOTOS} />
+        </Reveal>
       </section>
 
       {/* Brand band */}
       <section className="mx-auto grid max-w-7xl items-center gap-8 px-6 py-14 md:grid-cols-2">
+        <Reveal>
         {brandImage?.url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -232,6 +321,8 @@ export default async function HomePage() {
             aspect="aspect-[4/3]"
           />
         )}
+        </Reveal>
+        <Reveal delay={150}>
         <div>
           <h2 className="font-heading text-2xl font-bold text-navy">
             {brandHeading}
@@ -244,10 +335,12 @@ export default async function HomePage() {
             Узнать больше →
           </Link>
         </div>
+        </Reveal>
       </section>
 
       {/* Instagram strip */}
       <section className="mx-auto max-w-7xl px-6 pb-16">
+        <Reveal>
         <div className="flex items-center justify-between">
           <h2 className="font-heading text-xl font-bold text-navy">
             Мы в Instagram
@@ -261,6 +354,7 @@ export default async function HomePage() {
             @mollyhome
           </a>
         </div>
+        </Reveal>
         <div className="mt-4 grid grid-cols-3 gap-2 md:grid-cols-6">
           {instagramUrls.length > 0
             ? instagramUrls.map((url) => (
@@ -288,6 +382,20 @@ export default async function HomePage() {
               ))}
         </div>
       </section>
+
+      {/* Partner brands */}
+      {partnerBrands.length > 0 && (
+        <section className="border-t border-navy/10 bg-white">
+          <Reveal className="mx-auto max-w-7xl px-6 py-10">
+            <p className="text-center text-xs font-semibold uppercase tracking-wide text-navy/40">
+              Работаем на фурнитуре мировых брендов
+            </p>
+            <div className="mt-4">
+              <BrandSlider items={partnerBrands} />
+            </div>
+          </Reveal>
+        </section>
+      )}
     </div>
   );
 }

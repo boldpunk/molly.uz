@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 const LOCATIONS = [
-  "Ташкент и область",
+  "Ташкент",
   "Мирзо-Улугбекский район",
   "Юнусабадский район",
   "Чиланзарский район",
