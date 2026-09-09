@@ -5,6 +5,7 @@ import {
   getProduct,
   getRelatedProducts,
   isFavourite,
+  getPageBySlug,
 } from "@/lib/data";
 import { getCurrentCustomer } from "@/lib/customers";
 import { ProductDetail } from "@/components/product-detail";
@@ -46,6 +47,7 @@ export default async function ProductPage({
   const initialIsFavourite = customer
     ? await isFavourite(customer.id, product.id)
     : false;
+  const deliveryPage = await getPageBySlug("delivery");
 
   return (
     <ProductDetail
@@ -53,6 +55,7 @@ export default async function ProductPage({
       product={product}
       related={related}
       initialIsFavourite={initialIsFavourite}
+      deliveryBlocks={deliveryPage?.blocks ?? []}
     />
   );
 }
