@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getPageBySlug } from "@/lib/data";
+import { getPageBySlug, getContactInfo } from "@/lib/data";
 import { pageMetadata } from "@/lib/seo";
 import type { PageBlock } from "@/db/schema";
 
@@ -10,7 +10,9 @@ export async function generateMetadata() {
   return pageMetadata(
     page,
     "Контакты — Molly Home",
-    "Телефон, адрес и мессенджеры Molly Home в Ташкенте."
+    "Телефон, адрес и мессенджеры Molly Home в Ташкенте.",
+    undefined,
+    "/contacts"
   );
 }
 
@@ -38,19 +40,7 @@ export default async function ContactsPage() {
   const subtitle =
     pick(blocks, 1, "paragraph")?.text ??
     "Свяжитесь с нами удобным способом или оставьте заявку — мы перезвоним и согласуем замер.";
-  const contact = pick(blocks, 2, "contact_info") ?? {
-    type: "contact_info" as const,
-    phone: "+998 94 608 50 05",
-    email: "info@molly.uz",
-    hours: "Пн–Сб: 09:00–19:00 · Вс: выходной",
-    telegram: "mollyhomeuzbot",
-    instagram: "molly_home.uz",
-    address: "Ташкент, ул. Янги Олмазор, 17/23",
-    addressNote:
-      "Работаем по всему Ташкенту и области — выезд замерщика бесплатный.",
-    mapLat: 41.350703,
-    mapLng: 69.245558,
-  };
+  const contact = await getContactInfo();
   const telHref = `tel:${contact.phone.replace(/[^+\d]/g, "")}`;
 
   return (

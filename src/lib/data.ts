@@ -6,7 +6,29 @@ import {
   pages as pagesTable,
   favourites as favouritesTable,
 } from "@/db/schema";
+import type { PageBlock } from "@/db/schema";
 import { Category, Product } from "./types";
+
+const DEFAULT_CONTACT_INFO: Extract<PageBlock, { type: "contact_info" }> = {
+  type: "contact_info",
+  phone: "+998 94 608 50 05",
+  email: "info@molly.uz",
+  hours: "Пн–Сб: 09:00–19:00 · Вс: выходной",
+  telegram: "mollyhomeuzbot",
+  instagram: "molly_home.uz",
+  address: "Ташкент, ул. Янги Олмазор, 17/23",
+  addressNote: "Работаем по всему Ташкенту и области — выезд замерщика бесплатный.",
+  mapLat: 41.350703,
+  mapLng: 69.245558,
+};
+
+export async function getContactInfo(): Promise<
+  Extract<PageBlock, { type: "contact_info" }>
+> {
+  const page = await getPageBySlug("contacts");
+  const block = page?.blocks?.[2];
+  return block?.type === "contact_info" ? block : DEFAULT_CONTACT_INFO;
+}
 
 export interface Page {
   id: string;
