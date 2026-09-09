@@ -1,0 +1,24 @@
+name: Bootstrap deploy server (one-time)
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
+      - name: Add deploy key and inspect server
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PASSWORD: ${{ secrets.SSH_BOOTSTRAP_PASSWORD }}
+        run: |
+          set -eu
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          sshpass -p "$SSH_PASSWORD" ssh "$SSH_USER@$SSH_HOST" 'sh -s' < scripts/bootstrap-remote.sh

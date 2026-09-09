@@ -1,0 +1,15 @@
+services:
+  web:
+    image: ghcr.io/boldpunk/molly.uz:latest
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - molly_uploads:/app/public/uploads
+    # Bound to localhost only — the host's own reverse proxy (nginx/caddy)
+    # is what terminates TLS and faces the internet on 80/443.
+    ports:
+      - "127.0.0.1:3010:3000"
+
+volumes:
+  molly_uploads:
