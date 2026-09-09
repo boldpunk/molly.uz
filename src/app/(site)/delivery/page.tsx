@@ -9,7 +9,8 @@ export async function generateMetadata() {
   return pageMetadata(
     page,
     "Доставка и оплата — Molly Home",
-    "Условия доставки и оплаты мебели Molly Home."
+    "Условия доставки и оплаты мебели Molly Home.",
+    "/images/hero.jpg"
   );
 }
 

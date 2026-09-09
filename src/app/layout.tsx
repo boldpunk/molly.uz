@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Golos_Text, Inter } from "next/font/google";
+import { SITE_URL } from "@/lib/site";
+import { GoogleAnalytics } from "@/components/google-analytics";
 import "./globals.css";
 
 const golosText = Golos_Text({
@@ -13,6 +15,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "Molly Home — мебель для дома",
   description:
     "Molly Home — производитель комфортной мебели для дома. Современные технологии, лояльный бренд.",
@@ -26,6 +29,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col bg-white text-navy">
         {children}
+        <GoogleAnalytics />
       </body>
     </html>
   );

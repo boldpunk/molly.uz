@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 import { getCategories, getCategoryBySlug, getProductsByCategory } from "@/lib/data";
 import { CatalogView } from "@/components/catalog-view";
+import { productMetadata } from "@/lib/seo";
+import { CATEGORY_IMAGES } from "@/lib/category-images";
+import { SITE_URL } from "@/lib/site";
 
 export async function generateMetadata({
   params,
@@ -10,10 +13,12 @@ export async function generateMetadata({
   const { category: slug } = await params;
   const category = await getCategoryBySlug(slug);
   if (!category) return {};
-  return {
+  return productMetadata({
     title: `${category.name} — каталог Molly Home`,
     description: `Каталог «${category.name}» — мебель Molly Home с фильтрами по цвету и фурнитуре.`,
-  };
+    image: CATEGORY_IMAGES[category.slug],
+    url: `${SITE_URL}/catalog/${category.slug}`,
+  });
 }
 
 export default async function CatalogPage({
