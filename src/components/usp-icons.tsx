@@ -148,7 +148,7 @@ function PaymeIcon({ className = base }: IconProps) {
 
 function ClickIcon({ className = base }: IconProps) {
   // eslint-disable-next-line @next/next/no-img-element
-  return <img src="/images/payment/click.png" alt="Click" className={`${className} rounded-[20%] object-contain`} />;
+  return <img src="/images/payment/click.png" alt="Click" className={`${className} object-contain`} />;
 }
 
 function UzcardIcon({ className = base }: IconProps) {

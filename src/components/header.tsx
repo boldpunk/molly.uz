@@ -75,16 +75,16 @@ export function Header({
             onMouseEnter={() => setMenuOpen(true)}
             onMouseLeave={() => setMenuOpen(false)}
           >
-            <button
-              type="button"
-              className={`border-b-2 py-1 text-sm font-medium transition-colors ${
+            <Link
+              href="/catalog"
+              className={`inline-block cursor-pointer border-b-2 py-1 text-sm font-medium transition-colors ${
                 pathname === "/catalog"
                   ? "border-accent-dark text-accent-dark"
                   : "border-transparent text-navy hover:border-accent-dark/40 hover:text-accent-dark"
               }`}
             >
               Каталог
-            </button>
+            </Link>
             {menuOpen && (
               <div className="absolute left-0 top-full z-50 mt-2 w-full rounded-lg border border-navy/10 bg-white p-6 shadow-lg">
                 <div className="grid grid-cols-5 gap-4">

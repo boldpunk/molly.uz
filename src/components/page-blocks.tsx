@@ -46,9 +46,11 @@ function PageBlockView({ block }: { block: PageBlock }) {
           className="mt-6 aspect-[16/9] w-full rounded-lg object-cover first:mt-0"
         />
       );
-    case "stat_list":
+    case "stat_list": {
+      const colsClass =
+        block.items.length >= 5 ? "grid-cols-3 sm:grid-cols-5" : "grid-cols-2 sm:grid-cols-4";
       return (
-        <div className="mt-6 grid grid-cols-2 gap-6 border-y border-navy/10 py-6 first:mt-0 sm:grid-cols-4">
+        <div className={`mt-6 grid ${colsClass} gap-6 border-y border-navy/10 py-6 first:mt-0`}>
           {block.items.map((item, i) =>
             isBrandLogoIcon(item.icon) ? (
               <div key={i} className="flex flex-col gap-2">
@@ -74,6 +76,7 @@ function PageBlockView({ block }: { block: PageBlock }) {
           )}
         </div>
       );
+    }
     case "cta":
       return (
         <Link

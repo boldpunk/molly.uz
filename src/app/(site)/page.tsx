@@ -97,9 +97,20 @@ export default async function HomePage() {
     <div>
       {/* Hero */}
       <section className="relative overflow-hidden bg-white">
-        <div className="mx-auto grid max-w-7xl items-center gap-8 px-6 py-16 md:grid-cols-2 md:py-24">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-accent/40 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-32 top-1/4 h-96 w-96 rounded-full bg-navy/[0.06] blur-3xl"
+        />
+        <div className="relative mx-auto grid max-w-7xl items-center gap-8 px-6 py-16 md:grid-cols-2 md:py-24">
           <Reveal>
-            <h1 className="font-heading text-3xl font-bold leading-tight text-navy md:text-5xl">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/25 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent-dark">
+              Мебельная фабрика в Ташкенте
+            </span>
+            <h1 className="mt-4 font-heading text-3xl font-bold leading-tight text-navy md:text-5xl">
               {heroHeading}
             </h1>
             <p className="mt-4 max-w-md text-navy/70">{heroSubtitle}</p>
@@ -117,21 +128,48 @@ export default async function HomePage() {
                 Оставить заявку на замер
               </Link>
             </div>
+            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 border-t border-navy/10 pt-6">
+              <div className="flex items-center gap-2 text-sm text-navy/70">
+                <UspIcon icon="ruler" className="h-4 w-4 text-accent-dark" />
+                Бесплатный замер
+              </div>
+              <div className="flex items-center gap-2 text-sm text-navy/70">
+                <UspIcon icon="wrench" className="h-4 w-4 text-accent-dark" />
+                Под ваши размеры
+              </div>
+              <div className="flex items-center gap-2 text-sm text-navy/70">
+                <UspIcon icon="truck" className="h-4 w-4 text-accent-dark" />
+                Доставка и монтаж
+              </div>
+            </div>
           </Reveal>
           <Reveal delay={150}>
-            {heroImage?.url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={heroImage.url}
-                alt={heroImage.alt}
-                className="aspect-[4/3] w-full rounded-lg object-cover shadow-xl shadow-navy/10"
-              />
-            ) : (
-              <PlaceholderImage
-                label={heroImage?.alt || "Молли Хоум — интерьер"}
-                aspect="aspect-[4/3]"
-              />
-            )}
+            <div className="relative">
+              {heroImage?.url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={heroImage.url}
+                  alt={heroImage.alt}
+                  className="aspect-[4/3] w-full rounded-lg object-cover shadow-xl shadow-navy/10"
+                />
+              ) : (
+                <PlaceholderImage
+                  label={heroImage?.alt || "Молли Хоум — интерьер"}
+                  aspect="aspect-[4/3]"
+                />
+              )}
+              <div className="absolute -bottom-5 -left-5 hidden items-center gap-3 rounded-xl border border-navy/10 bg-white px-4 py-3 shadow-lg sm:flex">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/25 text-accent-dark">
+                  <UspIcon icon="shield" className="h-4.5 w-4.5" />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-navy">
+                    Собственное производство
+                  </p>
+                  <p className="text-xs text-navy/50">Ташкент</p>
+                </div>
+              </div>
+            </div>
           </Reveal>
         </div>
       </section>
