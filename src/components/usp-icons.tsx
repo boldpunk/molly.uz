@@ -131,6 +131,36 @@ function BoxIcon({ className = base }: IconProps) {
   );
 }
 
+function CashIcon({ className = base }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <rect x="2" y="6" width="20" height="12" rx="2" stroke="currentColor" strokeWidth="1.6" />
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M5.5 9v.01M18.5 15v.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function PaymeIcon({ className = base }: IconProps) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src="/images/payment/payme.png" alt="Payme" className={`${className} object-contain`} />;
+}
+
+function ClickIcon({ className = base }: IconProps) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src="/images/payment/click.png" alt="Click" className={`${className} rounded-[20%] object-contain`} />;
+}
+
+function UzcardIcon({ className = base }: IconProps) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src="/images/payment/uzcard.png" alt="Uzcard" className={`${className} object-contain`} />;
+}
+
+function HumoIcon({ className = base }: IconProps) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src="/images/payment/humo.png" alt="Humo" className={`${className} rounded-[20%] object-contain`} />;
+}
+
 export const USP_ICONS: Record<string, (props: IconProps) => React.JSX.Element> = {
   ruler: RulerIcon,
   layers: LayersIcon,
@@ -144,6 +174,11 @@ export const USP_ICONS: Record<string, (props: IconProps) => React.JSX.Element> 
   truck: TruckIcon,
   check: CheckIcon,
   box: BoxIcon,
+  cash: CashIcon,
+  payme: PaymeIcon,
+  click: ClickIcon,
+  uzcard: UzcardIcon,
+  humo: HumoIcon,
 };
 
 export const USP_ICON_OPTIONS: { key: string; label: string }[] = [
@@ -159,7 +194,18 @@ export const USP_ICON_OPTIONS: { key: string; label: string }[] = [
   { key: "truck", label: "Грузовик — доставка" },
   { key: "check", label: "Галочка — сертификат" },
   { key: "box", label: "Коробка — под проект" },
+  { key: "cash", label: "Наличные" },
+  { key: "payme", label: "Payme (логотип)" },
+  { key: "click", label: "Click (логотип)" },
+  { key: "uzcard", label: "Uzcard (логотип)" },
+  { key: "humo", label: "Humo (логотип)" },
 ];
+
+export const BRAND_LOGO_ICONS = new Set(["payme", "click", "uzcard", "humo"]);
+
+export function isBrandLogoIcon(icon?: string): boolean {
+  return Boolean(icon && BRAND_LOGO_ICONS.has(icon));
+}
 
 export function UspIcon({ icon, className }: { icon?: string; className?: string }) {
   const Icon = (icon && USP_ICONS[icon]) || CheckIcon;
