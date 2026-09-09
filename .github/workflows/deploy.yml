@@ -57,6 +57,27 @@ jobs:
           target: /opt/molly-uz
           overwrite: true
 
+      - name: Write server .env
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -eu
+            mkdir -p /opt/molly-uz
+            cat > /opt/molly-uz/.env <<'ENVEOF'
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            SESSION_SECRET=${{ secrets.SESSION_SECRET }}
+            TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
+            TELEGRAM_STAFF_CHAT_ID=${{ secrets.TELEGRAM_STAFF_CHAT_ID }}
+            TELEGRAM_WEBHOOK_SECRET=${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
+            NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }}
+            NEXT_PUBLIC_GA_MEASUREMENT_ID=${{ secrets.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
+            ENVEOF
+            chmod 600 /opt/molly-uz/.env
+            echo "wrote .env"
+
       - name: Pull and restart
         uses: appleboy/ssh-action@v1.2.0
         with:
