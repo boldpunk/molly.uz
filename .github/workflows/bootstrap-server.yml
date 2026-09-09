@@ -9,34 +9,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install sshpass
-        run: sudo apt-get update && sudo apt-get install -y sshpass
-
-      - name: Add deploy key and inspect server
+      - name: Inspect server over key-based SSH
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_PASSWORD: ${{ secrets.SSH_BOOTSTRAP_PASSWORD }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           set -eu
 
           missing=""
           if [ -z "$SSH_HOST" ]; then missing="$missing SSH_HOST"; fi
           if [ -z "$SSH_USER" ]; then missing="$missing SSH_USER"; fi
-          if [ -z "$SSH_PASSWORD" ]; then missing="$missing SSH_BOOTSTRAP_PASSWORD"; fi
+          if [ -z "$SSH_PRIVATE_KEY" ]; then missing="$missing SSH_PRIVATE_KEY"; fi
           if [ -n "$missing" ]; then
             echo "::error::These secrets are empty or unset:$missing"
             exit 1
           fi
-          # Lengths only (not values) — expected: SSH_HOST=13 ("46.62.141.176"),
-          # SSH_USER=4 ("root"), SSH_PASSWORD=20. A mismatch here (extra
-          # whitespace/newline in the secret) is the likely culprit if these
-          # don't match — GitHub redacts the actual secret text from logs
-          # regardless, so printing the values themselves wouldn't help.
-          echo "lengths -> SSH_HOST=${#SSH_HOST} SSH_USER=${#SSH_USER} SSH_PASSWORD=${#SSH_PASSWORD}"
 
           mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>&1
 
-          sshpass -p "$SSH_PASSWORD" ssh -vvv -o PreferredAuthentications=password -o PubkeyAuthentication=no \
-            "$SSH_USER@$SSH_HOST" 'sh -s' < scripts/bootstrap-remote.sh
+          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes "$SSH_USER@$SSH_HOST" 'sh -s' < scripts/bootstrap-remote.sh
