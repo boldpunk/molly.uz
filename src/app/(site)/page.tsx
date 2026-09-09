@@ -9,6 +9,14 @@ import type { PageBlock } from "@/db/schema";
 
 export const dynamic = "force-dynamic";
 
+const CATEGORY_IMAGES: Record<string, string> = {
+  "kuhonnaya-mebel": "/images/categories/kuhonnaya-mebel.jpg",
+  "myagkaya-mebel": "/images/categories/myagkaya-mebel.jpg",
+  "spalnye-garnitury": "/images/categories/spalnye-garnitury.jpg",
+  garderoby: "/images/categories/garderoby.jpg",
+  krovati: "/images/categories/krovati.jpg",
+};
+
 export async function generateMetadata() {
   const home = await getPageBySlug("home");
   return pageMetadata(
@@ -138,11 +146,20 @@ export default async function HomePage() {
                   </div>
                 ) : (
                   <div className="relative">
-                    <PlaceholderImage
-                      label={cat.name}
-                      aspect="aspect-square"
-                      className="transition group-hover:scale-[1.02]"
-                    />
+                    {CATEGORY_IMAGES[cat.slug] ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={CATEGORY_IMAGES[cat.slug]}
+                        alt={cat.name}
+                        className="aspect-square w-full rounded-xl object-cover transition group-hover:scale-[1.02]"
+                      />
+                    ) : (
+                      <PlaceholderImage
+                        label={cat.name}
+                        aspect="aspect-square"
+                        className="transition group-hover:scale-[1.02]"
+                      />
+                    )}
                     <span className="absolute left-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-sm">
                       <Icon className="h-[18px] w-[18px] text-navy/60" />
                     </span>
