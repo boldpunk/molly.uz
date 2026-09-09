@@ -1,0 +1,72 @@
+name: Deploy to production server
+
+on:
+  push:
+    branches: [phase-1-storefront]
+  workflow_dispatch: {}
+
+env:
+  IMAGE: ghcr.io/boldpunk/molly.uz
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }}
+            NEXT_PUBLIC_GA_MEASUREMENT_ID=${{ secrets.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
+          secrets: |
+            database_url=${{ secrets.DATABASE_URL }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy docker-compose.yml to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: docker-compose.yml
+          target: /opt/molly-uz
+          overwrite: true
+
+      - name: Pull and restart
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -eu
+            cd /opt/molly-uz
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+            docker compose pull
+            docker compose up -d
+            docker image prune -f
