@@ -3,6 +3,7 @@ import type { PageBlock } from "@/db/schema";
 import { PlaceholderImage } from "@/components/placeholder-image";
 import { BrandSlider } from "@/components/brand-slider";
 import { UspIcon, isBrandLogoIcon } from "@/components/usp-icons";
+import { ReviewsGrid } from "@/components/reviews-grid";
 
 export function PageBlocks({ blocks }: { blocks: PageBlock[] }) {
   return (
@@ -90,6 +91,12 @@ function PageBlockView({ block }: { block: PageBlock }) {
       return (
         <div className="mt-6 first:mt-0">
           <BrandSlider items={block.items} />
+        </div>
+      );
+    case "reviews":
+      return (
+        <div className="mt-6 first:mt-0">
+          <ReviewsGrid items={block.items} />
         </div>
       );
   }

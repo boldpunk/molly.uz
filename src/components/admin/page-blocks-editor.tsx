@@ -19,6 +19,7 @@ const BLOCK_LABELS: Record<AddableBlockType, string> = {
   stat_list: "Список показателей",
   cta: "Кнопка (CTA)",
   brand_list: "Список брендов",
+  reviews: "Отзывы",
 };
 
 function emptyBlock(type: AddableBlockType): EditableBlock {
@@ -34,6 +35,8 @@ function emptyBlock(type: AddableBlockType): EditableBlock {
     case "cta":
       return { type, label: "", href: "" };
     case "brand_list":
+      return { type, items: [] };
+    case "reviews":
       return { type, items: [] };
   }
 }
@@ -234,6 +237,13 @@ function BlockFields({
     case "brand_list":
       return (
         <BrandListFields
+          block={block}
+          onChange={(b) => onChange(b as EditableBlock)}
+        />
+      );
+    case "reviews":
+      return (
+        <ReviewsFields
           block={block}
           onChange={(b) => onChange(b as EditableBlock)}
         />
@@ -460,6 +470,88 @@ export function BrandListFields({
       >
         <PlusIcon className="h-3 w-3" />
         Добавить бренд
+      </button>
+    </div>
+  );
+}
+
+export function ReviewsFields({
+  block,
+  onChange,
+}: {
+  block: Extract<PageBlock, { type: "reviews" }>;
+  onChange: (b: PageBlock) => void;
+}) {
+  function updateItem(
+    i: number,
+    key: "name" | "role" | "rating" | "text",
+    value: string
+  ) {
+    const items = block.items.map((item, idx) =>
+      idx === i
+        ? { ...item, [key]: key === "rating" ? Number(value) || 0 : value }
+        : item
+    );
+    onChange({ ...block, items });
+  }
+  function addItem() {
+    onChange({
+      ...block,
+      items: [...block.items, { name: "", role: "", rating: 5, text: "" }],
+    });
+  }
+  function removeItem(i: number) {
+    onChange({ ...block, items: block.items.filter((_, idx) => idx !== i) });
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      {block.items.map((item, i) => (
+        <div key={i} className="rounded-md border border-navy/10 p-2.5">
+          <div className="flex items-center gap-2">
+            <input
+              value={item.name}
+              onChange={(e) => updateItem(i, "name", e.target.value)}
+              placeholder="Имя клиента"
+              className="input flex-1"
+            />
+            <input
+              value={item.role ?? ""}
+              onChange={(e) => updateItem(i, "role", e.target.value)}
+              placeholder="Например, купил кухню"
+              className="input flex-1"
+            />
+            <select
+              value={item.rating}
+              onChange={(e) => updateItem(i, "rating", e.target.value)}
+              className="input shrink-0 basis-24"
+            >
+              {[5, 4, 3, 2, 1].map((n) => (
+                <option key={n} value={n}>
+                  {"★".repeat(n)}
+                </option>
+              ))}
+            </select>
+            <IconButton onClick={() => removeItem(i)} label="Удалить">
+              <TrashIcon className="h-3.5 w-3.5" />
+            </IconButton>
+          </div>
+          <textarea
+            value={item.text}
+            onChange={(e) => updateItem(i, "text", e.target.value)}
+            placeholder="Текст отзыва"
+            rows={2}
+            className="input mt-2"
+          />
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={addItem}
+        className="inline-flex w-fit items-center gap-1 rounded-full bg-navy/5 px-2.5 py-1 text-xs font-medium text-navy/60 transition hover:bg-navy/10"
+      >
+        <PlusIcon className="h-3 w-3" />
+        Добавить отзыв
       </button>
     </div>
   );

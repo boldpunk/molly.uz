@@ -108,6 +108,10 @@ export type PageBlock =
   | { type: "stat_list"; items: { label: string; value: string; icon?: string }[] }
   | { type: "cta"; label: string; href: string }
   | { type: "brand_list"; items: { name: string; logoUrl: string }[] }
+  | {
+      type: "reviews";
+      items: { name: string; role?: string; rating: number; text: string }[];
+    }
   | { type: "instagram_strip"; urls: string[] }
   | {
       type: "contact_info";

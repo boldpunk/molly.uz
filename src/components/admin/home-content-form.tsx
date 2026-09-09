@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 import { FormSection } from "./form-section";
-import { BlockImageField, StatListFields } from "./page-blocks-editor";
+import {
+  BlockImageField,
+  StatListFields,
+  BrandListFields,
+  ReviewsFields,
+} from "./page-blocks-editor";
 import { GalleryUploadField } from "./gallery-upload-field";
 import { uploadPageImage } from "@/lib/upload-actions";
 import type { PageBlock } from "@/db/schema";
@@ -49,6 +54,12 @@ export function HomeContentForm({
   const [instagramUrls, setInstagramUrls] = useState(
     pick(initialBlocks, 7, "instagram_strip")?.urls ?? []
   );
+  const [partnerBrands, setPartnerBrands] = useState(
+    pick(initialBlocks, 8, "brand_list")?.items ?? []
+  );
+  const [reviews, setReviews] = useState(
+    pick(initialBlocks, 9, "reviews")?.items ?? []
+  );
 
   const blocks: PageBlock[] = [
     { type: "heading", text: heroHeading },
@@ -59,6 +70,8 @@ export function HomeContentForm({
     { type: "paragraph", text: brandParagraph },
     { type: "image", url: brandImage.url, alt: brandImage.alt },
     { type: "instagram_strip", urls: instagramUrls },
+    { type: "brand_list", items: partnerBrands },
+    { type: "reviews", items: reviews },
   ];
 
   return (
@@ -154,6 +167,30 @@ export function HomeContentForm({
           uploadAction={uploadPageImage}
           onChange={setInstagramUrls}
           hint="Квадратные фото для ленты — JPEG, PNG, WebP или AVIF, до 8 МБ каждое"
+        />
+      </FormSection>
+
+      <FormSection
+        title="Партнёры по фурнитуре"
+        description="Логотипы брендов фурнитуры — лента перед подвалом"
+      >
+        <BrandListFields
+          block={{ type: "brand_list", items: partnerBrands }}
+          onChange={(b) => {
+            if (b.type === "brand_list") setPartnerBrands(b.items);
+          }}
+        />
+      </FormSection>
+
+      <FormSection
+        title="Отзывы клиентов"
+        description="Показываются перед подвалом, только если добавлен хотя бы один отзыв — добавляйте только реальные отзывы клиентов"
+      >
+        <ReviewsFields
+          block={{ type: "reviews", items: reviews }}
+          onChange={(b) => {
+            if (b.type === "reviews") setReviews(b.items);
+          }}
         />
       </FormSection>
     </div>

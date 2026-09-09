@@ -7,6 +7,7 @@ import { UspIcon } from "@/components/usp-icons";
 import { Reveal } from "@/components/reveal";
 import { PhotoSlider } from "@/components/photo-slider";
 import { BrandSlider } from "@/components/brand-slider";
+import { ReviewsGrid } from "@/components/reviews-grid";
 import { pageMetadata } from "@/lib/seo";
 import { CATEGORY_IMAGES } from "@/lib/category-images";
 import type { PageBlock } from "@/db/schema";
@@ -92,6 +93,7 @@ export default async function HomePage() {
   const brandImage = pick(blocks, 6, "image");
   const instagramUrls = pick(blocks, 7, "instagram_strip")?.urls ?? [];
   const partnerBrands = pick(blocks, 8, "brand_list")?.items ?? [];
+  const reviews = pick(blocks, 9, "reviews")?.items ?? [];
 
   return (
     <div>
@@ -303,25 +305,63 @@ export default async function HomePage() {
 
       {/* Configurator teaser */}
       <section className="bg-white">
-        <Reveal className="mx-auto flex max-w-7xl flex-col items-center gap-6 rounded-2xl border border-navy/10 px-6 py-14 text-center">
-          <span className="rounded-full bg-accent/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent-dark">
-            Онлайн-конфигуратор
-          </span>
-          <h2 className="font-heading text-2xl font-bold text-navy">
-            Соберите свою кухню онлайн
-          </h2>
-          <p className="max-w-lg text-sm text-navy/70">
-            Выберите фурнитуру, цвет фасада и укажите ширину — увидите
-            примерную стоимость сразу. Точная цена подтверждается после
-            выезда замерщика.
-          </p>
-          <Link
-            href="/catalog/kuhonnaya-mebel/antro"
-            className="rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white hover:bg-navy/90"
-          >
-            Открыть конфигуратор
-          </Link>
-        </Reveal>
+        <div className="mx-auto max-w-7xl px-6 py-14">
+          <div className="grid items-center gap-8 overflow-hidden rounded-2xl border border-navy/10 md:grid-cols-2">
+            <Reveal className="p-8 sm:p-10">
+              <span className="rounded-full bg-accent/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent-dark">
+                Онлайн-конфигуратор
+              </span>
+              <h2 className="mt-4 font-heading text-2xl font-bold text-navy sm:text-3xl">
+                Соберите свою кухню онлайн
+              </h2>
+              <p className="mt-3 max-w-lg text-sm text-navy/70">
+                Выберите фурнитуру, цвет фасада и укажите ширину — увидите
+                примерную стоимость сразу. Точная цена подтверждается после
+                выезда замерщика.
+              </p>
+              <div className="mt-6 flex flex-col gap-3 border-y border-navy/10 py-5">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/20 text-accent-dark">
+                    <UspIcon icon="wrench" className="h-4 w-4" />
+                  </span>
+                  <span className="text-sm text-navy/70">
+                    Фурнитура HIGOLD / BLUM — на выбор
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/20 text-accent-dark">
+                    <UspIcon icon="palette" className="h-4 w-4" />
+                  </span>
+                  <span className="text-sm text-navy/70">
+                    Цвет фасада под ваш интерьер
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/20 text-accent-dark">
+                    <UspIcon icon="ruler" className="h-4 w-4" />
+                  </span>
+                  <span className="text-sm text-navy/70">
+                    Ширина без ограничений — под ваше помещение
+                  </span>
+                </div>
+              </div>
+              <Link
+                href="/catalog/kuhonnaya-mebel/antro"
+                className="mt-6 inline-block rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white transition hover:bg-navy/90 hover:shadow-lg hover:shadow-navy/20"
+              >
+                Открыть конфигуратор
+              </Link>
+            </Reveal>
+            <Reveal delay={120} className="h-full">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/images/gallery/kitchen-island.jpg"
+                alt="Кухонный остров с мраморной столешницей"
+                className="h-64 w-full object-cover md:h-full"
+              />
+            </Reveal>
+          </div>
+        </div>
       </section>
 
       {/* Gallery slider */}
@@ -429,6 +469,22 @@ export default async function HomePage() {
               <BrandSlider items={partnerBrands} />
             </div>
           </Reveal>
+        </section>
+      )}
+
+      {/* Reviews (prefooter) */}
+      {reviews.length > 0 && (
+        <section className="border-t border-navy/10 bg-navy/[0.015]">
+          <div className="mx-auto max-w-7xl px-6 py-14">
+            <Reveal>
+              <h2 className="font-heading text-2xl font-bold text-navy">
+                Отзывы клиентов
+              </h2>
+            </Reveal>
+            <Reveal delay={100} className="mt-6">
+              <ReviewsGrid items={reviews} />
+            </Reveal>
+          </div>
         </section>
       )}
     </div>
