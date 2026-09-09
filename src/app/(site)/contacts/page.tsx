@@ -43,8 +43,8 @@ export default async function ContactsPage() {
     phone: "+998 94 608 50 05",
     email: "info@molly.uz",
     hours: "Пн–Сб: 09:00–19:00 · Вс: выходной",
-    telegram: "mollyhome",
-    instagram: "mollyhome",
+    telegram: "mollyhomeuzbot",
+    instagram: "molly_home.uz",
     address: "Ташкент, ул. Янги Олмазор, 17/23",
     addressNote:
       "Работаем по всему Ташкенту и области — выезд замерщика бесплатный.",
@@ -98,7 +98,7 @@ export default async function ContactsPage() {
               )}
               {contact.instagram && (
                 <a
-                  href={`https://instagram.com/${contact.instagram}`}
+                  href={`https://www.instagram.com/${contact.instagram}`}
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center gap-2 font-medium text-navy hover:underline"
