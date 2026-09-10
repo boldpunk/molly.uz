@@ -1,0 +1,35 @@
+name: Install server dependencies (one-time)
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Docker and Nginx vhost over SSH
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          set -eu
+
+          missing=""
+          if [ -z "$SSH_HOST" ]; then missing="$missing SSH_HOST"; fi
+          if [ -z "$SSH_USER" ]; then missing="$missing SSH_USER"; fi
+          if [ -z "$SSH_PRIVATE_KEY" ]; then missing="$missing SSH_PRIVATE_KEY"; fi
+          if [ -n "$missing" ]; then
+            echo "::error::These secrets are empty or unset:$missing"
+            exit 1
+          fi
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>&1
+
+          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes "$SSH_USER@$SSH_HOST" 'sh -s' < scripts/server-setup.sh

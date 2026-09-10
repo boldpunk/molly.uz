@@ -1,0 +1,248 @@
+import { eq, and, ne, asc, desc, or, ilike } from "drizzle-orm";
+import { db } from "@/db";
+import {
+  categories as categoriesTable,
+  products as productsTable,
+  pages as pagesTable,
+  favourites as favouritesTable,
+} from "@/db/schema";
+import type { PageBlock } from "@/db/schema";
+import { Category, Product } from "./types";
+
+const DEFAULT_CONTACT_INFO: Extract<PageBlock, { type: "contact_info" }> = {
+  type: "contact_info",
+  phone: "+998 94 608 50 05",
+  email: "info@molly.uz",
+  hours: "Пн–Сб: 09:00–19:00 · Вс: выходной",
+  telegram: "mollyhomeuzbot",
+  instagram: "molly_home.uz",
+  address: "Ташкент, ул. Янги Олмазор, 17/23",
+  addressNote: "Работаем по всему Ташкенту и области — выезд замерщика бесплатный.",
+  mapLat: 41.350703,
+  mapLng: 69.245558,
+};
+
+export async function getContactInfo(): Promise<
+  Extract<PageBlock, { type: "contact_info" }>
+> {
+  const page = await getPageBySlug("contacts");
+  const block = page?.blocks?.[2];
+  return block?.type === "contact_info" ? block : DEFAULT_CONTACT_INFO;
+}
+
+export interface Page {
+  id: string;
+  slug: string;
+  title: string;
+  blocks: import("@/db/schema").PageBlock[];
+  metaTitle: string | null;
+  metaDescription: string | null;
+}
+
+export async function getPageBySlug(slug: string): Promise<Page | undefined> {
+  const rows = await db
+    .select()
+    .from(pagesTable)
+    .where(eq(pagesTable.slug, slug))
+    .limit(1);
+  return rows[0];
+}
+
+export async function getAllPages(): Promise<Page[]> {
+  return db.select().from(pagesTable).orderBy(asc(pagesTable.slug));
+}
+
+function toCategory(row: typeof categoriesTable.$inferSelect): Category {
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    isPlaceholder: row.isPlaceholder,
+    sortOrder: row.sortOrder,
+    filterKind: row.filterKind as Category["filterKind"],
+  };
+}
+
+function toProduct(
+  row: typeof productsTable.$inferSelect,
+  categorySlug: string
+): Product {
+  return {
+    id: row.id,
+    categoryId: row.categoryId,
+    categorySlug,
+    slug: row.slug,
+    name: row.name,
+    specLine: row.specLine,
+    description: row.description,
+    pricingMode: row.pricingMode,
+    pricePerMetre: row.pricePerMetre ?? undefined,
+    hardwareOptions: row.hardwareOptions ?? undefined,
+    colourOptions: row.colourOptions ?? undefined,
+    collection: row.collection ?? undefined,
+    attributes: row.attributes,
+    isSample: row.isSample,
+    isFeatured: row.isFeatured,
+    imageUrl: row.imageUrl ?? undefined,
+    galleryUrls: row.galleryUrls,
+    metaTitle: row.metaTitle ?? undefined,
+    metaDescription: row.metaDescription ?? undefined,
+  };
+}
+
+export async function getCategories(): Promise<Category[]> {
+  const rows = await db
+    .select()
+    .from(categoriesTable)
+    .orderBy(asc(categoriesTable.sortOrder));
+  return rows.map(toCategory);
+}
+
+export async function getCategoryBySlug(
+  slug: string
+): Promise<Category | undefined> {
+  const rows = await db
+    .select()
+    .from(categoriesTable)
+    .where(eq(categoriesTable.slug, slug))
+    .limit(1);
+  return rows[0] ? toCategory(rows[0]) : undefined;
+}
+
+export async function getProductsByCategory(
+  categoryId: string,
+  categorySlug: string
+): Promise<Product[]> {
+  const rows = await db
+    .select()
+    .from(productsTable)
+    .where(eq(productsTable.categoryId, categoryId))
+    .orderBy(asc(productsTable.name));
+  return rows.map((r) => toProduct(r, categorySlug));
+}
+
+export async function getProduct(
+  categorySlug: string,
+  productSlug: string
+): Promise<Product | undefined> {
+  const category = await getCategoryBySlug(categorySlug);
+  if (!category) return undefined;
+  const rows = await db
+    .select()
+    .from(productsTable)
+    .where(
+      and(
+        eq(productsTable.categoryId, category.id),
+        eq(productsTable.slug, productSlug)
+      )
+    )
+    .limit(1);
+  return rows[0] ? toProduct(rows[0], categorySlug) : undefined;
+}
+
+export async function getFeaturedProducts(): Promise<Product[]> {
+  const rows = await db
+    .select({
+      product: productsTable,
+      categorySlug: categoriesTable.slug,
+    })
+    .from(productsTable)
+    .innerJoin(
+      categoriesTable,
+      eq(productsTable.categoryId, categoriesTable.id)
+    )
+    .where(eq(productsTable.isFeatured, true));
+  return rows.map((r) => toProduct(r.product, r.categorySlug));
+}
+
+export async function getAllProducts(): Promise<Product[]> {
+  const rows = await db
+    .select({
+      product: productsTable,
+      categorySlug: categoriesTable.slug,
+    })
+    .from(productsTable)
+    .innerJoin(
+      categoriesTable,
+      eq(productsTable.categoryId, categoriesTable.id)
+    )
+    .orderBy(asc(categoriesTable.sortOrder), asc(productsTable.name));
+  return rows.map((r) => toProduct(r.product, r.categorySlug));
+}
+
+export async function searchProducts(query: string): Promise<Product[]> {
+  const term = query.trim();
+  if (!term) return [];
+  const pattern = `%${term}%`;
+  const rows = await db
+    .select({
+      product: productsTable,
+      categorySlug: categoriesTable.slug,
+    })
+    .from(productsTable)
+    .innerJoin(
+      categoriesTable,
+      eq(productsTable.categoryId, categoriesTable.id)
+    )
+    .where(
+      or(
+        ilike(productsTable.name, pattern),
+        ilike(productsTable.specLine, pattern),
+        ilike(productsTable.description, pattern),
+        ilike(productsTable.collection, pattern),
+        ilike(categoriesTable.name, pattern)
+      )
+    )
+    .orderBy(asc(productsTable.name));
+  return rows.map((r) => toProduct(r.product, r.categorySlug));
+}
+
+export async function getRelatedProducts(product: Product): Promise<Product[]> {
+  const rows = await db
+    .select()
+    .from(productsTable)
+    .where(
+      and(
+        eq(productsTable.categoryId, product.categoryId),
+        ne(productsTable.id, product.id)
+      )
+    )
+    .orderBy(asc(productsTable.name));
+  return rows.map((r) => toProduct(r, product.categorySlug));
+}
+
+export async function isFavourite(
+  customerId: string,
+  productId: string
+): Promise<boolean> {
+  const rows = await db
+    .select({ id: favouritesTable.id })
+    .from(favouritesTable)
+    .where(
+      and(
+        eq(favouritesTable.customerId, customerId),
+        eq(favouritesTable.productId, productId)
+      )
+    )
+    .limit(1);
+  return rows.length > 0;
+}
+
+export async function getFavouriteProducts(
+  customerId: string
+): Promise<Product[]> {
+  const rows = await db
+    .select({
+      product: productsTable,
+      categorySlug: categoriesTable.slug,
+    })
+    .from(favouritesTable)
+    .innerJoin(productsTable, eq(favouritesTable.productId, productsTable.id))
+    .innerJoin(
+      categoriesTable,
+      eq(productsTable.categoryId, categoriesTable.id)
+    )
+    .where(eq(favouritesTable.customerId, customerId))
+    .orderBy(desc(favouritesTable.createdAt));
+  return rows.map((r) => toProduct(r.product, r.categorySlug));
+}
