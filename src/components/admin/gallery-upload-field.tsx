@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRef, useState } from "react";
 import { uploadProductImage } from "@/lib/upload-actions";
 
@@ -63,8 +64,7 @@ export function GalleryUploadField({
             key={url}
             className="group relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-navy/10"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={url} alt="" className="h-full w-full object-cover" />
+            <Image src={url} alt="" fill sizes="80px" className="object-cover" />
             <button
               type="button"
               onClick={() => handleRemove(url)}

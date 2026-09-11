@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { getCurrentCustomer, getCustomerRequests } from "@/lib/customers";
 import { getFavouriteProducts } from "@/lib/data";
@@ -111,12 +112,15 @@ export default async function AccountPage({
                   className="group flex flex-col gap-2"
                 >
                   {p.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={p.imageUrl}
-                      alt={p.name}
-                      className="aspect-square w-full rounded-lg object-cover transition group-hover:scale-[1.01]"
-                    />
+                    <div className="relative aspect-square w-full overflow-hidden rounded-lg">
+                      <Image
+                        src={p.imageUrl}
+                        alt={p.name}
+                        fill
+                        sizes="(min-width: 768px) 25vw, 50vw"
+                        className="object-cover transition group-hover:scale-[1.01]"
+                      />
+                    </div>
                   ) : (
                     <PlaceholderImage label={p.name} aspect="aspect-square" />
                   )}

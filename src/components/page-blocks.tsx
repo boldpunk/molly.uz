@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { PageBlock } from "@/db/schema";
 import { PlaceholderImage } from "@/components/placeholder-image";
@@ -40,12 +41,15 @@ function PageBlockView({ block }: { block: PageBlock }) {
         );
       }
       return (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={block.url}
-          alt={block.alt}
-          className="mt-6 aspect-[16/9] w-full rounded-lg object-cover first:mt-0"
-        />
+        <div className="relative mt-6 aspect-[16/9] w-full overflow-hidden rounded-lg first:mt-0">
+          <Image
+            src={block.url}
+            alt={block.alt}
+            fill
+            sizes="100vw"
+            className="object-cover"
+          />
+        </div>
       );
     case "stat_list": {
       const colsClass =

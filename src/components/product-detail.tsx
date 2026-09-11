@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -162,14 +163,16 @@ export function ProductDetail({
             <button
               type="button"
               onClick={() => setLightboxOpen(true)}
-              className="aspect-[4/3] w-full cursor-zoom-in overflow-hidden rounded-lg bg-navy/[0.03]"
+              className="relative aspect-[4/3] w-full cursor-zoom-in overflow-hidden rounded-lg bg-navy/[0.03]"
               aria-label="Открыть фото на весь экран"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={activeImage}
                 alt={product.name}
-                className="h-full w-full object-contain"
+                fill
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                priority
+                className="object-contain"
               />
             </button>
           ) : (
@@ -189,18 +192,13 @@ export function ProductDetail({
                   key={url}
                   type="button"
                   onClick={() => setActiveImage(url)}
-                  className={`overflow-hidden rounded-lg border-2 transition ${
+                  className={`relative aspect-square w-full overflow-hidden rounded-lg border-2 transition ${
                     activeImage === url
                       ? "border-accent-dark"
                       : "border-transparent hover:border-navy/15"
                   }`}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={url}
-                    alt=""
-                    className="aspect-square w-full object-cover"
-                  />
+                  <Image src={url} alt="" fill sizes="25vw" className="object-cover" />
                 </button>
               ))}
             </div>

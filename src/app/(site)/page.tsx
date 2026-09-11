@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { getCategories, getFeaturedProducts, getPageBySlug } from "@/lib/data";
 import { ProductCard } from "@/components/product-card";
@@ -149,12 +150,16 @@ export default async function HomePage() {
           <Reveal delay={150}>
             <div className="relative">
               {heroImage?.url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={heroImage.url}
-                  alt={heroImage.alt}
-                  className="aspect-[4/3] w-full rounded-lg object-cover shadow-xl shadow-navy/10"
-                />
+                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg shadow-xl shadow-navy/10">
+                  <Image
+                    src={heroImage.url}
+                    alt={heroImage.alt}
+                    fill
+                    sizes="(min-width: 768px) 50vw, 100vw"
+                    priority
+                    className="object-cover"
+                  />
+                </div>
               ) : (
                 <PlaceholderImage
                   label={heroImage?.alt || "Молли Хоум — интерьер"}
@@ -223,12 +228,15 @@ export default async function HomePage() {
                 ) : (
                   <div className="relative">
                     {CATEGORY_IMAGES[cat.slug] ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={CATEGORY_IMAGES[cat.slug]}
-                        alt={cat.name}
-                        className="aspect-square w-full rounded-xl object-cover transition group-hover:scale-[1.02]"
-                      />
+                      <div className="relative aspect-square w-full overflow-hidden rounded-xl">
+                        <Image
+                          src={CATEGORY_IMAGES[cat.slug]}
+                          alt={cat.name}
+                          fill
+                          sizes="(min-width: 768px) 20vw, 50vw"
+                          className="object-cover transition group-hover:scale-[1.02]"
+                        />
+                      </div>
                     ) : (
                       <PlaceholderImage
                         label={cat.name}
@@ -354,12 +362,15 @@ export default async function HomePage() {
               </Link>
             </Reveal>
             <Reveal delay={120} className="h-full">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/images/gallery/kitchen-island.jpg"
-                alt="Кухонный остров с мраморной столешницей"
-                className="h-64 w-full object-cover md:h-full"
-              />
+              <div className="relative h-64 w-full md:h-full">
+                <Image
+                  src="/images/gallery/kitchen-island.jpg"
+                  alt="Кухонный остров с мраморной столешницей"
+                  fill
+                  sizes="(min-width: 768px) 50vw, 100vw"
+                  className="object-cover"
+                />
+              </div>
             </Reveal>
           </div>
         </div>
@@ -385,12 +396,15 @@ export default async function HomePage() {
       <section className="mx-auto grid max-w-7xl items-center gap-8 px-6 py-14 md:grid-cols-2">
         <Reveal>
         {brandImage?.url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={brandImage.url}
-            alt={brandImage.alt}
-            className="aspect-[4/3] w-full rounded-lg object-cover"
-          />
+          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg">
+            <Image
+              src={brandImage.url}
+              alt={brandImage.alt}
+              fill
+              sizes="(min-width: 768px) 50vw, 100vw"
+              className="object-cover"
+            />
+          </div>
         ) : (
           <PlaceholderImage
             label={brandImage?.alt || "О бренде Molly Home"}
@@ -439,13 +453,14 @@ export default async function HomePage() {
                   href="https://www.instagram.com/molly_home.uz"
                   target="_blank"
                   rel="noreferrer"
-                  className="block aspect-square overflow-hidden rounded-lg"
+                  className="relative block aspect-square overflow-hidden rounded-lg"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     src={url}
                     alt="Molly Home в Instagram"
-                    className="h-full w-full object-cover transition hover:scale-105"
+                    fill
+                    sizes="(min-width: 768px) 16vw, 33vw"
+                    className="object-cover transition hover:scale-105"
                   />
                 </a>
               ))
