@@ -6,6 +6,17 @@ import type { NextConfig } from "next";
 // set the VERCEL env var.
 const nextConfig: NextConfig = {
   output: process.env.VERCEL ? undefined : "standalone",
+  images: {
+    // Product photos uploaded before the self-host migration still live on
+    // Vercel Blob; new uploads are same-origin under /uploads and need no
+    // remote pattern.
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**.public.blob.vercel-storage.com",
+      },
+    ],
+  },
 };
 
 export default nextConfig;

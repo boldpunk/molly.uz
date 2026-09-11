@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 
@@ -43,12 +44,16 @@ export function ImageLightbox({
           />
         </svg>
       </button>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={src}
-        alt={alt}
-        className="relative max-h-full max-w-full rounded-lg object-contain"
-      />
+      <div className="relative h-full w-full">
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          sizes="100vw"
+          quality={90}
+          className="rounded-lg object-contain"
+        />
+      </div>
     </div>,
     document.body
   );

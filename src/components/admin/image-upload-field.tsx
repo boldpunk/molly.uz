@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRef, useState } from "react";
 import { uploadProductImage } from "@/lib/upload-actions";
 
@@ -47,10 +48,9 @@ export function ImageUploadField({
     <div className="flex flex-col gap-3">
       <input type="hidden" name={name} value={url} />
       <div className="flex items-center gap-4">
-        <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-navy/10 bg-navy/[0.02]">
+        <div className="relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-navy/10 bg-navy/[0.02]">
           {url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={url} alt="Фото товара" className="h-full w-full object-cover" />
+            <Image src={url} alt="Фото товара" fill sizes="96px" className="object-cover" />
           ) : (
             <span className="text-center text-[10px] text-navy/30">
               Нет фото

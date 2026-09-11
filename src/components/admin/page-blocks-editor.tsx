@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRef, useState } from "react";
 import { PlusIcon, TrashIcon } from "./icons";
 import { uploadPageImage } from "@/lib/upload-actions";
@@ -282,10 +283,9 @@ export function BlockImageField({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-4">
-        <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-navy/10 bg-navy/[0.02]">
+        <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-navy/10 bg-navy/[0.02]">
           {block.url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={block.url} alt="" className="h-full w-full object-cover" />
+            <Image src={block.url} alt="" fill sizes="80px" className="object-cover" />
           ) : (
             <span className="text-center text-[10px] text-navy/30">Нет фото</span>
           )}
@@ -406,10 +406,9 @@ function BrandLogoField({
   }
 
   return (
-    <label className="flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-md border border-navy/10 bg-navy/[0.02] hover:bg-navy/5">
+    <label className="relative flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-md border border-navy/10 bg-navy/[0.02] hover:bg-navy/5">
       {logoUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={logoUrl} alt="" className="h-full w-full object-contain p-1" />
+        <Image src={logoUrl} alt="" fill sizes="48px" className="object-contain p-1" />
       ) : (
         <span className="text-center text-[9px] leading-tight text-navy/30">
           {status === "uploading" ? "…" : "Лого"}

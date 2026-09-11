@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRef } from "react";
 
 function ChevronIcon({ direction }: { direction: "left" | "right" }) {
@@ -56,11 +57,12 @@ export function PhotoSlider({ items }: { items: SlidePhoto[] }) {
             key={i}
             className="group relative aspect-[4/3] w-[280px] shrink-0 overflow-hidden rounded-xl sm:w-[320px]"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={item.src}
               alt={item.caption}
-              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+              fill
+              sizes="320px"
+              className="object-cover transition duration-500 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-navy/60 via-navy/0 to-navy/0" />
             <span className="absolute bottom-3 left-4 text-sm font-medium text-white">

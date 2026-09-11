@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Product } from "@/lib/types";
 import { formatSum } from "@/lib/format";
@@ -12,12 +13,15 @@ export function ProductCard({ product }: { product: Product }) {
       className="group flex flex-col gap-3 rounded-xl border border-navy/10 bg-white p-3 transition hover:border-navy/30 hover:shadow-md"
     >
       {product.imageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={product.imageUrl}
-          alt={product.name}
-          className="aspect-[4/3] w-full rounded-lg object-cover transition group-hover:scale-[1.01]"
-        />
+        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg">
+          <Image
+            src={product.imageUrl}
+            alt={product.name}
+            fill
+            sizes="(min-width: 768px) 25vw, 50vw"
+            className="object-cover transition group-hover:scale-[1.01]"
+          />
+        </div>
       ) : (
         <PlaceholderImage
           label={product.name}

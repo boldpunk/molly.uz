@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRef } from "react";
 
 function ChevronIcon({ direction }: { direction: "left" | "right" }) {
@@ -50,12 +51,15 @@ export function BrandSlider({
             className="flex h-14 w-28 shrink-0 items-center justify-center sm:w-32"
           >
             {brand.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={brand.logoUrl}
-                alt={brand.name}
-                className="max-h-full max-w-full object-contain opacity-60 grayscale transition-all duration-300 ease-out hover:scale-110 hover:opacity-100 hover:grayscale-0 hover:drop-shadow-[0_4px_14px_rgba(124,154,104,0.45)]"
-              />
+              <div className="relative h-full w-full">
+                <Image
+                  src={brand.logoUrl}
+                  alt={brand.name}
+                  fill
+                  sizes="128px"
+                  className="object-contain opacity-60 grayscale transition-all duration-300 ease-out hover:scale-110 hover:opacity-100 hover:grayscale-0 hover:drop-shadow-[0_4px_14px_rgba(124,154,104,0.45)]"
+                />
+              </div>
             ) : (
               <span className="font-heading text-xl font-bold tracking-wide text-navy/35 transition-colors duration-300 hover:text-accent-dark">
                 {brand.name}
