@@ -22,3 +22,9 @@ docker volume inspect molly-uz_molly_uploads 2>/dev/null || docker volume ls | g
 
 echo "=== recent app logs (upload/error related) ==="
 docker compose logs web --tail=300 2>&1 | grep -iE "upload|EACCES|EROFS|ENOENT|Error" | tail -80 || echo "no matching log lines"
+
+echo "=== direct request to the app container, bypassing nginx ==="
+curl -sS -D - -o /dev/null "http://127.0.0.1:3010/uploads/products/queen-grey-4-5b3d2e79eb4279bf.png" || true
+
+echo "=== nginx config for molly.uz ==="
+cat /etc/nginx/sites-available/molly.conf || true
