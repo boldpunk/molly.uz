@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { isLocalUpload } from "@/lib/image-src";
 import Link from "next/link";
 import { getCurrentCustomer, getCustomerRequests } from "@/lib/customers";
 import { getFavouriteProducts } from "@/lib/data";
@@ -118,6 +119,7 @@ export default async function AccountPage({
                         alt={p.name}
                         fill
                         sizes="(min-width: 768px) 25vw, 50vw"
+                        unoptimized={isLocalUpload(p.imageUrl)}
                         className="object-cover transition group-hover:scale-[1.01]"
                       />
                     </div>

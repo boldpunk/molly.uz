@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { isLocalUpload } from "@/lib/image-src";
 import Link from "next/link";
 import { eq, asc } from "drizzle-orm";
 import { db } from "@/db";
@@ -82,6 +83,7 @@ export default async function AdminProductsPage() {
                                   alt=""
                                   fill
                                   sizes="36px"
+                                  unoptimized={isLocalUpload(p.imageUrl)}
                                   className="object-cover"
                                 />
                               </div>

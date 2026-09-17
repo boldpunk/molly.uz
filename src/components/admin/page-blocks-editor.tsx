@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRef, useState } from "react";
 import { PlusIcon, TrashIcon } from "./icons";
 import { uploadPageImage } from "@/lib/upload-actions";
+import { isLocalUpload } from "@/lib/image-src";
 import { USP_ICON_OPTIONS, UspIcon } from "@/components/usp-icons";
 import type { PageBlock } from "@/db/schema";
 
@@ -285,7 +286,14 @@ export function BlockImageField({
       <div className="flex items-center gap-4">
         <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-navy/10 bg-navy/[0.02]">
           {block.url ? (
-            <Image src={block.url} alt="" fill sizes="80px" className="object-cover" />
+            <Image
+              src={block.url}
+              alt=""
+              fill
+              sizes="80px"
+              unoptimized={isLocalUpload(block.url)}
+              className="object-cover"
+            />
           ) : (
             <span className="text-center text-[10px] text-navy/30">Нет фото</span>
           )}
@@ -408,7 +416,14 @@ function BrandLogoField({
   return (
     <label className="relative flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-md border border-navy/10 bg-navy/[0.02] hover:bg-navy/5">
       {logoUrl ? (
-        <Image src={logoUrl} alt="" fill sizes="48px" className="object-contain p-1" />
+        <Image
+          src={logoUrl}
+          alt=""
+          fill
+          sizes="48px"
+          unoptimized={isLocalUpload(logoUrl)}
+          className="object-contain p-1"
+        />
       ) : (
         <span className="text-center text-[9px] leading-tight text-navy/30">
           {status === "uploading" ? "…" : "Лого"}

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { isLocalUpload } from "@/lib/image-src";
 import Link from "next/link";
 import { getCategories, getFeaturedProducts, getPageBySlug } from "@/lib/data";
 import { ProductCard } from "@/components/product-card";
@@ -157,6 +158,7 @@ export default async function HomePage() {
                     fill
                     sizes="(min-width: 768px) 50vw, 100vw"
                     priority
+                    unoptimized={isLocalUpload(heroImage.url)}
                     className="object-cover"
                   />
                 </div>
@@ -402,6 +404,7 @@ export default async function HomePage() {
               alt={brandImage.alt}
               fill
               sizes="(min-width: 768px) 50vw, 100vw"
+              unoptimized={isLocalUpload(brandImage.url)}
               className="object-cover"
             />
           </div>
@@ -460,6 +463,7 @@ export default async function HomePage() {
                     alt="Molly Home в Instagram"
                     fill
                     sizes="(min-width: 768px) 16vw, 33vw"
+                    unoptimized={isLocalUpload(url)}
                     className="object-cover transition hover:scale-105"
                   />
                 </a>

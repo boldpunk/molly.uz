@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Category, Product } from "@/lib/types";
 import { formatSum } from "@/lib/format";
 import { applyDiscount, getDisplayPrice } from "@/lib/pricing";
+import { isLocalUpload } from "@/lib/image-src";
 import { PlaceholderImage } from "@/components/placeholder-image";
 import { ProductCard } from "@/components/product-card";
 import { useRequestList } from "@/lib/request-list-context";
@@ -200,6 +201,7 @@ export function ProductDetail({
                 fill
                 sizes="(min-width: 1024px) 50vw, 100vw"
                 priority
+                unoptimized={isLocalUpload(activeImage)}
                 className="object-contain"
               />
             </button>
@@ -226,7 +228,14 @@ export function ProductDetail({
                       : "border-transparent hover:border-navy/15"
                   }`}
                 >
-                  <Image src={url} alt="" fill sizes="25vw" className="object-cover" />
+                  <Image
+                    src={url}
+                    alt=""
+                    fill
+                    sizes="25vw"
+                    unoptimized={isLocalUpload(url)}
+                    className="object-cover"
+                  />
                 </button>
               ))}
             </div>

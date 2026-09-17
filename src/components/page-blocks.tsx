@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { PageBlock } from "@/db/schema";
+import { isLocalUpload } from "@/lib/image-src";
 import { PlaceholderImage } from "@/components/placeholder-image";
 import { BrandSlider } from "@/components/brand-slider";
 import { UspIcon, isBrandLogoIcon } from "@/components/usp-icons";
@@ -47,6 +48,7 @@ function PageBlockView({ block }: { block: PageBlock }) {
             alt={block.alt}
             fill
             sizes="100vw"
+            unoptimized={isLocalUpload(block.url)}
             className="object-cover"
           />
         </div>
