@@ -5,11 +5,16 @@ services:
     restart: unless-stopped
     env_file: .env
     volumes:
-      - molly_uploads:/app/public/uploads
+      # A host bind mount (not a named volume) so nginx can serve these
+      # files directly by path — see the /uploads/ location block in
+      # molly.conf. Files under /uploads/ must never be routed through
+      # the Next.js app: its App Router caches a page-level 404 for any
+      # path it doesn't recognize, and a freshly uploaded file requested
+      # a moment after upload (which is the normal case — the admin form
+      # redirects straight to a page showing it) would get that cached
+      # not-found response for up to 5 minutes even once the file exists.
+      - ./uploads:/app/public/uploads
     # Bound to localhost only — the host's own reverse proxy (nginx/caddy)
     # is what terminates TLS and faces the internet on 80/443.
     ports:
       - "127.0.0.1:3010:3000"
-
-volumes:
-  molly_uploads:

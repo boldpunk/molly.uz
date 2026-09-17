@@ -26,6 +26,18 @@ server {
     listen [::]:80;
     server_name molly.uz www.molly.uz;
 
+    # Served directly from disk, never proxied to the app: Next.js's App
+    # Router caches a page-level 404 for any path it doesn't recognize as
+    # a route, so a freshly uploaded file requested moments after upload
+    # (the normal case) could 404 for up to 5 minutes even once it exists.
+    # Filenames always include a random suffix, so a long cache is safe.
+    location /uploads/ {
+        alias /opt/molly-uz/uploads/;
+        access_log off;
+        expires 30d;
+        add_header Cache-Control "public, max-age=2592000, immutable";
+    }
+
     location / {
         proxy_pass http://127.0.0.1:3010;
         proxy_http_version 1.1;
