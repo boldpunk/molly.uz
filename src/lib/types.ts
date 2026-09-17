@@ -52,7 +52,7 @@ export interface Product {
 }
 
 export interface RequestItem {
-  productId: string;
+  productId?: string;
   productName: string;
   categorySlug: string;
   productSlug: string;
