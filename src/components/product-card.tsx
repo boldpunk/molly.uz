@@ -2,10 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { Product } from "@/lib/types";
 import { formatSum } from "@/lib/format";
+import { getDisplayPrice } from "@/lib/pricing";
 import { PlaceholderImage } from "./placeholder-image";
 
 export function ProductCard({ product }: { product: Product }) {
   const href = `/catalog/${product.categorySlug}/${product.slug}`;
+  const price = getDisplayPrice(product);
 
   return (
     <Link
@@ -21,6 +23,11 @@ export function ProductCard({ product }: { product: Product }) {
             sizes="(min-width: 768px) 25vw, 50vw"
             className="object-cover transition group-hover:scale-[1.01]"
           />
+          {price?.discountPercent && (
+            <span className="absolute left-2 top-2 rounded-full bg-red-600 px-2 py-1 text-xs font-bold text-white">
+              -{price.discountPercent}%
+            </span>
+          )}
         </div>
       ) : (
         <PlaceholderImage
@@ -33,14 +40,19 @@ export function ProductCard({ product }: { product: Product }) {
           {product.name}
         </h3>
         <p className="mt-0.5 text-xs text-navy/60">{product.specLine}</p>
-        {product.pricingMode === "per_metre" && product.hardwareOptions ? (
-          <p className="mt-2 text-sm font-semibold text-navy">
-            от{" "}
-            {formatSum(
-              Math.min(...product.hardwareOptions.map((h) => h.pricePerMetre))
-            )}{" "}
-            / пог.м
-          </p>
+        {price ? (
+          <div className="mt-2 flex items-baseline gap-2">
+            <p className="text-sm font-semibold text-navy">
+              {product.pricingMode === "per_metre" ? "от " : ""}
+              {formatSum(price.amount)}
+              {product.pricingMode === "per_metre" ? " / пог.м" : ""}
+            </p>
+            {price.originalAmount && (
+              <p className="text-xs text-navy/40 line-through">
+                {formatSum(price.originalAmount)}
+              </p>
+            )}
+          </div>
         ) : (
           <span className="mt-2 inline-block rounded-full bg-accent/15 px-2.5 py-1 text-xs font-semibold text-accent-dark">
             Цена по запросу

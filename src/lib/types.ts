@@ -10,6 +10,8 @@ export interface ColourOption {
   id: string;
   label: string;
   swatch: string;
+  imageUrl?: string;
+  galleryUrls?: string[];
 }
 
 export interface ProductAttribute {
@@ -35,7 +37,8 @@ export interface Product {
   specLine: string;
   description: string;
   pricingMode: PricingMode;
-  pricePerMetre?: number;
+  basePrice?: number;
+  discountPercent?: number;
   hardwareOptions?: HardwareOption[];
   colourOptions?: ColourOption[];
   collection?: string;

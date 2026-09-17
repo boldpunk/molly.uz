@@ -3,6 +3,7 @@ import { eq, asc } from "drizzle-orm";
 import { db } from "@/db";
 import { products as productsTable, categories as categoriesTable } from "@/db/schema";
 import { formatSum } from "@/lib/format";
+import { applyDiscount } from "@/lib/pricing";
 import { PageHeader } from "@/components/admin/page-header";
 import { ArrowRightIcon, ProductsIcon } from "@/components/admin/icons";
 
@@ -69,9 +70,19 @@ export default async function AdminProductsPage() {
                   <td className="px-5 py-3.5 text-navy/60">
                     {p.pricingMode === "per_metre" && p.hardwareOptions?.length
                       ? `от ${formatSum(
-                          Math.min(...p.hardwareOptions.map((h) => h.pricePerMetre))
+                          applyDiscount(
+                            Math.min(...p.hardwareOptions.map((h) => h.pricePerMetre)),
+                            p.discountPercent
+                          )
                         )} / пог.м`
-                      : "по запросу"}
+                      : p.pricingMode === "fixed" && p.basePrice
+                        ? formatSum(applyDiscount(p.basePrice, p.discountPercent))
+                        : "по запросу"}
+                    {p.discountPercent ? (
+                      <span className="ml-1.5 rounded-full bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">
+                        -{p.discountPercent}%
+                      </span>
+                    ) : null}
                   </td>
                   <td className="px-5 py-3.5 text-right">
                     <Link

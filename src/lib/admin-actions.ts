@@ -94,6 +94,9 @@ function productValuesFromFormData(formData: FormData) {
   );
   const galleryUrls = parseJsonArray<string>(formData.get("galleryUrlsJson"));
 
+  const basePriceRaw = String(formData.get("basePrice") ?? "").trim();
+  const discountPercentRaw = String(formData.get("discountPercent") ?? "").trim();
+
   return {
     categoryId: String(formData.get("categoryId")),
     slug: String(formData.get("slug")),
@@ -101,6 +104,8 @@ function productValuesFromFormData(formData: FormData) {
     specLine: String(formData.get("specLine") ?? ""),
     description: String(formData.get("description") ?? ""),
     pricingMode,
+    basePrice: basePriceRaw ? Math.round(Number(basePriceRaw)) : null,
+    discountPercent: discountPercentRaw ? Math.round(Number(discountPercentRaw)) : null,
     hardwareOptions: hardwareOptions.length > 0 ? hardwareOptions : null,
     colourOptions: colourOptions.length > 0 ? colourOptions : null,
     collection: String(formData.get("collection") ?? "") || null,
