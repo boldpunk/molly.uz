@@ -516,6 +516,14 @@ export function ProductDetail({
                 >
                   {submitted ? "Добавлено ✓" : "Узнать цену"}
                 </button>
+                {category.slug === "garderoby" && (
+                  <Link
+                    href="/configurator/shkaf"
+                    className="rounded-full border border-navy/20 px-6 py-3 text-sm font-semibold text-navy hover:bg-navy/5"
+                  >
+                    Открыть конфигуратор
+                  </Link>
+                )}
                 <a
                   href="https://t.me/mollyhomeuzbot"
                   target="_blank"
