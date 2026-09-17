@@ -40,12 +40,16 @@ async function main() {
       specLine: p.specLine,
       description: p.description,
       pricingMode: p.pricingMode,
+      basePrice: p.basePrice,
+      discountPercent: p.discountPercent,
       hardwareOptions: p.hardwareOptions,
       colourOptions: p.colourOptions,
       collection: p.collection,
       attributes: p.attributes,
       isSample: p.isSample ?? false,
       isFeatured: p.isFeatured ?? false,
+      imageUrl: p.imageUrl,
+      galleryUrls: p.galleryUrls ?? [],
     });
   }
 

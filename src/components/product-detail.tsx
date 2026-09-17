@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Category, Product } from "@/lib/types";
 import { formatSum } from "@/lib/format";
+import { applyDiscount, getDisplayPrice } from "@/lib/pricing";
 import { PlaceholderImage } from "@/components/placeholder-image";
 import { ProductCard } from "@/components/product-card";
 import { useRequestList } from "@/lib/request-list-context";
@@ -39,10 +40,6 @@ export function ProductDetail({
     product.hardwareOptions?.[0]?.id
   );
   const [colourId, setColourId] = useState(product.colourOptions?.[0]?.id);
-  const galleryImages = [product.imageUrl, ...product.galleryUrls].filter(
-    (url): url is string => Boolean(url)
-  );
-  const [activeImage, setActiveImage] = useState(galleryImages[0]);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [width, setWidth] = useState(DEFAULT_WIDTH);
   const [widthText, setWidthText] = useState(String(DEFAULT_WIDTH));
@@ -52,6 +49,7 @@ export function ProductDetail({
   const [submitted, setSubmitted] = useState(false);
 
   const isConfigurable = product.pricingMode === "per_metre";
+  const isFixedPrice = product.pricingMode === "fixed";
 
   const parsedWidthText = parseFloat(widthText);
   const widthBelowMin =
@@ -74,10 +72,34 @@ export function ProductDetail({
   const hardware = product.hardwareOptions?.find((h) => h.id === hardwareId);
   const colour = product.colourOptions?.find((c) => c.id === colourId);
 
+  // Colours with their own photoset (e.g. per-colour sofa renders) swap the
+  // gallery when selected; otherwise the gallery stays the product's own.
+  const galleryImages = useMemo(() => {
+    const fromColour = colour?.imageUrl
+      ? [colour.imageUrl, ...(colour.galleryUrls ?? [])]
+      : [product.imageUrl, ...product.galleryUrls];
+    return fromColour.filter((url): url is string => Boolean(url));
+  }, [colour, product.imageUrl, product.galleryUrls]);
+
+  const [activeImage, setActiveImage] = useState(galleryImages[0]);
+  const [galleryForActiveImage, setGalleryForActiveImage] = useState(galleryImages);
+  if (galleryForActiveImage !== galleryImages) {
+    setGalleryForActiveImage(galleryImages);
+    setActiveImage(galleryImages[0]);
+  }
+
+  const displayPrice = getDisplayPrice(product);
+
   const estimate = useMemo(() => {
     if (!isConfigurable || !hardware) return null;
+    return Math.round(
+      applyDiscount(hardware.pricePerMetre, product.discountPercent) * width
+    );
+  }, [isConfigurable, hardware, width, product.discountPercent]);
+  const originalEstimate = useMemo(() => {
+    if (!isConfigurable || !hardware || !product.discountPercent) return null;
     return Math.round(hardware.pricePerMetre * width);
-  }, [isConfigurable, hardware, width]);
+  }, [isConfigurable, hardware, width, product.discountPercent]);
 
   function handleAddToRequest() {
     addItem({
@@ -90,13 +112,19 @@ export function ProductDetail({
       colourId: colour?.id,
       colourLabel: colour?.label,
       widthMetres: isConfigurable ? width : undefined,
-      estimate: estimate ?? undefined,
+      estimate: (isConfigurable ? estimate : displayPrice?.amount) ?? undefined,
     });
     setSubmitted(true);
     setTimeout(() => router.push("/request"), 600);
   }
 
   const productUrl = `${SITE_URL}/catalog/${category.slug}/${product.slug}`;
+  const offerPrice =
+    isConfigurable && hardware
+      ? applyDiscount(hardware.pricePerMetre, product.discountPercent)
+      : isFixedPrice
+        ? displayPrice?.amount
+        : undefined;
   const productJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -106,11 +134,11 @@ export function ProductDetail({
     url: productUrl,
     brand: { "@type": "Brand", name: "Molly Home" },
     offers:
-      isConfigurable && hardware
+      offerPrice !== undefined
         ? {
             "@type": "Offer",
             priceCurrency: "UZS",
-            price: hardware.pricePerMetre,
+            price: offerPrice,
             availability: "https://schema.org/InStock",
             url: productUrl,
           }
@@ -332,12 +360,26 @@ export function ProductDetail({
               </div>
 
               <div className="border-t border-navy/10 pt-4">
-                <p className="text-xs uppercase tracking-wide text-navy/50">
-                  Примерная стоимость
-                </p>
-                <p className="font-heading text-2xl font-bold text-navy">
-                  {estimate !== null ? formatSum(estimate) : "—"}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs uppercase tracking-wide text-navy/50">
+                    Примерная стоимость
+                  </p>
+                  {product.discountPercent && (
+                    <span className="rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                      -{product.discountPercent}%
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <p className="font-heading text-2xl font-bold text-navy">
+                    {estimate !== null ? formatSum(estimate) : "—"}
+                  </p>
+                  {originalEstimate !== null && (
+                    <p className="text-sm text-navy/40 line-through">
+                      {formatSum(originalEstimate)}
+                    </p>
+                  )}
+                </div>
                 <p className="mt-1 text-xs text-navy/50">
                   Это предварительная оценка. Точная цена подтверждается
                   после выезда замерщика.
@@ -352,6 +394,76 @@ export function ProductDetail({
                 >
                   {submitted ? "Добавлено ✓" : "Оставить заявку на замер"}
                 </button>
+                <FavouriteButton
+                  productId={product.id}
+                  productPath={`/catalog/${category.slug}/${product.slug}`}
+                  initialIsFavourite={initialIsFavourite}
+                />
+              </div>
+            </div>
+          ) : isFixedPrice ? (
+            <div className="mt-6 flex flex-col gap-4 rounded-xl border border-navy/10 bg-white p-5">
+              {product.colourOptions && product.colourOptions.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-navy">Цвет</h3>
+                  <div className="mt-2 flex gap-2">
+                    {product.colourOptions.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => setColourId(c.id)}
+                        title={c.label}
+                        style={{ backgroundColor: c.swatch }}
+                        className={`h-9 w-9 rounded-full border-2 transition ${
+                          colourId === c.id
+                            ? "border-accent-dark"
+                            : "border-transparent hover:border-navy/20"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  {colour && (
+                    <p className="mt-1 text-xs text-navy/50">{colour.label}</p>
+                  )}
+                </div>
+              )}
+
+              <div>
+                <div className="flex items-center gap-2">
+                  {displayPrice?.discountPercent && (
+                    <span className="rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                      -{displayPrice.discountPercent}%
+                    </span>
+                  )}
+                </div>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <p className="font-heading text-2xl font-bold text-navy">
+                    {displayPrice ? formatSum(displayPrice.amount) : "—"}
+                  </p>
+                  {displayPrice?.originalAmount && (
+                    <p className="text-sm text-navy/40 line-through">
+                      {formatSum(displayPrice.originalAmount)}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={handleAddToRequest}
+                  className="rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white hover:bg-navy/90"
+                >
+                  {submitted ? "Добавлено ✓" : "Оставить заявку"}
+                </button>
+                <a
+                  href="https://t.me/mollyhomeuzbot"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-full border border-navy/20 px-6 py-3 text-sm font-semibold text-navy hover:bg-navy/5"
+                >
+                  Написать в Telegram
+                </a>
                 <FavouriteButton
                   productId={product.id}
                   productPath={`/catalog/${category.slug}/${product.slug}`}

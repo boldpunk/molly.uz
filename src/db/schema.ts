@@ -69,6 +69,8 @@ export interface ColourOption {
   id: string;
   label: string;
   swatch: string;
+  imageUrl?: string;
+  galleryUrls?: string[];
 }
 
 export interface ProductAttribute {
@@ -88,7 +90,13 @@ export const products = pgTable("products", {
   imageUrl: text("image_url"),
   galleryUrls: jsonb("gallery_urls").$type<string[]>().notNull().default([]),
   pricingMode: pricingModeEnum("pricing_mode").notNull().default("on_request"),
-  pricePerMetre: integer("price_per_metre"),
+  // Base price for "fixed"-mode products (ready-made items sold at one
+  // price, e.g. sofas) — pre-discount. Column kept as price_per_metre at
+  // the DB level (was added but never wired up under that name) to avoid
+  // an interactive drizzle-kit rename prompt; base_price is just its
+  // application-facing name.
+  basePrice: integer("price_per_metre"),
+  discountPercent: integer("discount_percent"),
   hardwareOptions: jsonb("hardware_options").$type<HardwareOption[]>(),
   colourOptions: jsonb("colour_options").$type<ColourOption[]>(),
   collection: text("collection"),

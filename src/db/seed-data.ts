@@ -13,7 +13,7 @@ export const categories = [
     key: "soft",
     name: "Мягкая мебель",
     slug: "myagkaya-mebel",
-    isPlaceholder: true,
+    isPlaceholder: false,
     sortOrder: 2,
     filterKind: "none" as const,
   },
@@ -84,12 +84,16 @@ interface SeedProduct {
   specLine: string;
   description: string;
   pricingMode: "per_metre" | "fixed" | "on_request";
+  basePrice?: number;
+  discountPercent?: number;
   hardwareOptions?: HardwareOption[];
   colourOptions?: ColourOption[];
   collection?: string;
   attributes: ProductAttribute[];
   isSample?: boolean;
   isFeatured?: boolean;
+  imageUrl?: string;
+  galleryUrls?: string[];
 }
 
 const kitchenProducts: SeedProduct[] = kitchenModels.map((model, i) => ({
@@ -178,4 +182,112 @@ const savageProducts: SeedProduct[] = [
   },
 ];
 
-export const products: SeedProduct[] = [...kitchenProducts, ...savageProducts];
+const softFurnitureProducts: SeedProduct[] = [
+  {
+    categoryKey: "soft",
+    slug: "queen",
+    name: "Диван Queen",
+    specLine: "Угловой модульный диван · готовое решение",
+    description:
+      "Угловой модульный диван Queen — просторная посадочная зона с мягкими подушками и плавной геометрией. Обивка — приятная на ощупь ткань букле. Доступен в трёх цветах.",
+    pricingMode: "fixed",
+    basePrice: 10_800_000,
+    attributes: [
+      { key: "Тип", value: "Угловой модульный диван" },
+      { key: "Обивка", value: "Ткань букле" },
+      { key: "Цвета", value: "Бежевый, Синий, Серый" },
+    ],
+    isSample: false,
+    isFeatured: true,
+    imageUrl: "/images/products/queen/beige-1.png",
+    galleryUrls: [
+      "/images/products/queen/beige-2.png",
+      "/images/products/queen/beige-3.png",
+      "/images/products/queen/beige-4.png",
+    ],
+    colourOptions: [
+      {
+        id: "beige",
+        label: "Бежевый",
+        swatch: "#a4886a",
+        imageUrl: "/images/products/queen/beige-1.png",
+        galleryUrls: [
+          "/images/products/queen/beige-2.png",
+          "/images/products/queen/beige-3.png",
+          "/images/products/queen/beige-4.png",
+        ],
+      },
+      {
+        id: "blue",
+        label: "Синий",
+        swatch: "#48566b",
+        imageUrl: "/images/products/queen/blue-1.png",
+        galleryUrls: [
+          "/images/products/queen/blue-2.png",
+          "/images/products/queen/blue-3.png",
+          "/images/products/queen/blue-4.png",
+        ],
+      },
+      {
+        id: "grey",
+        label: "Серый",
+        swatch: "#767676",
+        imageUrl: "/images/products/queen/grey-1.png",
+        galleryUrls: [
+          "/images/products/queen/grey-2.png",
+          "/images/products/queen/grey-3.png",
+          "/images/products/queen/grey-4.png",
+        ],
+      },
+    ],
+  },
+  {
+    categoryKey: "soft",
+    slug: "piola",
+    name: "Диван Piola",
+    specLine: "Мягкий диван с округлым каркасом · готовое решение",
+    description:
+      "Диван Piola — мягкий диван с округлым каркасом и контрастными подушками. К коллекции также относятся кресла Piola в тех же цветах — уточняйте у менеджера.",
+    pricingMode: "fixed",
+    basePrice: 12_800_000,
+    attributes: [
+      { key: "Тип", value: "Диван с мягким округлым каркасом" },
+      { key: "Обивка", value: "Ткань букле, контрастные подушки" },
+      { key: "Цвета", value: "Терракотовый, Бежевый" },
+    ],
+    isSample: false,
+    isFeatured: true,
+    imageUrl: "/images/products/piola/terracotta-2.png",
+    galleryUrls: [
+      "/images/products/piola/terracotta-1.png",
+      "/images/products/piola/terracotta-3.png",
+      "/images/products/piola/terracotta-4.png",
+    ],
+    colourOptions: [
+      {
+        id: "terracotta",
+        label: "Терракотовый",
+        swatch: "#b3532c",
+        imageUrl: "/images/products/piola/terracotta-2.png",
+        galleryUrls: [
+          "/images/products/piola/terracotta-1.png",
+          "/images/products/piola/terracotta-3.png",
+          "/images/products/piola/terracotta-4.png",
+        ],
+      },
+      {
+        id: "beige",
+        label: "Бежевый",
+        swatch: "#c9bba0",
+        imageUrl: "/images/products/piola/beige-1.png",
+        galleryUrls: ["/images/products/piola/beige-2.png"],
+      },
+    ],
+  },
+];
+
+export const products: SeedProduct[] = [
+  ...kitchenProducts,
+  ...savageProducts,
+  ...softFurnitureProducts,
+];

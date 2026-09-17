@@ -120,6 +120,36 @@ export function ProductForm({
           </Field>
         </div>
 
+        <div className="grid grid-cols-2 gap-4">
+          {pricingMode === "fixed" && (
+            <Field label="Цена">
+              <input
+                name="basePrice"
+                type="number"
+                min={0}
+                step={1}
+                defaultValue={product?.basePrice}
+                className="input"
+                placeholder="10800000"
+              />
+            </Field>
+          )}
+          {(pricingMode === "fixed" || pricingMode === "per_metre") && (
+            <Field label="Скидка, % (необязательно)">
+              <input
+                name="discountPercent"
+                type="number"
+                min={1}
+                max={99}
+                step={1}
+                defaultValue={product?.discountPercent}
+                className="input"
+                placeholder="30"
+              />
+            </Field>
+          )}
+        </div>
+
         <div className="flex flex-col gap-2 sm:flex-row sm:gap-6">
           <label className="flex items-center gap-2 text-sm text-navy">
             <input

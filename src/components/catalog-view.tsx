@@ -6,14 +6,12 @@ import { Category, Product } from "@/lib/types";
 import { ProductCard } from "@/components/product-card";
 import { getCategoryIcon, FurnitureIcon } from "@/components/icons/categories";
 import { getHardwareBrandBadge } from "@/lib/hardware-brands";
+import { getDisplayPrice } from "@/lib/pricing";
 
 type SortKey = "default" | "price-asc" | "price-desc" | "name";
 
 function priceOf(p: Product) {
-  if (p.pricingMode === "per_metre" && p.hardwareOptions) {
-    return Math.min(...p.hardwareOptions.map((h) => h.pricePerMetre));
-  }
-  return null;
+  return getDisplayPrice(p)?.amount ?? null;
 }
 
 export function CatalogView({
