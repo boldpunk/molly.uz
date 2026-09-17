@@ -1,6 +1,6 @@
 "use server";
 
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, ne } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
@@ -120,6 +120,23 @@ function productValuesFromFormData(formData: FormData) {
   };
 }
 
+// Duplicated products can share imageUrl/galleryUrls with the product they
+// were copied from, so a file must only be deleted once nothing else
+// references it — otherwise editing/deleting one duplicate would knock out
+// the photo on another product still using the same file.
+async function deleteProductImageIfUnreferenced(url: string, excludeProductId: string) {
+  const rows = await db
+    .select({ imageUrl: products.imageUrl, galleryUrls: products.galleryUrls })
+    .from(products)
+    .where(ne(products.id, excludeProductId));
+  const stillReferenced = rows.some(
+    (r) => r.imageUrl === url || r.galleryUrls.includes(url)
+  );
+  if (!stillReferenced) {
+    await deleteProductImage(url);
+  }
+}
+
 export async function createProduct(formData: FormData) {
   await db.insert(products).values(productValuesFromFormData(formData));
   revalidatePath("/admin/products");
@@ -138,12 +155,61 @@ export async function updateProduct(id: string, formData: FormData) {
   await db.update(products).set(values).where(eq(products.id, id));
 
   if (existing?.imageUrl && existing.imageUrl !== values.imageUrl) {
-    await deleteProductImage(existing.imageUrl);
+    await deleteProductImageIfUnreferenced(existing.imageUrl, id);
   }
   const removedGalleryUrls = (existing?.galleryUrls ?? []).filter(
     (url) => !values.galleryUrls.includes(url)
   );
-  await Promise.all(removedGalleryUrls.map((url) => deleteProductImage(url)));
+  await Promise.all(
+    removedGalleryUrls.map((url) => deleteProductImageIfUnreferenced(url, id))
+  );
+
+  revalidatePath("/admin/products");
+  revalidatePath("/", "layout");
+  redirect("/admin/products");
+}
+
+export async function duplicateProduct(id: string) {
+  const [existing] = await db
+    .select()
+    .from(products)
+    .where(eq(products.id, id))
+    .limit(1);
+  if (!existing) throw new Error("Товар не найден");
+
+  let slug = `${existing.slug}-copy`;
+  let suffix = 2;
+  while (
+    (
+      await db
+        .select({ id: products.id })
+        .from(products)
+        .where(and(eq(products.categoryId, existing.categoryId), eq(products.slug, slug)))
+        .limit(1)
+    ).length > 0
+  ) {
+    slug = `${existing.slug}-copy-${suffix}`;
+    suffix += 1;
+  }
+
+  await db.insert(products).values({
+    categoryId: existing.categoryId,
+    slug,
+    name: `${existing.name} (копия)`,
+    specLine: existing.specLine,
+    description: existing.description,
+    imageUrl: existing.imageUrl,
+    galleryUrls: existing.galleryUrls,
+    pricingMode: existing.pricingMode,
+    basePrice: existing.basePrice,
+    discountPercent: existing.discountPercent,
+    hardwareOptions: existing.hardwareOptions,
+    colourOptions: existing.colourOptions,
+    collection: existing.collection,
+    attributes: existing.attributes,
+    isSample: existing.isSample,
+    isFeatured: false,
+  });
 
   revalidatePath("/admin/products");
   revalidatePath("/", "layout");
@@ -160,10 +226,10 @@ export async function deleteProduct(id: string) {
   await db.delete(products).where(eq(products.id, id));
 
   if (existing?.imageUrl) {
-    await deleteProductImage(existing.imageUrl);
+    await deleteProductImageIfUnreferenced(existing.imageUrl, id);
   }
   await Promise.all(
-    (existing?.galleryUrls ?? []).map((url) => deleteProductImage(url))
+    (existing?.galleryUrls ?? []).map((url) => deleteProductImageIfUnreferenced(url, id))
   );
 
   revalidatePath("/admin/products");
