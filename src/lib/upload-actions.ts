@@ -3,9 +3,13 @@
 import { randomBytes } from "node:crypto";
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import sharp from "sharp";
 
 const MAX_SIZE_BYTES = 8 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
+// Uploaded photos are served as-is (see src/lib/image-src.ts — they skip
+// Next's image optimizer), so cap the dimensions here instead.
+const MAX_DIMENSION = 2400;
 
 // Uploaded files live under public/uploads so Next.js serves them the same
 // way it serves any other file in public/ — no separate static route needed.
@@ -41,8 +45,17 @@ async function uploadImage(
 
   const dir = path.join(/* turbopackIgnore: true */ UPLOAD_DIR, folder);
   await mkdir(dir, { recursive: true });
-  const bytes = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(/* turbopackIgnore: true */ dir, filename), bytes);
+  const original = Buffer.from(await file.arrayBuffer());
+  const resized = await sharp(original)
+    .rotate()
+    .resize({
+      width: MAX_DIMENSION,
+      height: MAX_DIMENSION,
+      fit: "inside",
+      withoutEnlargement: true,
+    })
+    .toBuffer();
+  await writeFile(path.join(/* turbopackIgnore: true */ dir, filename), resized);
 
   return { url: `/uploads/${folder}/${filename}` };
 }

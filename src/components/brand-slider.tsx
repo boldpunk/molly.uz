@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useRef } from "react";
+import { isLocalUpload } from "@/lib/image-src";
 
 function ChevronIcon({ direction }: { direction: "left" | "right" }) {
   return (
@@ -57,6 +58,7 @@ export function BrandSlider({
                   alt={brand.name}
                   fill
                   sizes="128px"
+                  unoptimized={isLocalUpload(brand.logoUrl)}
                   className="object-contain opacity-60 grayscale transition-all duration-300 ease-out hover:scale-110 hover:opacity-100 hover:grayscale-0 hover:drop-shadow-[0_4px_14px_rgba(124,154,104,0.45)]"
                 />
               </div>

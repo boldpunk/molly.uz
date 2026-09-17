@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { uploadProductImage } from "@/lib/upload-actions";
+import { isLocalUpload } from "@/lib/image-src";
 
 type UploadResult = { url: string } | { error: string };
 
@@ -64,7 +65,14 @@ export function GalleryUploadField({
             key={url}
             className="group relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-navy/10"
           >
-            <Image src={url} alt="" fill sizes="80px" className="object-cover" />
+            <Image
+              src={url}
+              alt=""
+              fill
+              sizes="80px"
+              unoptimized={isLocalUpload(url)}
+              className="object-cover"
+            />
             <button
               type="button"
               onClick={() => handleRemove(url)}

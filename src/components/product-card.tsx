@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Product } from "@/lib/types";
 import { formatSum } from "@/lib/format";
 import { getDisplayPrice } from "@/lib/pricing";
+import { isLocalUpload } from "@/lib/image-src";
 import { PlaceholderImage } from "./placeholder-image";
 
 export function ProductCard({ product }: { product: Product }) {
@@ -21,6 +22,7 @@ export function ProductCard({ product }: { product: Product }) {
             alt={product.name}
             fill
             sizes="(min-width: 768px) 25vw, 50vw"
+            unoptimized={isLocalUpload(product.imageUrl)}
             className="object-cover transition group-hover:scale-[1.01]"
           />
           {price?.discountPercent && (

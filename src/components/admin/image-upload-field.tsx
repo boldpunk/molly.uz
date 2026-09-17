@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { uploadProductImage } from "@/lib/upload-actions";
+import { isLocalUpload } from "@/lib/image-src";
 
 export function ImageUploadField({
   name,
@@ -50,7 +51,14 @@ export function ImageUploadField({
       <div className="flex items-center gap-4">
         <div className="relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-navy/10 bg-navy/[0.02]">
           {url ? (
-            <Image src={url} alt="Фото товара" fill sizes="96px" className="object-cover" />
+            <Image
+              src={url}
+              alt="Фото товара"
+              fill
+              sizes="96px"
+              unoptimized={isLocalUpload(url)}
+              className="object-cover"
+            />
           ) : (
             <span className="text-center text-[10px] text-navy/30">
               Нет фото
