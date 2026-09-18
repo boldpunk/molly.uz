@@ -37,19 +37,24 @@ export function GalleryUploadField({
     setStatus("uploading");
     setError(null);
 
-    const formData = new FormData();
-    formData.set("file", file);
-    const result = await uploadAction(formData);
+    try {
+      const formData = new FormData();
+      formData.set("file", file);
+      const result = await uploadAction(formData);
 
-    if ("error" in result) {
+      if ("error" in result) {
+        setStatus("error");
+        setError(result.error);
+        return;
+      }
+
+      updateUrls([...urls, result.url]);
+      setStatus("idle");
+      if (inputRef.current) inputRef.current.value = "";
+    } catch {
       setStatus("error");
-      setError(result.error);
-      return;
+      setError("Не удалось загрузить файл. Попробуйте фото меньшего размера.");
     }
-
-    updateUrls([...urls, result.url]);
-    setStatus("idle");
-    if (inputRef.current) inputRef.current.value = "";
   }
 
   function handleRemove(url: string) {
