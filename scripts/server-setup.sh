@@ -26,6 +26,13 @@ server {
     listen [::]:80;
     server_name molly.uz www.molly.uz;
 
+    # Nginx defaults to 1MB, which real product/hero photos routinely
+    # exceed — a rejected upload here throws inside the client's server
+    # action call instead of returning the app's own size-limit error, so
+    # it looked like the upload button just hung forever. Matches (with
+    # headroom) the 8MB cap enforced in src/lib/upload-actions.ts.
+    client_max_body_size 10m;
+
     # Served directly from disk, never proxied to the app: Next.js's App
     # Router caches a page-level 404 for any path it doesn't recognize as
     # a route, so a freshly uploaded file requested moments after upload
