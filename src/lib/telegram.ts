@@ -66,6 +66,21 @@ export async function sendTelegramMessage(
   });
 }
 
+export async function sendTelegramPhoto(
+  chatId: string | number,
+  photoUrl: string,
+  caption: string,
+  options?: { replyMarkup?: Record<string, unknown> }
+): Promise<TelegramApiMessage | null> {
+  return callTelegramApi<TelegramApiMessage>("sendPhoto", {
+    chat_id: chatId,
+    photo: photoUrl,
+    caption,
+    parse_mode: "HTML",
+    reply_markup: options?.replyMarkup,
+  });
+}
+
 export async function answerCallbackQuery(
   callbackQueryId: string,
   text?: string
@@ -110,7 +125,7 @@ export const REQUEST_CONTACT_KEYBOARD = {
 
 export const CLIENT_LINKS_KEYBOARD = {
   inline_keyboard: [
-    [{ text: "🛋 Каталог мебели", url: `${SITE_URL}/catalog` }],
+    [{ text: "🛋 Каталог мебели", callback_data: "cat:root" }],
     [{ text: "📝 Оставить заявку на замер", url: `${SITE_URL}/request` }],
     [{ text: "📞 Контакты", url: `${SITE_URL}/contacts` }],
   ],
@@ -301,7 +316,7 @@ export function buildOrderCardKeyboard(
   return { inline_keyboard: [] };
 }
 
-function escapeHtml(value: string): string {
+export function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
