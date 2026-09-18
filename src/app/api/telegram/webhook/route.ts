@@ -10,6 +10,7 @@ import {
   getStaffChatId,
   REQUEST_CONTACT_KEYBOARD,
   CLIENT_LINKS_KEYBOARD,
+  ROLE_KEYBOARD,
 } from "@/lib/telegram";
 import {
   handleOrderAction,
@@ -86,8 +87,31 @@ function displayName(from: TelegramFrom): string {
 }
 
 async function handleCallbackQuery(cq: TelegramCallbackQuery) {
-  const staffChatId = getStaffChatId();
   const chatId = cq.message?.chat.id;
+
+  // Explicit role choice from the private-chat onboarding prompt — replaces
+  // the old "just type your name" flow, which silently registered ANY
+  // free-text reply (even from a customer) as staff, via registerEmployeeName.
+  if (chatId && (cq.data === "role:client" || cq.data === "role:manager")) {
+    await answerCallbackQuery(cq.id);
+    if (cq.data === "role:client") {
+      await clearPendingRegistration(chatId);
+      await sendTelegramMessage(
+        chatId,
+        "Поделитесь номером телефона кнопкой ниже — я найду вашу заявку и покажу статус.",
+        { replyMarkup: REQUEST_CONTACT_KEYBOARD }
+      );
+    } else {
+      await sendTelegramMessage(
+        chatId,
+        "Напишите своё имя ответным сообщением — так вас будут узнавать в истории заказов."
+      );
+      await setPendingRegistration(chatId);
+    }
+    return;
+  }
+
+  const staffChatId = getStaffChatId();
   if (!chatId || !staffChatId || String(chatId) !== String(staffChatId)) {
     await answerCallbackQuery(cq.id);
     return;
@@ -195,17 +219,13 @@ async function handleMessage(message: TelegramMessage) {
       return;
     }
 
+    await clearPendingRegistration(chatId);
     await sendTelegramMessage(
       chatId,
       "👋 Добро пожаловать в Molly Home — мебельную фабрику в Ташкенте!\n\nЧерез этого бота вы можете:\n✅ Проверить статус своего заказа в любое время\n🔔 Получать уведомления, когда статус меняется — не нужно звонить и уточнять\n🛋 Посмотреть каталог и оставить заявку на замер",
       { replyMarkup: CLIENT_LINKS_KEYBOARD }
     );
-    await sendTelegramMessage(
-      chatId,
-      "Если вы <b>менеджер</b> — напишите своё имя в ответ, чтобы вас узнавали в истории заказов.\nЕсли вы <b>клиент</b> — поделитесь номером телефона кнопкой ниже, чтобы проверить статус заявки.",
-      { replyMarkup: REQUEST_CONTACT_KEYBOARD }
-    );
-    await setPendingRegistration(chatId);
+    await sendTelegramMessage(chatId, "Кто вы?", { replyMarkup: ROLE_KEYBOARD });
     return;
   }
 
@@ -220,12 +240,12 @@ async function handleMessage(message: TelegramMessage) {
       );
       return;
     }
-    await sendTelegramMessage(
-      chatId,
-      "👋 Если вы менеджер — напишите своё имя. Если вы клиент — поделитесь номером телефона кнопкой ниже.",
-      { replyMarkup: REQUEST_CONTACT_KEYBOARD }
-    );
-    await setPendingRegistration(chatId);
+    // No pending manager-name prompt active — never guess. Free text alone
+    // used to silently register the sender as staff; now it just re-shows
+    // the explicit role choice.
+    await sendTelegramMessage(chatId, "Уточните, пожалуйста, кто вы:", {
+      replyMarkup: ROLE_KEYBOARD,
+    });
   }
 }
 

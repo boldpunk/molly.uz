@@ -116,6 +116,18 @@ export const CLIENT_LINKS_KEYBOARD = {
   ],
 };
 
+// An explicit choice, not free text — anyone who typed anything used to be
+// silently registered as staff (registerEmployeeName), which meant a random
+// customer could end up in the employee DM broadcast for every new order.
+export const ROLE_KEYBOARD = {
+  inline_keyboard: [
+    [
+      { text: "🙋 Я клиент", callback_data: "role:client" },
+      { text: "👔 Я менеджер", callback_data: "role:manager" },
+    ],
+  ],
+};
+
 export async function setBotProfile(): Promise<void> {
   await callTelegramApi("setMyShortDescription", {
     short_description:
