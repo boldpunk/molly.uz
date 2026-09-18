@@ -6,6 +6,7 @@ import { submitRequest } from "@/lib/actions";
 import { getHardwareBrandBadge } from "@/lib/hardware-brands";
 import { PhoneInput } from "@/components/phone-input";
 import { buildStatusDeepLink } from "@/lib/telegram-links";
+import type { WardrobeFinish } from "@/lib/data";
 
 const MODULE_WIDTH_MM = 366;
 const HEIGHT_MM = 2300;
@@ -26,12 +27,14 @@ const FILLINGS = [
   },
 ] as const;
 
-const FINISHES = [
-  { id: "white", label: "Белый матовый", ral: "RAL 9010", swatch: "#f2efe9" },
-  { id: "grey", label: "Серый шёлк", ral: "RAL 7044", swatch: "#bdb8ac" },
-  { id: "beige", label: "Бежевый", ral: "RAL 1019", swatch: "#a99578" },
-  { id: "black", label: "Чёрный матовый", ral: "RAL 9005", swatch: "#1c1c1c" },
-] as const;
+// Used only if the admin hasn't configured any finishes yet (see
+// /admin/configurator) — keeps the page from ever showing an empty state.
+const DEFAULT_FINISHES: WardrobeFinish[] = [
+  { id: "default-white", label: "Белый матовый", ral: "RAL 9010", hex: "#f2efe9" },
+  { id: "default-grey", label: "Серый шёлк", ral: "RAL 7044", hex: "#bdb8ac" },
+  { id: "default-beige", label: "Бежевый", ral: "RAL 1019", hex: "#a99578" },
+  { id: "default-black", label: "Чёрный матовый", ral: "RAL 9005", hex: "#1c1c1c" },
+];
 
 const HANDLE_TYPES = [
   { id: "накладные", label: "Накладные" },
@@ -51,18 +54,187 @@ function isDarkColour(hex: string): boolean {
   return (r * 299 + g * 587 + b * 114) / 1000 < 140;
 }
 
+type FillingId = (typeof FILLINGS)[number]["id"];
+type InteriorKind = "rod" | "shelves" | "drawers" | "cubbies";
+
+// Deterministic per-module layout so the interior view visibly differs
+// between the two filling types, matching their descriptions: classic is
+// mostly hanging space with drawers at the sides; the system variant is
+// mostly shelving with a dedicated accessories module.
+function moduleInteriorKind(i: number, modules: number, filling: FillingId): InteriorKind {
+  const mid = Math.floor(modules / 2);
+  if (filling === "classic") {
+    if (i === 0 || i === modules - 1) return "drawers";
+    if (i === mid) return "rod";
+    return "shelves";
+  }
+  if (i === modules - 1) return "drawers";
+  if (i === 0) return "cubbies";
+  if (i === mid) return "rod";
+  return "shelves";
+}
+
+function InteriorShelves({
+  x,
+  doorW,
+  h,
+  count,
+  lineColour,
+}: {
+  x: number;
+  doorW: number;
+  h: number;
+  count: number;
+  lineColour: string;
+}) {
+  return (
+    <>
+      {Array.from({ length: count }).map((_, i) => {
+        const y = ((i + 1) / (count + 1)) * h;
+        return (
+          <rect key={i} x={x + 4} y={y} width={doorW - 8} height={2.5} fill={lineColour} />
+        );
+      })}
+    </>
+  );
+}
+
+function InteriorRod({
+  x,
+  doorW,
+  h,
+  lineColour,
+  withShelfBelow,
+}: {
+  x: number;
+  doorW: number;
+  h: number;
+  lineColour: string;
+  withShelfBelow: boolean;
+}) {
+  const rodY = h * 0.16;
+  const hangerXs = [x + doorW * 0.3, x + doorW * 0.5, x + doorW * 0.7];
+  return (
+    <>
+      <rect x={x + 4} y={rodY} width={doorW - 8} height={2.5} fill={lineColour} />
+      {hangerXs.map((hx, i) => (
+        <path
+          key={i}
+          d={`M ${hx} ${rodY + 2} l -3 8 l 6 0 Z`}
+          fill={lineColour}
+        />
+      ))}
+      {withShelfBelow && (
+        <InteriorShelves x={x} doorW={doorW} h={h - h * 0.55} count={2} lineColour={lineColour} />
+      )}
+    </>
+  );
+}
+
+function InteriorDrawers({
+  x,
+  doorW,
+  h,
+  lineColour,
+  dark,
+}: {
+  x: number;
+  doorW: number;
+  h: number;
+  lineColour: string;
+  dark: boolean;
+}) {
+  const count = 3;
+  const gap = 4;
+  const drawerH = (h - gap * (count + 1)) / count;
+  return (
+    <>
+      {Array.from({ length: count }).map((_, i) => {
+        const y = gap + i * (drawerH + gap);
+        return (
+          <g key={i}>
+            <rect
+              x={x + 4}
+              y={y}
+              width={doorW - 8}
+              height={drawerH}
+              rx={2}
+              fill="none"
+              stroke={lineColour}
+              strokeWidth={1.5}
+            />
+            <rect
+              x={x + doorW / 2 - 6}
+              y={y + drawerH / 2 - 1}
+              width={12}
+              height={2}
+              rx={1}
+              fill={dark ? "#e8e2d6" : "#0b1a2d"}
+              opacity={0.6}
+            />
+          </g>
+        );
+      })}
+    </>
+  );
+}
+
+function InteriorCubbies({
+  x,
+  doorW,
+  h,
+  lineColour,
+}: {
+  x: number;
+  doorW: number;
+  h: number;
+  lineColour: string;
+}) {
+  const bandH = h * 0.4;
+  const cols = 2;
+  const rows = 2;
+  const cellW = (doorW - 8) / cols;
+  const cellH = bandH / rows;
+  return (
+    <>
+      {Array.from({ length: cols * rows }).map((_, i) => {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        return (
+          <rect
+            key={i}
+            x={x + 4 + col * cellW + 1.5}
+            y={row * cellH + 1.5}
+            width={cellW - 3}
+            height={cellH - 3}
+            rx={1.5}
+            fill="none"
+            stroke={lineColour}
+            strokeWidth={1.5}
+          />
+        );
+      })}
+      <InteriorShelves x={x} doorW={doorW} h={h - bandH} count={2} lineColour={lineColour} />
+    </>
+  );
+}
+
 function WardrobeDiagram({
   modules,
   finishSwatch,
   mirror,
   rails,
   handleType,
+  filling,
+  view,
 }: {
   modules: number;
   finishSwatch: string;
   mirror: boolean;
   rails: boolean;
   handleType: string;
+  filling: FillingId;
+  view: "facade" | "interior";
 }) {
   const doorW = 64;
   const gap = 3;
@@ -70,6 +242,7 @@ function WardrobeDiagram({
   const h = 220;
   const dark = isDarkColour(finishSwatch);
   const lineColour = dark ? "rgba(255,255,255,0.18)" : "rgba(11,26,45,0.12)";
+  const interiorLine = "rgba(11,26,45,0.35)";
 
   return (
     <svg
@@ -79,12 +252,57 @@ function WardrobeDiagram({
       style={{ width: "100%", height: "auto" }}
       className="mx-auto block max-w-md"
       role="img"
-      aria-label={`Схема шкафа из ${modules} модулей`}
+      aria-label={`Схема шкафа из ${modules} модулей — ${
+        view === "facade" ? "фасад" : "наполнение"
+      }`}
     >
       <rect x={0} y={h + 4} width={totalW} height={6} rx={2} fill="#0b1a2d" opacity={0.15} />
       {Array.from({ length: modules }).map((_, i) => {
         const x = i * (doorW + gap);
         const handleOnLeft = i % 2 === 0;
+
+        if (view === "interior") {
+          const kind = moduleInteriorKind(i, modules, filling);
+          return (
+            <g key={i}>
+              <rect
+                x={x}
+                y={0}
+                width={doorW}
+                height={h}
+                rx={3}
+                fill="#faf8f4"
+                stroke="rgba(11,26,45,0.25)"
+                strokeWidth={1}
+              />
+              {kind === "shelves" && (
+                <InteriorShelves
+                  x={x}
+                  doorW={doorW}
+                  h={h}
+                  count={filling === "system" ? 5 : 3}
+                  lineColour={interiorLine}
+                />
+              )}
+              {kind === "rod" && (
+                <InteriorRod
+                  x={x}
+                  doorW={doorW}
+                  h={h}
+                  lineColour={interiorLine}
+                  withShelfBelow={filling === "system"}
+                />
+              )}
+              {kind === "drawers" && (
+                <InteriorDrawers x={x} doorW={doorW} h={h} lineColour={interiorLine} dark={false} />
+              )}
+              {kind === "cubbies" && (
+                <InteriorCubbies x={x} doorW={doorW} h={h} lineColour={interiorLine} />
+              )}
+            </g>
+          );
+        }
+
         return (
           <g key={i}>
             <rect
@@ -150,14 +368,19 @@ export function WardrobeConfigurator({
   productId,
   productSlug,
   categorySlug,
+  finishes,
 }: {
   productId?: string;
   productSlug: string;
   categorySlug: string;
+  finishes: WardrobeFinish[];
 }) {
+  const finishOptions = finishes.length > 0 ? finishes : DEFAULT_FINISHES;
+
   const [modules, setModules] = useState(6);
   const [filling, setFilling] = useState<(typeof FILLINGS)[number]["id"]>("classic");
-  const [finish, setFinish] = useState<(typeof FINISHES)[number]["id"]>("white");
+  const [finish, setFinish] = useState<string>(finishOptions[0].id);
+  const [view, setView] = useState<"facade" | "interior">("facade");
   const [mirror, setMirror] = useState(false);
   const [rails, setRails] = useState(false);
   const [handleType, setHandleType] =
@@ -175,7 +398,8 @@ export function WardrobeConfigurator({
   const widthM = widthMm / 1000;
 
   const fillingLabel = FILLINGS.find((f) => f.id === filling)!.label;
-  const finishOption = FINISHES.find((f) => f.id === finish)!;
+  const finishOption =
+    finishOptions.find((f) => f.id === finish) ?? finishOptions[0];
   const handleLabel = HANDLE_TYPES.find((h) => h.id === handleType)!.label;
   const hingeLabel = HINGES.find((h) => h.id === hinge)!.label;
 
@@ -186,7 +410,7 @@ export function WardrobeConfigurator({
       `Глубина: ${DEPTH_MM} мм (стандарт)`,
       `Количество фасадов: ${modules} шт.`,
       `Наполнение: ${fillingLabel}`,
-      `Отделка фасада: ${finishOption.label} (${finishOption.ral})`,
+      `Отделка фасада: ${finishOption.label}${finishOption.ral ? ` (${finishOption.ral})` : ""}`,
       `Зеркало на фасадах: ${mirror ? "да" : "нет"}`,
       `Декоративные рейки: ${rails ? "да" : "нет"}`,
       `Ручки: ${handleLabel}`,
@@ -349,12 +573,12 @@ export function WardrobeConfigurator({
               Отделка фасада
             </h3>
             <div className="mt-2 flex flex-wrap gap-2">
-              {FINISHES.map((f) => (
+              {finishOptions.map((f) => (
                 <button
                   key={f.id}
                   type="button"
                   onClick={() => setFinish(f.id)}
-                  title={`${f.label} (${f.ral})`}
+                  title={f.ral ? `${f.label} (${f.ral})` : f.label}
                   className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition ${
                     finish === f.id
                       ? "border-accent-dark bg-accent/10 font-medium text-navy"
@@ -363,7 +587,7 @@ export function WardrobeConfigurator({
                 >
                   <span
                     className="h-5 w-5 shrink-0 rounded-full border border-navy/10"
-                    style={{ backgroundColor: f.swatch }}
+                    style={{ backgroundColor: f.hex }}
                   />
                   {f.label}
                 </button>
@@ -458,20 +682,46 @@ export function WardrobeConfigurator({
         <div className="flex flex-col gap-6 lg:sticky lg:top-6 lg:self-start">
           <div className="overflow-hidden rounded-xl border border-navy/10 bg-white shadow-sm">
             <div className="border-b border-navy/10 bg-navy/[0.03] p-5 pb-6">
-              <p className="text-xs uppercase tracking-wide text-navy/50">
-                Схема шкафа
-              </p>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs uppercase tracking-wide text-navy/50">
+                  Схема шкафа
+                </p>
+                <div className="flex rounded-full border border-navy/15 bg-white p-0.5 text-xs font-medium">
+                  <button
+                    type="button"
+                    onClick={() => setView("facade")}
+                    className={`rounded-full px-3 py-1 transition ${
+                      view === "facade" ? "bg-navy text-white" : "text-navy/60 hover:text-navy"
+                    }`}
+                  >
+                    Фасад
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setView("interior")}
+                    className={`rounded-full px-3 py-1 transition ${
+                      view === "interior" ? "bg-navy text-white" : "text-navy/60 hover:text-navy"
+                    }`}
+                  >
+                    Внутри
+                  </button>
+                </div>
+              </div>
               <div className="mt-3">
                 <WardrobeDiagram
                   modules={modules}
-                  finishSwatch={finishOption.swatch}
+                  finishSwatch={finishOption.hex}
                   mirror={mirror}
                   rails={rails}
                   handleType={handleType}
+                  filling={filling}
+                  view={view}
                 />
               </div>
               <p className="mt-2 text-center text-xs text-navy/40">
-                Схематичный вид — реальные пропорции уточняются на замере
+                {view === "facade"
+                  ? "Схематичный вид фасада — реальные пропорции уточняются на замере"
+                  : "Схематичное наполнение по выбранному типу — точную раскладку секций подтвердит замерщик"}
               </p>
             </div>
             <div className="p-5">

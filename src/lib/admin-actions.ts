@@ -4,7 +4,14 @@ import { and, eq, inArray, ne } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { categories, products, requests, requestItems, pages } from "@/db/schema";
+import {
+  categories,
+  products,
+  requests,
+  requestItems,
+  pages,
+  wardrobeFinishes,
+} from "@/db/schema";
 import type {
   HardwareOption,
   ColourOption,
@@ -356,4 +363,37 @@ export async function updatePage(slug: string, formData: FormData) {
   revalidatePath(`/admin/pages/${slug}`);
   revalidatePath(slug === "home" ? "/" : `/${slug}`);
   redirect("/admin/pages");
+}
+
+// --- Wardrobe configurator -------------------------------------------------
+
+interface WardrobeFinishInput {
+  label: string;
+  ral: string;
+  hex: string;
+}
+
+export async function updateWardrobeFinishes(formData: FormData) {
+  const items = parseJsonArray<WardrobeFinishInput>(
+    formData.get("finishesJson")
+  )
+    .map((f) => ({
+      label: f.label.trim(),
+      ral: f.ral.trim() || null,
+      hex: f.hex.trim(),
+    }))
+    .filter((f) => f.label && /^#[0-9a-fA-F]{6}$/.test(f.hex));
+
+  // neon-http has no transaction support, so this is delete-then-insert
+  // rather than atomic — acceptable for a low-traffic admin config list.
+  await db.delete(wardrobeFinishes);
+  if (items.length > 0) {
+    await db.insert(wardrobeFinishes).values(
+      items.map((f, i) => ({ ...f, sortOrder: i }))
+    );
+  }
+
+  revalidatePath("/admin/configurator");
+  revalidatePath("/configurator/shkaf");
+  redirect("/admin/configurator");
 }

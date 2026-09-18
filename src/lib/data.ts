@@ -5,6 +5,7 @@ import {
   products as productsTable,
   pages as pagesTable,
   favourites as favouritesTable,
+  wardrobeFinishes as wardrobeFinishesTable,
 } from "@/db/schema";
 import type { PageBlock } from "@/db/schema";
 import { Category, Product } from "./types";
@@ -97,6 +98,21 @@ export async function getCategories(): Promise<Category[]> {
     .from(categoriesTable)
     .orderBy(asc(categoriesTable.sortOrder));
   return rows.map(toCategory);
+}
+
+export interface WardrobeFinish {
+  id: string;
+  label: string;
+  ral: string | null;
+  hex: string;
+}
+
+export async function getWardrobeFinishes(): Promise<WardrobeFinish[]> {
+  const rows = await db
+    .select()
+    .from(wardrobeFinishesTable)
+    .orderBy(asc(wardrobeFinishesTable.sortOrder));
+  return rows.map((r) => ({ id: r.id, label: r.label, ral: r.ral, hex: r.hex }));
 }
 
 export async function getCategoryBySlug(
