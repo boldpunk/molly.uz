@@ -1,6 +1,5 @@
 "use server";
 
-import { after } from "next/server";
 import { db } from "@/db";
 import { requests, requestItems } from "@/db/schema";
 import { RequestItem } from "./types";
@@ -45,11 +44,20 @@ export async function submitRequest(
     );
   }
 
-  after(() =>
-    postNewOrderCard(request.id).catch((err) =>
-      console.error("Telegram order card post failed", err)
-    )
-  );
+  // Deliberately awaited, not fired via next/server's after(): this app runs
+  // as a persistent self-hosted Node server (Dockerfile CMD is `node
+  // server.js` from the standalone build), not `next start` or a serverless
+  // platform — the self-hosting docs only confirm after() support under
+  // `next start`. Every request created since the last deploy that used
+  // after() here ended up with no telegram_message_id and zero related log
+  // output, meaning the callback silently never ran under this runtime.
+  // Awaiting directly costs a few hundred ms on submit but guarantees the
+  // card is posted (or the failure is actually logged) before we return.
+  try {
+    await postNewOrderCard(request.id);
+  } catch (err) {
+    console.error("Telegram order card post failed", err);
+  }
 
   return { id: request.id, orderNumber };
 }
