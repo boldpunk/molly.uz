@@ -178,6 +178,14 @@ export interface StatusHistoryEntry {
   note?: string;
 }
 
+// Telegram can redeliver the same update (retries after a slow/failed
+// response, or after a webhook outage) — this dedupes so a redelivered
+// update never re-runs handleMessage/handleCallbackQuery a second time.
+export const telegramProcessedUpdates = pgTable("telegram_processed_updates", {
+  updateId: text("update_id").primaryKey(),
+  processedAt: timestamp("processed_at").notNull().defaultNow(),
+});
+
 export const wardrobeFinishes = pgTable("wardrobe_finishes", {
   id: uuid("id").primaryKey().defaultRandom(),
   label: text("label").notNull(),

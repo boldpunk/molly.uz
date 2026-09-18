@@ -145,6 +145,7 @@ export async function setBotProfile(): Promise<void> {
 // --- Order funnel (§3 of the MebelFlow bot spec) ------------------------
 
 type ActionCode =
+  | "claim"
   | "contact"
   | "unreach"
   | "meet"
@@ -215,7 +216,8 @@ export function parseCallbackData(
 export function buildOrderCardKeyboard(
   requestId: string,
   status: RequestStatus,
-  hasDeposit: boolean
+  hasDeposit: boolean,
+  isUnassigned: boolean = false
 ): { inline_keyboard: { text: string; callback_data: string }[][] } {
   const cb = (action: ActionCode) => buildCallbackData(requestId, action);
   const backRow = () => [{ text: "🔄 Изменить статус", callback_data: cb("back") }];
@@ -224,6 +226,13 @@ export function buildOrderCardKeyboard(
     case "new_order":
       return {
         inline_keyboard: [
+          // Two managers can otherwise both tap an action on the same
+          // stale card at once — this makes the first claim win instead
+          // of silently overwriting assigned_manager_id (see "claim" in
+          // handleOrderAction, guarded by a conditional UPDATE).
+          ...(isUnassigned
+            ? [[{ text: "🙋 Взять в работу", callback_data: cb("claim") }]]
+            : []),
           [
             { text: "☎️ Связался", callback_data: cb("contact") },
             { text: "❌ Не дозвонился", callback_data: cb("unreach") },

@@ -390,6 +390,7 @@ export function WardrobeConfigurator({
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [comment, setComment] = useState("");
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "submitting" | "submitted" | "error">(
     "idle"
   );
@@ -423,7 +424,7 @@ export function WardrobeConfigurator({
     e.preventDefault();
     setStatus("submitting");
     try {
-      await submitRequest(name, phone, comment, [
+      const result = await submitRequest(name, phone, comment, [
         {
           productId,
           productName: "Шкаф — по конфигуратору",
@@ -434,6 +435,7 @@ export function WardrobeConfigurator({
           widthMetres: widthM,
         },
       ]);
+      setOrderNumber(result.orderNumber);
       setStatus("submitted");
     } catch {
       setStatus("error");
@@ -446,6 +448,11 @@ export function WardrobeConfigurator({
         <h1 className="font-heading text-2xl font-bold text-navy">
           Заявка отправлена
         </h1>
+        {orderNumber && (
+          <p className="mt-2 text-sm font-medium text-navy/50">
+            Номер заявки: <span className="text-navy">{orderNumber}</span>
+          </p>
+        )}
         <p className="mt-3 text-sm text-navy/70">
           Спасибо{name ? `, ${name}` : ""}! Мы получили конфигурацию шкафа и
           свяжемся с вами по телефону {phone}, чтобы уточнить детали, стоимость
