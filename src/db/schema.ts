@@ -202,6 +202,18 @@ export const employees = pgTable("employees", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// A private-chat "Я менеджер" tap used to insert straight into `employees`,
+// which also grants the new-order DM broadcast — meaning anyone could grant
+// themselves access to every future customer's name/phone/comment. This
+// queues the request instead; only an administrator moving it into
+// `employees` from /admin/employees grants that access.
+export const employeeApplications = pgTable("employee_applications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  telegramId: text("telegram_id").notNull().unique(),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const orderCounters = pgTable("order_counters", {
   year: integer("year").primaryKey(),
   seq: integer("seq").notNull().default(0),

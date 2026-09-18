@@ -16,6 +16,7 @@ import {
   PageIcon,
   UsersIcon,
   ConfiguratorIcon,
+  EmployeesIcon,
 } from "./icons";
 
 function BackIcon({ className = "h-[18px] w-[18px]" }: { className?: string }) {
@@ -69,6 +70,12 @@ const NAV_ITEMS = [
     label: "Конфигуратор",
     icon: ConfiguratorIcon,
     roles: ["administrator", "catalog_manager"],
+  },
+  {
+    href: "/admin/employees",
+    label: "Сотрудники",
+    icon: EmployeesIcon,
+    roles: ["administrator"],
   },
   {
     href: "/admin/users",

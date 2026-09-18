@@ -17,7 +17,7 @@ import {
   startAmountPrompt,
   startNewOrderPrompt,
   resolveReplyPrompt,
-  registerEmployeeName,
+  submitEmployeeApplication,
   setPendingRegistration,
   consumePendingRegistration,
   clearPendingRegistration,
@@ -250,10 +250,12 @@ async function handleMessage(message: TelegramMessage) {
     const wasPending = await consumePendingRegistration(chatId);
     if (wasPending) {
       const name = message.text.trim().slice(0, 80);
-      await registerEmployeeName(String(message.from.id), name);
+      const outcome = await submitEmployeeApplication(String(message.from.id), name);
       await sendTelegramMessage(
         chatId,
-        `✅ Записал вас как «${name}». Ваши действия в заказах теперь будут подписаны этим именем.`
+        outcome === "already_staff"
+          ? `✅ Обновил имя на «${name}». Ваши действия в заказах теперь будут подписаны этим именем.`
+          : `📨 Заявка отправлена администратору как «${name}». Как только вас подтвердят, вы начнёте получать уведомления о заказах.`
       );
       return;
     }
