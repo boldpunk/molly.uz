@@ -132,6 +132,13 @@ export const CLIENT_LINKS_KEYBOARD = {
   ],
 };
 
+export const MANAGER_MENU_KEYBOARD = {
+  inline_keyboard: [
+    [{ text: "📋 Все заявки", callback_data: "req:list:0" }],
+    [{ text: "💬 Диалоги", callback_data: "req:dialogs" }],
+  ],
+};
+
 // An explicit choice, not free text — anyone who typed anything used to be
 // silently registered as staff (registerEmployeeName), which meant a random
 // customer could end up in the employee DM broadcast for every new order.
