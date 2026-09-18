@@ -269,16 +269,21 @@ export function BlockImageField({
     if (!file) return;
     setStatus("uploading");
     setError(null);
-    const formData = new FormData();
-    formData.set("file", file);
-    const result = await uploadPageImage(formData);
-    if ("error" in result) {
+    try {
+      const formData = new FormData();
+      formData.set("file", file);
+      const result = await uploadPageImage(formData);
+      if ("error" in result) {
+        setStatus("error");
+        setError(result.error);
+        return;
+      }
+      onChange({ ...block, url: result.url });
+      setStatus("idle");
+    } catch {
       setStatus("error");
-      setError(result.error);
-      return;
+      setError("Не удалось загрузить файл. Попробуйте фото меньшего размера.");
     }
-    onChange({ ...block, url: result.url });
-    setStatus("idle");
   }
 
   return (
@@ -402,15 +407,19 @@ function BrandLogoField({
     const file = e.target.files?.[0];
     if (!file) return;
     setStatus("uploading");
-    const formData = new FormData();
-    formData.set("file", file);
-    const result = await uploadPageImage(formData);
-    if ("error" in result) {
+    try {
+      const formData = new FormData();
+      formData.set("file", file);
+      const result = await uploadPageImage(formData);
+      if ("error" in result) {
+        setStatus("error");
+        return;
+      }
+      onChange(result.url);
+      setStatus("idle");
+    } catch {
       setStatus("error");
-      return;
     }
-    onChange(result.url);
-    setStatus("idle");
   }
 
   return (
