@@ -6,6 +6,8 @@ import {
   pages as pagesTable,
   favourites as favouritesTable,
   wardrobeFinishes as wardrobeFinishesTable,
+  employees as employeesTable,
+  employeeApplications as employeeApplicationsTable,
 } from "@/db/schema";
 import type { PageBlock } from "@/db/schema";
 import { Category, Product } from "./types";
@@ -113,6 +115,34 @@ export async function getWardrobeFinishes(): Promise<WardrobeFinish[]> {
     .from(wardrobeFinishesTable)
     .orderBy(asc(wardrobeFinishesTable.sortOrder));
   return rows.map((r) => ({ id: r.id, label: r.label, ral: r.ral, hex: r.hex }));
+}
+
+export interface Employee {
+  id: string;
+  telegramId: string;
+  name: string;
+  createdAt: Date;
+}
+
+export interface EmployeeApplication {
+  id: string;
+  telegramId: string;
+  name: string;
+  createdAt: Date;
+}
+
+export async function getEmployees(): Promise<Employee[]> {
+  return db
+    .select()
+    .from(employeesTable)
+    .orderBy(desc(employeesTable.createdAt));
+}
+
+export async function getEmployeeApplications(): Promise<EmployeeApplication[]> {
+  return db
+    .select()
+    .from(employeeApplicationsTable)
+    .orderBy(desc(employeeApplicationsTable.createdAt));
 }
 
 export async function getCategoryBySlug(

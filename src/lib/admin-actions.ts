@@ -11,6 +11,8 @@ import {
   requestItems,
   pages,
   wardrobeFinishes,
+  employees,
+  employeeApplications,
 } from "@/db/schema";
 import type {
   HardwareOption,
@@ -26,6 +28,7 @@ import {
   deleteTelegramMessage,
   getStaffChatId,
   isStaffNotifyConfigured,
+  sendTelegramMessage,
 } from "./telegram";
 
 function parseJsonArray<T>(raw: FormDataEntryValue | null): T[] {
@@ -396,4 +399,78 @@ export async function updateWardrobeFinishes(formData: FormData) {
   revalidatePath("/admin/configurator");
   revalidatePath("/configurator/shkaf");
   redirect("/admin/configurator");
+}
+
+// --- Telegram employees (bot access, separate from admin_users/admin login) -
+
+export async function approveEmployeeApplication(applicationId: string) {
+  const [application] = await db
+    .select()
+    .from(employeeApplications)
+    .where(eq(employeeApplications.id, applicationId))
+    .limit(1);
+  if (!application) {
+    revalidatePath("/admin/employees");
+    return;
+  }
+
+  await db
+    .insert(employees)
+    .values({ telegramId: application.telegramId, name: application.name })
+    .onConflictDoUpdate({
+      target: employees.telegramId,
+      set: { name: application.name },
+    });
+  await db
+    .delete(employeeApplications)
+    .where(eq(employeeApplications.id, applicationId));
+
+  await sendTelegramMessage(
+    application.telegramId,
+    "✅ Вас подтвердили как сотрудника. Теперь вы будете получать уведомления о новых заказах."
+  ).catch((err) => console.error("Employee approval notify failed", err));
+
+  revalidatePath("/admin/employees");
+}
+
+export async function rejectEmployeeApplication(applicationId: string) {
+  const [application] = await db
+    .select()
+    .from(employeeApplications)
+    .where(eq(employeeApplications.id, applicationId))
+    .limit(1);
+
+  await db
+    .delete(employeeApplications)
+    .where(eq(employeeApplications.id, applicationId));
+
+  if (application) {
+    await sendTelegramMessage(
+      application.telegramId,
+      "Заявка на доступ сотрудника отклонена. Если это ошибка, обратитесь к администратору."
+    ).catch((err) => console.error("Employee rejection notify failed", err));
+  }
+
+  revalidatePath("/admin/employees");
+}
+
+export async function addEmployeeManually(formData: FormData) {
+  const telegramId = String(formData.get("telegramId") ?? "").trim();
+  const name = String(formData.get("name") ?? "").trim();
+  if (!telegramId || !name || !/^\d+$/.test(telegramId)) {
+    revalidatePath("/admin/employees");
+    return;
+  }
+
+  await db
+    .insert(employees)
+    .values({ telegramId, name })
+    .onConflictDoUpdate({ target: employees.telegramId, set: { name } });
+
+  revalidatePath("/admin/employees");
+}
+
+export async function removeEmployee(id: string) {
+  await db.delete(employees).where(eq(employees.id, id));
+  revalidatePath("/admin/employees");
 }

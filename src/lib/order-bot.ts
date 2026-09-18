@@ -4,6 +4,7 @@ import {
   requests,
   requestItems,
   employees,
+  employeeApplications,
   orderCounters,
   telegramPendingActions,
   customers,
@@ -74,6 +75,34 @@ export async function registerEmployeeName(
     .insert(employees)
     .values({ telegramId, name })
     .onConflictDoUpdate({ target: employees.telegramId, set: { name } });
+}
+
+export type EmployeeApplicationOutcome = "already_staff" | "pending";
+
+// Entry point for the bot's "Я менеджер" flow. Does NOT grant employee
+// access (order-action attribution, new-order DM broadcast) — an
+// administrator has to approve the application from /admin/employees.
+// Someone already approved just gets their display name updated directly,
+// no need to re-queue a trusted person.
+export async function submitEmployeeApplication(
+  telegramId: string,
+  name: string
+): Promise<EmployeeApplicationOutcome> {
+  const [existing] = await db
+    .select({ id: employees.id })
+    .from(employees)
+    .where(eq(employees.telegramId, telegramId))
+    .limit(1);
+  if (existing) {
+    await registerEmployeeName(telegramId, name);
+    return "already_staff";
+  }
+
+  await db
+    .insert(employeeApplications)
+    .values({ telegramId, name })
+    .onConflictDoUpdate({ target: employeeApplications.telegramId, set: { name } });
+  return "pending";
 }
 
 export async function setPendingRegistration(
