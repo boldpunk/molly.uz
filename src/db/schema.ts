@@ -250,11 +250,20 @@ export const requests = pgTable("requests", {
 export const telegramPendingActions = pgTable("telegram_pending_actions", {
   key: text("key").primaryKey(),
   kind: text("kind", {
-    enum: ["register_name", "amount_deposit", "amount_paid_full", "new_order_entry"],
+    enum: [
+      "register_name",
+      "amount_deposit",
+      "amount_paid_full",
+      "new_order_entry",
+      "product_question",
+    ],
   }).notNull(),
   requestId: uuid("request_id").references(() => requests.id, {
     onDelete: "cascade",
   }),
+  // Opaque per-kind data that doesn't fit requestId — e.g. product_question
+  // stores the product id here, since it isn't tied to any request.
+  payload: text("payload"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

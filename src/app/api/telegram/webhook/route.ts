@@ -22,6 +22,14 @@ import {
   consumePendingRegistration,
   clearPendingRegistration,
 } from "@/lib/order-bot";
+import {
+  sendCategoryList,
+  sendProductList,
+  sendProductCard,
+  startProductQuestion,
+  consumeProductQuestion,
+  relayProductQuestion,
+} from "@/lib/bot-catalog";
 import { REQUEST_STATUS_LABELS, RequestStatus } from "@/lib/types";
 
 interface TelegramContact {
@@ -122,6 +130,25 @@ async function handleCallbackQuery(cq: TelegramCallbackQuery) {
         "Напишите своё имя ответным сообщением — так вас будут узнавать в истории заказов."
       );
       await setPendingRegistration(chatId);
+    }
+    return;
+  }
+
+  if (chatId && cq.data && cq.data.startsWith("cat:")) {
+    await answerCallbackQuery(cq.id);
+    const parts = cq.data.split(":");
+    const sub = parts[1];
+    if (sub === "root") {
+      await sendCategoryList(chatId);
+    } else if (sub === "c") {
+      const [, , slug, pageStr] = parts;
+      await sendProductList(chatId, slug, Number(pageStr) || 0);
+    } else if (sub === "p") {
+      const [, , productId] = parts;
+      await sendProductCard(chatId, productId);
+    } else if (sub === "ask") {
+      const [, , productId] = parts;
+      await startProductQuestion(chatId, productId);
     }
     return;
   }
@@ -247,6 +274,21 @@ async function handleMessage(message: TelegramMessage) {
   }
 
   if (message.text && message.from) {
+    const question = await consumeProductQuestion(chatId);
+    if (question) {
+      await relayProductQuestion(
+        chatId,
+        displayName(message.from),
+        question.productName,
+        message.text
+      );
+      await sendTelegramMessage(
+        chatId,
+        "✅ Вопрос отправлен менеджеру. Мы ответим вам здесь же."
+      );
+      return;
+    }
+
     const wasPending = await consumePendingRegistration(chatId);
     if (wasPending) {
       const name = message.text.trim().slice(0, 80);

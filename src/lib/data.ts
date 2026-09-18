@@ -187,6 +187,16 @@ export async function getProduct(
   return rows[0] ? toProduct(rows[0], categorySlug) : undefined;
 }
 
+export async function getProductById(id: string): Promise<Product | undefined> {
+  const rows = await db
+    .select({ product: productsTable, categorySlug: categoriesTable.slug })
+    .from(productsTable)
+    .innerJoin(categoriesTable, eq(productsTable.categoryId, categoriesTable.id))
+    .where(eq(productsTable.id, id))
+    .limit(1);
+  return rows[0] ? toProduct(rows[0].product, rows[0].categorySlug) : undefined;
+}
+
 export async function getFeaturedProducts(): Promise<Product[]> {
   const rows = await db
     .select({
