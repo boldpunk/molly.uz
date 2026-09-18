@@ -42,6 +42,108 @@ const HINGES = [
   { id: "hettich", label: "Hettich" },
 ] as const;
 
+function isDarkColour(hex: string): boolean {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return (r * 299 + g * 587 + b * 114) / 1000 < 140;
+}
+
+function WardrobeDiagram({
+  modules,
+  finishSwatch,
+  mirror,
+  rails,
+  handleType,
+}: {
+  modules: number;
+  finishSwatch: string;
+  mirror: boolean;
+  rails: boolean;
+  handleType: string;
+}) {
+  const doorW = 64;
+  const gap = 3;
+  const totalW = modules * doorW + (modules - 1) * gap;
+  const h = 220;
+  const dark = isDarkColour(finishSwatch);
+  const lineColour = dark ? "rgba(255,255,255,0.18)" : "rgba(11,26,45,0.12)";
+
+  return (
+    <svg
+      viewBox={`0 0 ${totalW} ${h + 24}`}
+      width={totalW}
+      height={h + 24}
+      style={{ width: "100%", height: "auto" }}
+      className="mx-auto block max-w-md"
+      role="img"
+      aria-label={`Схема шкафа из ${modules} модулей`}
+    >
+      <rect x={0} y={h + 4} width={totalW} height={6} rx={2} fill="#0b1a2d" opacity={0.15} />
+      {Array.from({ length: modules }).map((_, i) => {
+        const x = i * (doorW + gap);
+        const handleOnLeft = i % 2 === 0;
+        return (
+          <g key={i}>
+            <rect
+              x={x}
+              y={0}
+              width={doorW}
+              height={h}
+              rx={3}
+              fill={finishSwatch}
+              stroke={dark ? "rgba(255,255,255,0.25)" : "rgba(11,26,45,0.2)"}
+              strokeWidth={1}
+            />
+            {mirror && (
+              <rect
+                x={x + 4}
+                y={4}
+                width={doorW - 8}
+                height={h - 8}
+                rx={2}
+                fill="url(#mirror-sheen)"
+              />
+            )}
+            {rails && (
+              <>
+                <rect x={x + 6} y={h * 0.28} width={doorW - 12} height={3} fill={lineColour} />
+                <rect x={x + 6} y={h * 0.72} width={doorW - 12} height={3} fill={lineColour} />
+              </>
+            )}
+            {handleType === "накладные" && (
+              <rect
+                x={handleOnLeft ? x + 5 : x + doorW - 8}
+                y={h * 0.42}
+                width={3}
+                height={h * 0.16}
+                rx={1.5}
+                fill={dark ? "#e8e2d6" : "#0b1a2d"}
+                opacity={0.8}
+              />
+            )}
+          </g>
+        );
+      })}
+      <defs>
+        <linearGradient id="mirror-sheen" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity={0.35} />
+          <stop offset="45%" stopColor="#ffffff" stopOpacity={0.05} />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity={0} />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
+function StepBadge({ n }: { n: number }) {
+  return (
+    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-navy text-xs font-bold text-white">
+      {n}
+    </span>
+  );
+}
+
 export function WardrobeConfigurator({
   productId,
   productSlug,
@@ -134,33 +236,43 @@ export function WardrobeConfigurator({
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-10">
-      <nav className="text-xs text-navy/50">
-        <Link href="/" className="hover:underline">
-          Главная
-        </Link>{" "}
-        /{" "}
-        <Link href="/catalog/garderoby" className="hover:underline">
-          Гардеробы
-        </Link>{" "}
-        / <span className="text-navy">Конфигуратор шкафа</span>
-      </nav>
+    <div className="bg-navy/[0.02]">
+      <div className="border-b border-navy/10 bg-gradient-to-br from-navy via-navy to-[#16324f] text-white">
+        <div className="mx-auto max-w-5xl px-6 py-10">
+          <nav className="text-xs text-white/60">
+            <Link href="/" className="hover:underline">
+              Главная
+            </Link>{" "}
+            /{" "}
+            <Link href="/catalog/garderoby" className="hover:underline">
+              Гардеробы
+            </Link>{" "}
+            / <span className="text-white">Конфигуратор шкафа</span>
+          </nav>
 
-      <h1 className="mt-4 font-heading text-2xl font-bold text-navy md:text-3xl">
-        Конфигуратор шкафа
-      </h1>
-      <p className="mt-2 max-w-2xl text-sm text-navy/60">
-        Соберите шкаф из модулей шириной {MODULE_WIDTH_MM} мм, выберите
-        наполнение, отделку фасада и фурнитуру. В конце оставьте контакты — и
-        мы посчитаем точную стоимость и запишем вас на замер.
-      </p>
+          <span className="mt-4 inline-block rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent">
+            Онлайн-конфигуратор · модульная система {MODULE_WIDTH_MM} мм
+          </span>
+          <h1 className="mt-4 font-heading text-2xl font-bold md:text-3xl">
+            Конфигуратор шкафа
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm text-white/70">
+            Соберите шкаф из модулей шириной {MODULE_WIDTH_MM} мм, выберите
+            наполнение, отделку фасада и фурнитуру. Справа — живая схема
+            вашей конфигурации. В конце оставьте контакты — мы посчитаем
+            точную стоимость и запишем вас на замер.
+          </p>
+        </div>
+      </div>
 
-      <div className="mt-8 grid gap-10 lg:grid-cols-[1.2fr_1fr]">
+      <div className="mx-auto max-w-5xl px-6 py-10">
+      <div className="mt-0 grid gap-10 lg:grid-cols-[1.2fr_1fr]">
         {/* Configurator fields */}
-        <div className="flex flex-col gap-6 rounded-xl border border-navy/10 bg-white p-5">
+        <div className="flex flex-col gap-6 rounded-xl border border-navy/10 bg-white p-5 shadow-sm">
           <div>
             <div className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-semibold text-navy">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-navy">
+                <StepBadge n={1} />
                 Количество модулей ({MODULE_WIDTH_MM} мм каждый)
               </h3>
               <div className="flex items-center gap-3">
@@ -192,7 +304,10 @@ export function WardrobeConfigurator({
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-navy">Наполнение</h3>
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-navy">
+              <StepBadge n={2} />
+              Наполнение
+            </h3>
             <div className="mt-2 grid gap-2 sm:grid-cols-2">
               {FILLINGS.map((f) => (
                 <button
@@ -217,7 +332,10 @@ export function WardrobeConfigurator({
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-navy">Отделка фасада</h3>
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-navy">
+              <StepBadge n={3} />
+              Отделка фасада
+            </h3>
             <div className="mt-2 flex flex-wrap gap-2">
               {FINISHES.map((f) => (
                 <button
@@ -241,7 +359,12 @@ export function WardrobeConfigurator({
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-navy">
+              <StepBadge n={4} />
+              Дополнительно
+            </h3>
+            <div className="mt-2 grid gap-4 sm:grid-cols-2">
             <label className="flex items-center gap-2 text-sm text-navy">
               <input
                 type="checkbox"
@@ -260,10 +383,14 @@ export function WardrobeConfigurator({
               />
               Декоративные рейки (МДФ)
             </label>
+            </div>
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-navy">Ручки</h3>
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-navy">
+              <StepBadge n={5} />
+              Ручки
+            </h3>
             <div className="mt-2 flex flex-wrap gap-2">
               {HANDLE_TYPES.map((h) => (
                 <button
@@ -283,7 +410,10 @@ export function WardrobeConfigurator({
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-navy">Петли</h3>
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-navy">
+              <StepBadge n={6} />
+              Петли
+            </h3>
             <div className="mt-2 flex flex-wrap gap-2">
               {HINGES.map((h) => {
                 const badge = getHardwareBrandBadge(h.id, h.label);
@@ -313,25 +443,47 @@ export function WardrobeConfigurator({
         </div>
 
         {/* Result + contact form */}
-        <div className="flex flex-col gap-6">
-          <div className="rounded-xl border border-navy/10 bg-white p-5">
-            <p className="text-xs uppercase tracking-wide text-navy/50">
-              Ваша конфигурация
-            </p>
-            <ul className="mt-3 flex flex-col gap-1.5 text-sm text-navy/80">
-              {specLines.map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ul>
-            <p className="mt-4 text-xs text-navy/50">
-              Точная цена рассчитывается менеджером по вашей конфигурации —
-              оставьте контакты ниже, и мы свяжемся с вами.
-            </p>
+        <div className="flex flex-col gap-6 lg:sticky lg:top-6 lg:self-start">
+          <div className="overflow-hidden rounded-xl border border-navy/10 bg-white shadow-sm">
+            <div className="border-b border-navy/10 bg-navy/[0.03] p-5 pb-6">
+              <p className="text-xs uppercase tracking-wide text-navy/50">
+                Схема шкафа
+              </p>
+              <div className="mt-3">
+                <WardrobeDiagram
+                  modules={modules}
+                  finishSwatch={finishOption.swatch}
+                  mirror={mirror}
+                  rails={rails}
+                  handleType={handleType}
+                />
+              </div>
+              <p className="mt-2 text-center text-xs text-navy/40">
+                Схематичный вид — реальные пропорции уточняются на замере
+              </p>
+            </div>
+            <div className="p-5">
+              <p className="text-xs uppercase tracking-wide text-navy/50">
+                Ваша конфигурация
+              </p>
+              <ul className="mt-3 flex flex-col gap-1.5 text-sm text-navy/80">
+                {specLines.map((line) => (
+                  <li key={line} className="flex gap-2">
+                    <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-accent-dark" />
+                    {line}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-4 text-xs text-navy/50">
+                Точная цена рассчитывается менеджером по вашей конфигурации —
+                оставьте контакты ниже, и мы свяжемся с вами.
+              </p>
+            </div>
           </div>
 
           <form
             onSubmit={handleSubmit}
-            className="flex flex-col gap-4 rounded-xl border border-navy/10 bg-white p-5"
+            className="flex flex-col gap-4 rounded-xl border border-navy/10 bg-white p-5 shadow-sm"
           >
             <h3 className="text-sm font-semibold text-navy">Оставить заявку</h3>
             <div>
@@ -383,6 +535,7 @@ export function WardrobeConfigurator({
             </p>
           </form>
         </div>
+      </div>
       </div>
     </div>
   );

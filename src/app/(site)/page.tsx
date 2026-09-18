@@ -378,6 +378,70 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Wardrobe configurator teaser */}
+      <section className="border-y border-navy/10 bg-navy/[0.015]">
+        <div className="mx-auto max-w-7xl px-6 py-14">
+          <div className="grid items-center gap-8 overflow-hidden rounded-2xl border border-navy/10 md:grid-cols-2">
+            <Reveal className="h-full md:order-1">
+              <div className="relative h-64 w-full md:h-full">
+                <Image
+                  src="/images/categories/garderoby.jpg"
+                  alt="Шкаф-купе, собранный в конфигураторе"
+                  fill
+                  sizes="(min-width: 768px) 50vw, 100vw"
+                  className="object-cover"
+                />
+              </div>
+            </Reveal>
+            <Reveal delay={120} className="p-8 sm:p-10 md:order-2">
+              <span className="rounded-full bg-accent/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent-dark">
+                Онлайн-конфигуратор
+              </span>
+              <h2 className="mt-4 font-heading text-2xl font-bold text-navy sm:text-3xl">
+                Соберите свой шкаф онлайн
+              </h2>
+              <p className="mt-3 max-w-lg text-sm text-navy/70">
+                Задайте количество модулей, наполнение, отделку фасада и
+                фурнитуру — получите готовую спецификацию и оставьте заявку
+                прямо на странице конфигуратора.
+              </p>
+              <div className="mt-6 flex flex-col gap-3 border-y border-navy/10 py-5">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/20 text-accent-dark">
+                    <UspIcon icon="layers" className="h-4 w-4" />
+                  </span>
+                  <span className="text-sm text-navy/70">
+                    Модули шириной 366 мм — любая конфигурация
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/20 text-accent-dark">
+                    <UspIcon icon="palette" className="h-4 w-4" />
+                  </span>
+                  <span className="text-sm text-navy/70">
+                    4 цвета фасада, зеркало и декоративные рейки
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/20 text-accent-dark">
+                    <UspIcon icon="wrench" className="h-4 w-4" />
+                  </span>
+                  <span className="text-sm text-navy/70">
+                    Петли Blum или Hettich на выбор
+                  </span>
+                </div>
+              </div>
+              <Link
+                href="/configurator/shkaf"
+                className="mt-6 inline-block rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white transition hover:bg-navy/90 hover:shadow-lg hover:shadow-navy/20"
+              >
+                Собрать шкаф
+              </Link>
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
       {/* Gallery slider */}
       <section className="mx-auto max-w-7xl px-6 py-14">
         <Reveal>
