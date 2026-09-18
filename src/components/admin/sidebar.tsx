@@ -15,6 +15,7 @@ import {
   LogoutIcon,
   PageIcon,
   UsersIcon,
+  ConfiguratorIcon,
 } from "./icons";
 
 function BackIcon({ className = "h-[18px] w-[18px]" }: { className?: string }) {
@@ -62,6 +63,12 @@ const NAV_ITEMS = [
     label: "Страницы",
     icon: PageIcon,
     roles: ["administrator", "content_editor"],
+  },
+  {
+    href: "/admin/configurator",
+    label: "Конфигуратор",
+    icon: ConfiguratorIcon,
+    roles: ["administrator", "catalog_manager"],
   },
   {
     href: "/admin/users",

@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
-import { getCategoryBySlug, getProductsByCategory } from "@/lib/data";
+import {
+  getCategoryBySlug,
+  getProductsByCategory,
+  getWardrobeFinishes,
+} from "@/lib/data";
 import { WardrobeConfigurator } from "@/components/wardrobe-configurator";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +15,10 @@ export const metadata: Metadata = {
 };
 
 export default async function WardrobeConfiguratorPage() {
-  const category = await getCategoryBySlug("garderoby");
+  const [category, finishes] = await Promise.all([
+    getCategoryBySlug("garderoby"),
+    getWardrobeFinishes(),
+  ]);
   const products = category
     ? await getProductsByCategory(category.id, category.slug)
     : [];
@@ -26,6 +33,7 @@ export default async function WardrobeConfiguratorPage() {
       productId={linkedProduct?.id}
       productSlug={linkedProduct?.slug ?? "shkaf"}
       categorySlug="garderoby"
+      finishes={finishes}
     />
   );
 }

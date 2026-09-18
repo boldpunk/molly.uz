@@ -18,7 +18,8 @@ function isAllowed(role: string, pathname: string): boolean {
   }
   if (
     pathname.startsWith("/admin/products") ||
-    pathname.startsWith("/admin/categories")
+    pathname.startsWith("/admin/categories") ||
+    pathname.startsWith("/admin/configurator")
   ) {
     return role === "catalog_manager";
   }

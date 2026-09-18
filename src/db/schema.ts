@@ -178,6 +178,15 @@ export interface StatusHistoryEntry {
   note?: string;
 }
 
+export const wardrobeFinishes = pgTable("wardrobe_finishes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  label: text("label").notNull(),
+  ral: text("ral"),
+  hex: text("hex").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const employees = pgTable("employees", {
   id: uuid("id").primaryKey().defaultRandom(),
   telegramId: text("telegram_id").notNull().unique(),

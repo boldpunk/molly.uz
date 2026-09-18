@@ -154,6 +154,17 @@ export function UsersIcon({ className = base }: IconProps) {
   );
 }
 
+export function ConfiguratorIcon({ className = base }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+      <circle cx="9" cy="6" r="2" fill="currentColor" />
+      <circle cx="16" cy="12" r="2" fill="currentColor" />
+      <circle cx="11" cy="18" r="2" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function SparkIcon({ className = "h-8 w-8" }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className}>
