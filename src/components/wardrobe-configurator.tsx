@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { submitRequest } from "@/lib/actions";
 import { getHardwareBrandBadge } from "@/lib/hardware-brands";
 import { PhoneInput } from "@/components/phone-input";
+import { buildStatusDeepLink } from "@/lib/telegram-links";
 
 const MODULE_WIDTH_MM = 366;
 const HEIGHT_MM = 2300;
@@ -225,12 +226,22 @@ export function WardrobeConfigurator({
           свяжемся с вами по телефону {phone}, чтобы уточнить детали, стоимость
           и записать на замер.
         </p>
-        <Link
-          href="/"
-          className="mt-8 inline-block rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white hover:bg-navy/90"
-        >
-          На главную
-        </Link>
+        <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+          <a
+            href={buildStatusDeepLink(phone)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block rounded-full bg-[#2AABEE] px-6 py-3 text-sm font-semibold text-white hover:bg-[#2AABEE]/90"
+          >
+            Статус заявки в Telegram
+          </a>
+          <Link
+            href="/"
+            className="inline-block rounded-full border border-navy/15 px-6 py-3 text-sm font-semibold text-navy hover:bg-navy/5"
+          >
+            На главную
+          </Link>
+        </div>
       </div>
     );
   }

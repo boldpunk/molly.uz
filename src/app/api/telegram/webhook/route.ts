@@ -181,7 +181,20 @@ async function handleMessage(message: TelegramMessage) {
     return;
   }
 
-  if (message.text === "/start") {
+  const startMatch = message.text?.match(/^\/start(?:@\w+)?(?:\s+(\S+))?\s*$/);
+  if (startMatch) {
+    const payload = startMatch[1];
+    // Deep link from the site's own "Проверить статус" button — it embeds
+    // the phone digits the request was submitted with (see buildStatusDeepLink
+    // in src/lib/telegram-links.ts), so a customer coming from their own
+    // confirmation page sees their status immediately instead of having to
+    // tap through the share-contact flow below.
+    if (payload && payload.startsWith("p_") && /^p_\d{5,15}$/.test(payload)) {
+      const digits = payload.slice(2);
+      await sendRequestStatusByPhone(chatId, digits);
+      return;
+    }
+
     await sendTelegramMessage(
       chatId,
       "👋 Добро пожаловать в Molly Home — мебельную фабрику в Ташкенте!\n\nЧерез этого бота вы можете:\n✅ Проверить статус своего заказа в любое время\n🔔 Получать уведомления, когда статус меняется — не нужно звонить и уточнять\n🛋 Посмотреть каталог и оставить заявку на замер",
@@ -218,7 +231,10 @@ async function handleMessage(message: TelegramMessage) {
 
 async function handleCustomerContact(chatId: number, contact: TelegramContact) {
   const digits = contact.phone_number.replace(/\D/g, "");
+  await sendRequestStatusByPhone(chatId, digits);
+}
 
+async function sendRequestStatusByPhone(chatId: number, digits: string) {
   const [latest] = await db
     .select()
     .from(requests)
