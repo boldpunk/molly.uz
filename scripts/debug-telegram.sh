@@ -1,23 +1,25 @@
 #!/bin/sh
-# One-off read-only diagnostic: why did postNewOrderCard silently fail for
-# the request created around 2026-09-17T21:02 UTC?
 set -eu
 
-echo "=== container uptime ==="
-docker inspect molly-uz-web-1 --format '{{.State.StartedAt}}'
+echo "=== full sendMessage error, unfiltered context ==="
+docker compose -f /opt/molly-uz/docker-compose.yml logs web --since 48h 2>&1 | grep -A 15 "Telegram API error" | tail -120 || echo "no matching log lines"
 
-echo "=== env vars present (names + lengths only, no values) ==="
+echo "=== getWebhookInfo, run from the HOST (container has no curl) ==="
 docker compose -f /opt/molly-uz/docker-compose.yml exec -T web sh -c '
-for v in TELEGRAM_BOT_TOKEN TELEGRAM_STAFF_CHAT_ID TELEGRAM_WEBHOOK_SECRET; do
-  val=$(eval "printf \"%s\" \"\$$v\"")
-  echo "$v length: ${#val}"
-done
+node -e "
+fetch(\"https://api.telegram.org/bot\" + process.env.TELEGRAM_BOT_TOKEN + \"/getWebhookInfo\")
+  .then(r => r.json())
+  .then(j => console.log(JSON.stringify(j, null, 2)))
+  .catch(e => console.error(\"fetch error:\", e.message));
+"
 '
 
-echo "=== full app logs, last 600 lines, filtered for telegram/error signals ==="
-docker compose -f /opt/molly-uz/docker-compose.yml logs web --since 48h 2>&1 | grep -iE "telegram|Error|failed|ETIMEDOUT|ECONNREFUSED|fetch failed" | tail -150 || echo "no matching log lines"
-
-echo "=== raw getWebhookInfo (safe, read-only, no token printed) ==="
+echo "=== getChat on the configured staff chat id, to confirm the bot can still see it ==="
 docker compose -f /opt/molly-uz/docker-compose.yml exec -T web sh -c '
-curl -sS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getWebhookInfo"
+node -e "
+fetch(\"https://api.telegram.org/bot\" + process.env.TELEGRAM_BOT_TOKEN + \"/getChat?chat_id=\" + process.env.TELEGRAM_STAFF_CHAT_ID)
+  .then(r => r.json())
+  .then(j => console.log(JSON.stringify(j, null, 2)))
+  .catch(e => console.error(\"fetch error:\", e.message));
+"
 '
