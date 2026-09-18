@@ -232,7 +232,7 @@ export function AdminSidebar({ admin }: { admin: CurrentAdmin }) {
       )}
 
       {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-navy/10 bg-white md:flex">
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-navy/10 bg-white md:sticky md:top-0 md:flex md:h-screen md:overflow-y-auto">
         <div className="px-6 py-6">
           <SidebarLogo />
         </div>
