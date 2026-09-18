@@ -188,6 +188,20 @@ export async function postNewOrderCard(requestId: string): Promise<void> {
       .set({ telegramMessageId: String(sent.message_id) })
       .where(eq(requests.id, requestId));
   }
+
+  // Also DM every registered employee directly — the group post can fail
+  // (wrong/rotated chat id, bot removed, etc.) without anyone noticing for
+  // days, since it's not always open. DMs have no action buttons: taps are
+  // only wired up for the group chat (see handleCallbackQuery's chat-id
+  // check), so this is notification-only — act from the group or admin panel.
+  const recipients = await db
+    .select({ telegramId: employees.telegramId })
+    .from(employees);
+  await Promise.all(
+    recipients
+      .filter((r) => /^\d+$/.test(r.telegramId))
+      .map((r) => sendTelegramMessage(r.telegramId, `🆕 Новый заказ\n\n${text}`))
+  );
 }
 
 export async function refreshOrderCard(requestId: string): Promise<void> {

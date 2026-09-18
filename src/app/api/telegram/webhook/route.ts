@@ -120,6 +120,18 @@ async function handleMessage(message: TelegramMessage) {
   const staffChatId = getStaffChatId();
   const chatId = message.chat.id;
 
+  // Works in any chat — a group's chat_id changes if Telegram migrates it to
+  // a supergroup, so this is the fastest way to recover the current value
+  // for TELEGRAM_STAFF_CHAT_ID (or a manager's own id for DM notifications)
+  // without a third-party bot.
+  if (message.text && /^\/chatid(@\w+)?\s*$/i.test(message.text.trim())) {
+    await sendTelegramMessage(
+      chatId,
+      `Chat ID: <code>${chatId}</code>\nТип: ${message.chat.type}`
+    );
+    return;
+  }
+
   if (staffChatId && String(chatId) === String(staffChatId)) {
     if (message.text && /^\/new(@\w+)?\s*$/i.test(message.text.trim()) && message.from) {
       const actor = {
