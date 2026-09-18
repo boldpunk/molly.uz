@@ -11,6 +11,7 @@ import {
   REQUEST_CONTACT_KEYBOARD,
   CLIENT_LINKS_KEYBOARD,
   ROLE_KEYBOARD,
+  MANAGER_MENU_KEYBOARD,
 } from "@/lib/telegram";
 import {
   handleOrderAction,
@@ -21,6 +22,9 @@ import {
   setPendingRegistration,
   consumePendingRegistration,
   clearPendingRegistration,
+  isApprovedEmployee,
+  sendRequestsOverview,
+  sendOrderCardTo,
 } from "@/lib/order-bot";
 import {
   sendCategoryList,
@@ -170,8 +174,27 @@ async function handleCallbackQuery(cq: TelegramCallbackQuery) {
     return;
   }
 
+  if (chatId && cq.data && cq.data.startsWith("req:")) {
+    await answerCallbackQuery(cq.id);
+    const staffChatIdValue = getStaffChatId();
+    const isAuthorized =
+      (staffChatIdValue && String(chatId) === String(staffChatIdValue)) ||
+      (await isApprovedEmployee(String(chatId)));
+    if (!isAuthorized) return;
+    if (cq.data === "req:dialogs") {
+      await sendOpenConversationsList(chatId);
+    } else if (cq.data.startsWith("req:list:")) {
+      await sendRequestsOverview(chatId, Number(cq.data.slice("req:list:".length)) || 0);
+    } else if (cq.data.startsWith("req:show:")) {
+      await sendOrderCardTo(chatId, cq.data.slice("req:show:".length));
+    }
+    return;
+  }
+
   const staffChatId = getStaffChatId();
-  if (!chatId || !staffChatId || String(chatId) !== String(staffChatId)) {
+  const isStaffGroup = Boolean(chatId && staffChatId && String(chatId) === String(staffChatId));
+  const isEmployeeDm = chatId ? await isApprovedEmployee(String(chatId)) : false;
+  if (!chatId || !(isStaffGroup || isEmployeeDm)) {
     await answerCallbackQuery(cq.id);
     return;
   }
@@ -187,7 +210,12 @@ async function handleCallbackQuery(cq: TelegramCallbackQuery) {
 
   if (result.kind === "amount_prompt") {
     await answerCallbackQuery(cq.id, "Введите сумму сообщением ниже");
-    await startAmountPrompt(parsed.requestId, result.promptKind, actor);
+    await startAmountPrompt(
+      isStaffGroup ? staffChatId! : chatId,
+      parsed.requestId,
+      result.promptKind,
+      actor
+    );
   } else if (result.kind === "updated") {
     await answerCallbackQuery(cq.id, "Статус обновлён");
   } else if (result.kind === "already_claimed") {
@@ -229,6 +257,11 @@ async function handleMessage(message: TelegramMessage) {
 
     if (message.text && /^\/dialogs(@\w+)?\s*$/i.test(message.text.trim())) {
       await sendOpenConversationsList(chatId);
+      return;
+    }
+
+    if (message.text && /^\/requests(@\w+)?\s*$/i.test(message.text.trim())) {
+      await sendRequestsOverview(chatId);
       return;
     }
 
@@ -303,12 +336,29 @@ async function handleMessage(message: TelegramMessage) {
     }
 
     await clearPendingRegistration(chatId);
+
+    if (await isApprovedEmployee(String(chatId))) {
+      await sendTelegramMessage(
+        chatId,
+        "👋 С возвращением! Вы подтверждённый сотрудник Molly Home.",
+        { replyMarkup: MANAGER_MENU_KEYBOARD }
+      );
+      return;
+    }
+
     await sendTelegramMessage(
       chatId,
       "👋 Добро пожаловать в Molly Home — мебельную фабрику в Ташкенте!\n\nЧерез этого бота вы можете:\n✅ Проверить статус своего заказа в любое время\n🔔 Получать уведомления, когда статус меняется — не нужно звонить и уточнять\n🛋 Посмотреть каталог и оставить заявку на замер\n💬 Написать менеджеру и получить ответ прямо здесь",
       { replyMarkup: CLIENT_LINKS_KEYBOARD }
     );
     await sendTelegramMessage(chatId, "Кто вы?", { replyMarkup: ROLE_KEYBOARD });
+    return;
+  }
+
+  if (message.text && /^\/requests(@\w+)?\s*$/i.test(message.text.trim())) {
+    if (await isApprovedEmployee(String(chatId))) {
+      await sendRequestsOverview(chatId);
+    }
     return;
   }
 

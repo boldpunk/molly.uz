@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, desc } from "drizzle-orm";
 import { db } from "@/db";
 import {
   requests,
@@ -12,7 +12,7 @@ import {
   categories,
 } from "@/db/schema";
 import type { StatusHistoryEntry } from "@/db/schema";
-import { RequestStatus } from "./types";
+import { RequestStatus, REQUEST_STATUSES, REQUEST_STATUS_LABELS } from "./types";
 import {
   buildOrderCardText,
   buildOrderCardKeyboard,
@@ -183,11 +183,7 @@ async function loadOrderCard(requestId: string) {
   return { request, items, assignedManagerName };
 }
 
-export async function postNewOrderCard(requestId: string): Promise<void> {
-  if (!isStaffNotifyConfigured()) return;
-  const data = await loadOrderCard(requestId);
-  if (!data) return;
-
+function buildOrderCardPayload(data: NonNullable<Awaited<ReturnType<typeof loadOrderCard>>>) {
   const text = buildOrderCardText({
     id: data.request.id,
     customerName: data.request.customerName,
@@ -204,11 +200,20 @@ export async function postNewOrderCard(requestId: string): Promise<void> {
     items: data.items,
   });
   const keyboard = buildOrderCardKeyboard(
-    requestId,
+    data.request.id,
     data.request.status as RequestStatus,
     Boolean(data.request.depositAmount),
     !data.request.assignedManagerId
   );
+  return { text, keyboard };
+}
+
+export async function postNewOrderCard(requestId: string): Promise<void> {
+  if (!isStaffNotifyConfigured()) return;
+  const data = await loadOrderCard(requestId);
+  if (!data) return;
+
+  const { text, keyboard } = buildOrderCardPayload(data);
 
   const sent = await sendTelegramMessage(getStaffChatId()!, text, {
     replyMarkup: keyboard,
@@ -222,16 +227,20 @@ export async function postNewOrderCard(requestId: string): Promise<void> {
 
   // Also DM every registered employee directly — the group post can fail
   // (wrong/rotated chat id, bot removed, etc.) without anyone noticing for
-  // days, since it's not always open. DMs have no action buttons: taps are
-  // only wired up for the group chat (see handleCallbackQuery's chat-id
-  // check), so this is notification-only — act from the group or admin panel.
+  // days, since it's not always open. DMs get the same action keyboard as
+  // the group now that handleCallbackQuery accepts actions from a confirmed
+  // employee's own chat, not just the group (see isApprovedEmployee).
   const recipients = await db
     .select({ telegramId: employees.telegramId })
     .from(employees);
   await Promise.all(
     recipients
       .filter((r) => /^\d+$/.test(r.telegramId))
-      .map((r) => sendTelegramMessage(r.telegramId, `🆕 Новый заказ\n\n${text}`))
+      .map((r) =>
+        sendTelegramMessage(r.telegramId, `🆕 Новый заказ\n\n${text}`, {
+          replyMarkup: keyboard,
+        })
+      )
   );
 }
 
@@ -240,33 +249,86 @@ export async function refreshOrderCard(requestId: string): Promise<void> {
   const data = await loadOrderCard(requestId);
   if (!data || !data.request.telegramMessageId) return;
 
-  const text = buildOrderCardText({
-    id: data.request.id,
-    customerName: data.request.customerName,
-    customerPhone: data.request.customerPhone,
-    source: data.request.source,
-    createdAt: data.request.createdAt,
-    status: data.request.status as RequestStatus,
-    statusHistory: data.request.statusHistory,
-    orderNumber: data.request.orderNumber,
-    totalAmount: data.request.totalAmount,
-    depositAmount: data.request.depositAmount,
-    paidAmount: data.request.paidAmount,
-    assignedManagerName: data.assignedManagerName,
-    items: data.items,
-  });
-  const keyboard = buildOrderCardKeyboard(
-    requestId,
-    data.request.status as RequestStatus,
-    Boolean(data.request.depositAmount),
-    !data.request.assignedManagerId
-  );
+  const { text, keyboard } = buildOrderCardPayload(data);
 
   await editTelegramMessage(
     getStaffChatId()!,
     data.request.telegramMessageId,
     text,
     keyboard
+  );
+}
+
+// Posts a fresh copy of a request's order card into an arbitrary chat (a
+// manager's own DM, not just the staff group), with the same action
+// keyboard — used by the /requests overview so a manager can act on a
+// request from wherever they're looking at it.
+export async function sendOrderCardTo(
+  chatId: number | string,
+  requestId: string
+): Promise<void> {
+  const data = await loadOrderCard(requestId);
+  if (!data) return;
+  const { text, keyboard } = buildOrderCardPayload(data);
+  await sendTelegramMessage(chatId, text, { replyMarkup: keyboard });
+}
+
+export async function isApprovedEmployee(telegramId: string): Promise<boolean> {
+  const [row] = await db
+    .select({ id: employees.id })
+    .from(employees)
+    .where(eq(employees.telegramId, telegramId))
+    .limit(1);
+  return Boolean(row);
+}
+
+export async function sendRequestsOverview(
+  chatId: number | string,
+  page = 0
+): Promise<void> {
+  const PAGE_SIZE = 8;
+  const all = await db
+    .select({
+      id: requests.id,
+      customerName: requests.customerName,
+      status: requests.status,
+      orderNumber: requests.orderNumber,
+      createdAt: requests.createdAt,
+    })
+    .from(requests)
+    .orderBy(desc(requests.createdAt));
+
+  if (all.length === 0) {
+    await sendTelegramMessage(chatId, "Заявок пока нет.");
+    return;
+  }
+
+  const counts = new Map<string, number>();
+  for (const r of all) counts.set(r.status, (counts.get(r.status) ?? 0) + 1);
+  const countsLines = REQUEST_STATUSES.map(
+    (s) => `${REQUEST_STATUS_LABELS[s]}: ${counts.get(s) ?? 0}`
+  ).join("\n");
+
+  const totalPages = Math.ceil(all.length / PAGE_SIZE);
+  const safePage = Math.min(Math.max(page, 0), totalPages - 1);
+  const pageItems = all.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
+
+  const rows = pageItems.map((r) => [
+    {
+      text: `${r.orderNumber ? `${r.orderNumber} · ` : ""}${r.customerName} — ${REQUEST_STATUS_LABELS[r.status as RequestStatus]}`,
+      callback_data: `req:show:${r.id}`,
+    },
+  ]);
+  const navRow: { text: string; callback_data: string }[] = [];
+  if (safePage > 0) navRow.push({ text: "⬅️", callback_data: `req:list:${safePage - 1}` });
+  if (safePage < totalPages - 1) navRow.push({ text: "➡️", callback_data: `req:list:${safePage + 1}` });
+  if (navRow.length > 0) rows.push(navRow);
+
+  const pageLabel = totalPages > 1 ? ` (стр. ${safePage + 1} из ${totalPages})` : "";
+  await sendTelegramMessage(
+    chatId,
+    `📋 Все заявки (${all.length})${pageLabel}\n\n${countsLines}\n\nНажмите на заявку, чтобы открыть карточку:`,
+    { replyMarkup: { inline_keyboard: rows } }
   );
 }
 
@@ -429,12 +491,11 @@ export async function handleOrderAction(
 }
 
 export async function startAmountPrompt(
+  chatId: number | string,
   requestId: string,
   promptKind: "amount_deposit" | "amount_paid_full",
   actor: Actor
 ): Promise<void> {
-  const chatId = getStaffChatId();
-  if (!chatId) return;
   const label =
     promptKind === "amount_deposit"
       ? "сумму залога"
