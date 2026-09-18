@@ -23,6 +23,7 @@ import {
   isStaffNotifyConfigured,
   notifyCustomerStatusChange,
 } from "./telegram";
+import { resolveConversationReply } from "./bot-conversations";
 
 interface Actor {
   telegramId: string;
@@ -475,6 +476,7 @@ export type ReplyPromptResult =
   | { kind: "amount_invalid" }
   | { kind: "new_order_ok"; requestId: string }
   | { kind: "new_order_invalid"; reason: string }
+  | { kind: "conversation_reply_ok" }
   | { kind: "not_found" };
 
 export async function resolveReplyPrompt(
@@ -492,6 +494,13 @@ export async function resolveReplyPrompt(
 
   if (pending.kind === "new_order_entry") {
     return resolveNewOrderPrompt(key, actor, text);
+  }
+
+  if (pending.kind === "conversation_reply") {
+    if (!pending.payload) return { kind: "not_found" };
+    await resolveConversationReply(pending.payload, actor.name, text);
+    await db.delete(telegramPendingActions).where(eq(telegramPendingActions.key, key));
+    return { kind: "conversation_reply_ok" };
   }
 
   const outcome = await resolveAmountPrompt(pending, key, actor, text);

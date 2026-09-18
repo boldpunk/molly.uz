@@ -127,6 +127,7 @@ export const CLIENT_LINKS_KEYBOARD = {
   inline_keyboard: [
     [{ text: "🛋 Каталог мебели", callback_data: "cat:root" }],
     [{ text: "📝 Оставить заявку на замер", url: `${SITE_URL}/request` }],
+    [{ text: "💬 Написать менеджеру", callback_data: "conv:new" }],
     [{ text: "📞 Контакты", url: `${SITE_URL}/contacts` }],
   ],
 };
