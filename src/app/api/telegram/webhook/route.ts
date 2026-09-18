@@ -30,6 +30,12 @@ import {
   consumeProductQuestion,
   relayProductQuestion,
 } from "@/lib/bot-catalog";
+import {
+  startConversation,
+  relayCustomerMessage,
+  closeConversation,
+  sendOpenConversationsList,
+} from "@/lib/bot-conversations";
 import { REQUEST_STATUS_LABELS, RequestStatus } from "@/lib/types";
 
 interface TelegramContact {
@@ -153,6 +159,17 @@ async function handleCallbackQuery(cq: TelegramCallbackQuery) {
     return;
   }
 
+  if (chatId && cq.data && cq.data.startsWith("conv:")) {
+    await answerCallbackQuery(cq.id);
+    if (cq.data === "conv:new") {
+      await startConversation(chatId, displayName(cq.from));
+    } else if (cq.data.startsWith("conv:close:")) {
+      const conversationId = cq.data.slice("conv:close:".length);
+      await closeConversation(conversationId, chatId, displayName(cq.from));
+    }
+    return;
+  }
+
   const staffChatId = getStaffChatId();
   if (!chatId || !staffChatId || String(chatId) !== String(staffChatId)) {
     await answerCallbackQuery(cq.id);
@@ -210,6 +227,11 @@ async function handleMessage(message: TelegramMessage) {
       return;
     }
 
+    if (message.text && /^\/dialogs(@\w+)?\s*$/i.test(message.text.trim())) {
+      await sendOpenConversationsList(chatId);
+      return;
+    }
+
     if (message.reply_to_message && message.text && message.from) {
       const actor = {
         telegramId: String(message.from.id),
@@ -243,6 +265,23 @@ async function handleMessage(message: TelegramMessage) {
 
   if (message.chat.type !== "private") return;
 
+  // A manager replying from their own DM (not the group) to a relayed
+  // customer message — resolveReplyPrompt only matches messages we actually
+  // sent to this exact chat, so a stranger can't hijack someone else's
+  // conversation by guessing a message id.
+  if (message.reply_to_message && message.text && message.from) {
+    const actor = { telegramId: String(message.from.id), name: displayName(message.from) };
+    const result = await resolveReplyPrompt(
+      message.reply_to_message.message_id,
+      actor,
+      message.text
+    );
+    if (result.kind === "conversation_reply_ok") {
+      await sendTelegramMessage(chatId, "✅ Отправлено клиенту.");
+      return;
+    }
+  }
+
   if (message.contact) {
     await handleCustomerContact(chatId, message.contact);
     await clearPendingRegistration(chatId);
@@ -266,7 +305,7 @@ async function handleMessage(message: TelegramMessage) {
     await clearPendingRegistration(chatId);
     await sendTelegramMessage(
       chatId,
-      "👋 Добро пожаловать в Molly Home — мебельную фабрику в Ташкенте!\n\nЧерез этого бота вы можете:\n✅ Проверить статус своего заказа в любое время\n🔔 Получать уведомления, когда статус меняется — не нужно звонить и уточнять\n🛋 Посмотреть каталог и оставить заявку на замер",
+      "👋 Добро пожаловать в Molly Home — мебельную фабрику в Ташкенте!\n\nЧерез этого бота вы можете:\n✅ Проверить статус своего заказа в любое время\n🔔 Получать уведомления, когда статус меняется — не нужно звонить и уточнять\n🛋 Посмотреть каталог и оставить заявку на замер\n💬 Написать менеджеру и получить ответ прямо здесь",
       { replyMarkup: CLIENT_LINKS_KEYBOARD }
     );
     await sendTelegramMessage(chatId, "Кто вы?", { replyMarkup: ROLE_KEYBOARD });
@@ -286,6 +325,12 @@ async function handleMessage(message: TelegramMessage) {
         chatId,
         "✅ Вопрос отправлен менеджеру. Мы ответим вам здесь же."
       );
+      return;
+    }
+
+    const relayed = await relayCustomerMessage(chatId, displayName(message.from), message.text);
+    if (relayed) {
+      await sendTelegramMessage(chatId, "✅ Передал менеджеру. Ответим здесь же.");
       return;
     }
 

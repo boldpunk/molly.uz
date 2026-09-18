@@ -219,6 +219,30 @@ export const orderCounters = pgTable("order_counters", {
   seq: integer("seq").notNull().default(0),
 });
 
+// Client<->manager dialogs (§3 "Общение с менеджером" / §4 "Диалоги").
+// Kept as its own thread, not folded into `requests`, so a plain question
+// doesn't create a fake lead in the sales pipeline.
+export const conversations = pgTable("conversations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  customerTelegramId: text("customer_telegram_id").notNull(),
+  customerName: text("customer_name").notNull(),
+  status: text("status", { enum: ["open", "closed"] }).notNull().default("open"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  closedAt: timestamp("closed_at"),
+});
+
+export const conversationMessages = pgTable("conversation_messages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  conversationId: uuid("conversation_id")
+    .notNull()
+    .references(() => conversations.id, { onDelete: "cascade" }),
+  direction: text("direction", { enum: ["from_customer", "from_staff"] }).notNull(),
+  authorName: text("author_name"),
+  text: text("text").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const requests = pgTable("requests", {
   id: uuid("id").primaryKey().defaultRandom(),
   customerId: uuid("customer_id").references(() => customers.id, {
@@ -256,13 +280,14 @@ export const telegramPendingActions = pgTable("telegram_pending_actions", {
       "amount_paid_full",
       "new_order_entry",
       "product_question",
+      "conversation_reply",
     ],
   }).notNull(),
   requestId: uuid("request_id").references(() => requests.id, {
     onDelete: "cascade",
   }),
-  // Opaque per-kind data that doesn't fit requestId — e.g. product_question
-  // stores the product id here, since it isn't tied to any request.
+  // Opaque per-kind data that doesn't fit requestId — product_question
+  // stores the product id, conversation_reply stores the conversation id.
   payload: text("payload"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
