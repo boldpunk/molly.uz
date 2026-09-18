@@ -21,6 +21,7 @@ export function RequestForm({
   const [name, setName] = useState(initialName);
   const [phone, setPhone] = useState(initialPhone);
   const [notes, setNotes] = useState("");
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "submitting" | "submitted" | "error">(
     "idle"
   );
@@ -29,7 +30,8 @@ export function RequestForm({
     e.preventDefault();
     setStatus("submitting");
     try {
-      await submitRequest(name, phone, notes, items, customerId);
+      const result = await submitRequest(name, phone, notes, items, customerId);
+      setOrderNumber(result.orderNumber);
       setStatus("submitted");
       clear();
     } catch {
@@ -43,6 +45,11 @@ export function RequestForm({
         <h1 className="font-heading text-2xl font-bold text-navy">
           Заявка отправлена
         </h1>
+        {orderNumber && (
+          <p className="mt-2 text-sm font-medium text-navy/50">
+            Номер заявки: <span className="text-navy">{orderNumber}</span>
+          </p>
+        )}
         <p className="mt-3 text-sm text-navy/70">
           Спасибо, {name || "мы получили вашу заявку"}! Наш менеджер свяжется
           с вами по телефону {phone} для уточнения деталей и записи на замер.

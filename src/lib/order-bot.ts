@@ -110,7 +110,7 @@ export async function clearPendingRegistration(
     .where(eq(telegramPendingActions.key, `reg:${chatId}`));
 }
 
-async function nextOrderNumber(): Promise<string> {
+export async function nextOrderNumber(): Promise<string> {
   const year = new Date().getFullYear();
   const [row] = await db
     .insert(orderCounters)
@@ -176,7 +176,8 @@ export async function postNewOrderCard(requestId: string): Promise<void> {
   const keyboard = buildOrderCardKeyboard(
     requestId,
     data.request.status as RequestStatus,
-    Boolean(data.request.depositAmount)
+    Boolean(data.request.depositAmount),
+    !data.request.assignedManagerId
   );
 
   const sent = await sendTelegramMessage(getStaffChatId()!, text, {
@@ -227,7 +228,8 @@ export async function refreshOrderCard(requestId: string): Promise<void> {
   const keyboard = buildOrderCardKeyboard(
     requestId,
     data.request.status as RequestStatus,
-    Boolean(data.request.depositAmount)
+    Boolean(data.request.depositAmount),
+    !data.request.assignedManagerId
   );
 
   await editTelegramMessage(
@@ -260,6 +262,7 @@ const DIRECT_ACTIONS: Partial<
 export type OrderActionResult =
   | { kind: "updated" }
   | { kind: "amount_prompt"; promptKind: "amount_deposit" | "amount_paid_full" }
+  | { kind: "already_claimed" }
   | { kind: "noop" };
 
 export async function handleOrderAction(
@@ -289,6 +292,37 @@ export async function handleOrderAction(
       kind: "amount_prompt",
       promptKind: action === "deposit" ? "amount_deposit" : "amount_paid_full",
     };
+  }
+
+  if (action === "claim") {
+    if (!employeeRow) return { kind: "noop" };
+    // Conditional UPDATE, not a plain write: if two managers tap "Взять в
+    // работу" on the same card near-simultaneously, only the first one's
+    // WHERE clause still matches — the second gets 0 rows back instead of
+    // silently overwriting the first manager's claim.
+    const claimed = await db
+      .update(requests)
+      .set({
+        assignedManagerId: employeeRow.id,
+        statusHistory: appendHistory(current.statusHistory, {
+          status: current.status as RequestStatus,
+          changedAt: new Date().toISOString(),
+          employeeTelegramId: actor.telegramId,
+          employeeName,
+          note: "Взял(а) в работу",
+        }),
+        updatedAt: new Date(),
+      })
+      .where(sql`${requests.id} = ${requestId} AND ${requests.assignedManagerId} IS NULL`)
+      .returning({ id: requests.id });
+    if (claimed.length === 0) {
+      // Refresh so the manager who lost the race sees who actually has it
+      // and the now-stale "Взять в работу" button disappears from their view.
+      await refreshOrderCard(requestId);
+      return { kind: "already_claimed" };
+    }
+    await refreshOrderCard(requestId);
+    return { kind: "updated" };
   }
 
   if (action === "back") {
@@ -579,6 +613,8 @@ async function resolveNewOrderPrompt(
     .where(eq(employees.telegramId, actor.telegramId))
     .limit(1);
 
+  const orderNumber = await nextOrderNumber();
+
   const [created] = await db
     .insert(requests)
     .values({
@@ -586,6 +622,7 @@ async function resolveNewOrderPrompt(
       customerPhone: phone,
       notes,
       source,
+      orderNumber,
       assignedManagerId: employeeRow?.id,
       statusHistory: [
         {

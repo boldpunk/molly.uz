@@ -4,7 +4,7 @@ import { after } from "next/server";
 import { db } from "@/db";
 import { requests, requestItems } from "@/db/schema";
 import { RequestItem } from "./types";
-import { postNewOrderCard } from "./order-bot";
+import { postNewOrderCard, nextOrderNumber } from "./order-bot";
 
 export async function submitRequest(
   name: string,
@@ -13,6 +13,8 @@ export async function submitRequest(
   items: RequestItem[],
   customerId?: string
 ) {
+  const orderNumber = await nextOrderNumber();
+
   const [request] = await db
     .insert(requests)
     .values({
@@ -20,6 +22,7 @@ export async function submitRequest(
       customerName: name,
       customerPhone: phone,
       notes,
+      orderNumber,
       statusHistory: [
         { status: "new_order", changedAt: new Date().toISOString() },
       ],
@@ -48,5 +51,5 @@ export async function submitRequest(
     )
   );
 
-  return { id: request.id };
+  return { id: request.id, orderNumber };
 }

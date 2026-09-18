@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { desc, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { requests, customers } from "@/db/schema";
+import { requests, customers, telegramProcessedUpdates } from "@/db/schema";
 import {
   sendTelegramMessage,
   answerCallbackQuery,
@@ -52,6 +52,7 @@ interface TelegramCallbackQuery {
 }
 
 interface TelegramUpdate {
+  update_id: number;
   message?: TelegramMessage;
   callback_query?: TelegramCallbackQuery;
 }
@@ -70,6 +71,20 @@ export async function POST(request: NextRequest) {
     update = await request.json();
   } catch {
     return NextResponse.json({ ok: false }, { status: 400 });
+  }
+
+  // Telegram redelivers an update if our response was slow or dropped —
+  // without this, a redelivered update would re-post an order card or
+  // re-apply a manager's status change a second time.
+  if (typeof update.update_id === "number") {
+    const inserted = await db
+      .insert(telegramProcessedUpdates)
+      .values({ updateId: String(update.update_id) })
+      .onConflictDoNothing()
+      .returning({ updateId: telegramProcessedUpdates.updateId });
+    if (inserted.length === 0) {
+      return NextResponse.json({ ok: true });
+    }
   }
 
   if (update.callback_query) {
@@ -131,6 +146,8 @@ async function handleCallbackQuery(cq: TelegramCallbackQuery) {
     await startAmountPrompt(parsed.requestId, result.promptKind, actor);
   } else if (result.kind === "updated") {
     await answerCallbackQuery(cq.id, "Статус обновлён");
+  } else if (result.kind === "already_claimed") {
+    await answerCallbackQuery(cq.id, "Уже взято в работу другим менеджером");
   } else {
     await answerCallbackQuery(cq.id);
   }
