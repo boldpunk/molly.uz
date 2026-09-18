@@ -41,6 +41,7 @@ const HANDLE_TYPES = [
 const HINGES = [
   { id: "blum", label: "Blum" },
   { id: "hettich", label: "Hettich" },
+  { id: "higold", label: "Higold" },
 ] as const;
 
 function isDarkColour(hex: string): boolean {
