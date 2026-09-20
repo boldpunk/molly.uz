@@ -2,6 +2,8 @@ import {
   pgTable,
   text,
   integer,
+  bigint,
+  date,
   doublePrecision,
   boolean,
   jsonb,
@@ -290,6 +292,114 @@ export const telegramPendingActions = pgTable("telegram_pending_actions", {
   // stores the product id, conversation_reply stores the conversation id.
   payload: text("payload"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export interface ProposalBrand {
+  name: string;
+  logoUrl?: string;
+}
+
+// Commercial proposals (КП). Money is stored in minor units (tiyin/cents) and
+// quantities in thousandths, both as integers — a proposal is a priced
+// document a customer is shown, so no line total may ever drift by a float
+// rounding error. See src/lib/proposal-money.ts for the conversions.
+export const commercialProposals = pgTable("commercial_proposals", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  number: text("number").notNull().unique(),
+  proposalDate: date("proposal_date").notNull(),
+  // Linked account when the client has one; the snapshot fields below are
+  // still always filled, so editing a customer later never rewrites a
+  // proposal that was already sent (§30 historical pricing, same reasoning).
+  customerId: uuid("customer_id").references(() => customers.id, {
+    onDelete: "set null",
+  }),
+  clientName: text("client_name").notNull().default(""),
+  clientPhone: text("client_phone").notNull().default(""),
+  clientCompany: text("client_company").notNull().default(""),
+  clientAddress: text("client_address").notNull().default(""),
+  projectName: text("project_name").notNull().default(""),
+  language: text("language", { enum: ["ru", "uz"] })
+    .notNull()
+    .default("ru"),
+  currency: text("currency", { enum: ["UZS", "USD", "EUR"] })
+    .notNull()
+    .default("UZS"),
+  themeColor: text("theme_color").notNull().default("#C08A2E"),
+  preparedById: uuid("prepared_by_id").references(() => adminUsers.id, {
+    onDelete: "set null",
+  }),
+  preparedByName: text("prepared_by_name").notNull().default(""),
+  preparedByPhone: text("prepared_by_phone").notNull().default(""),
+  deadline: text("deadline").notNull().default(""),
+  // Snapshot of the brands picked from the site's brand directory, for the
+  // same reason as the client fields.
+  brands: jsonb("brands").$type<ProposalBrand[]>().notNull().default([]),
+  subtotalMinor: bigint("subtotal_minor", { mode: "number" })
+    .notNull()
+    .default(0),
+  totalMinor: bigint("total_minor", { mode: "number" }).notNull().default(0),
+  finalText: text("final_text").notNull().default(""),
+  validityNote: text("validity_note").notNull().default(""),
+  status: text("status", {
+    enum: ["draft", "ready", "sent", "accepted", "rejected", "archived"],
+  })
+    .notNull()
+    .default("draft"),
+  sourceRequestId: uuid("source_request_id").references(() => requests.id, {
+    onDelete: "set null",
+  }),
+  createdById: uuid("created_by_id").references(() => adminUsers.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const commercialProposalItems = pgTable("commercial_proposal_items", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  proposalId: uuid("proposal_id")
+    .notNull()
+    .references(() => commercialProposals.id, { onDelete: "cascade" }),
+  sortOrder: integer("sort_order").notNull().default(0),
+  name: text("name").notNull().default(""),
+  description: text("description").notNull().default(""),
+  imageUrl: text("image_url"),
+  quantityMilli: integer("quantity_milli").notNull().default(1000),
+  unit: text("unit", {
+    enum: ["pcs", "rm", "m2", "m", "set", "service"],
+  })
+    .notNull()
+    .default("pcs"),
+  dimensions: text("dimensions").notNull().default(""),
+  unitPriceMinor: bigint("unit_price_minor", { mode: "number" })
+    .notNull()
+    .default(0),
+  totalMinor: bigint("total_minor", { mode: "number" }).notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const proposalTextTemplates = pgTable("proposal_text_templates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  language: text("language", { enum: ["ru", "uz"] })
+    .notNull()
+    .default("ru"),
+  text: text("text").notNull(),
+  active: boolean("active").notNull().default(true),
+  createdById: uuid("created_by_id").references(() => adminUsers.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Single-row counter behind the MH-0001 proposal numbers. Kept separate from
+// order_counters because proposal numbers run continuously rather than
+// resetting per year.
+export const proposalCounters = pgTable("proposal_counters", {
+  scope: text("scope").primaryKey(),
+  seq: integer("seq").notNull().default(0),
 });
 
 export const requestItems = pgTable("request_items", {

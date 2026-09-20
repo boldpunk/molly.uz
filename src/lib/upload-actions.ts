@@ -66,6 +66,12 @@ export async function uploadProductImage(
   return uploadImage(formData, "products");
 }
 
+export async function uploadProposalImage(
+  formData: FormData
+): Promise<{ url: string } | { error: string }> {
+  return uploadImage(formData, "proposals");
+}
+
 export async function uploadPageImage(
   formData: FormData
 ): Promise<{ url: string } | { error: string }> {

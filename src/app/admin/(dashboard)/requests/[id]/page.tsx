@@ -7,6 +7,8 @@ import { formatSum } from "@/lib/format";
 import { REQUEST_STATUS_LABELS } from "@/lib/types";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { updateRequest, deleteRequest } from "@/lib/admin-actions";
+import { createProposalFromRequest } from "@/lib/proposal-actions";
+import { getProposalsForRequests } from "@/lib/proposals";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { FormSection } from "@/components/admin/form-section";
 import { ArrowRightIcon, InboxIcon } from "@/components/admin/icons";
@@ -38,6 +40,8 @@ export default async function RequestDetailPage({
       .limit(1);
     managerName = mgr?.name ?? null;
   }
+
+  const proposals = (await getProposalsForRequests([id])).get(id) ?? [];
 
   const updateWithId = updateRequest.bind(null, id);
   const deleteWithId = deleteRequest.bind(null, id);
@@ -76,7 +80,28 @@ export default async function RequestDetailPage({
             </a>
           </div>
         </div>
-        <DeleteButton action={deleteWithId} label="Удалить заявку" />
+        <div className="flex flex-wrap items-center gap-2">
+          {proposals.length > 0 ? (
+            proposals.map((proposal) => (
+              <Link
+                key={proposal.id}
+                href={`/admin/proposals/${proposal.id}`}
+                className="rounded-full border border-navy/15 px-4 py-2 text-xs font-semibold text-navy/70 transition hover:bg-navy/5"
+              >
+                КП {proposal.number}
+              </Link>
+            ))
+          ) : null}
+          <form action={createProposalFromRequest.bind(null, id)}>
+            <button
+              type="submit"
+              className="rounded-full border border-navy/15 px-4 py-2 text-xs font-semibold text-navy/70 transition hover:bg-navy/5"
+            >
+              Создать КП
+            </button>
+          </form>
+          <DeleteButton action={deleteWithId} label="Удалить заявку" />
+        </div>
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
