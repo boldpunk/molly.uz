@@ -13,7 +13,10 @@ function isAllowed(role: string, pathname: string): boolean {
   if (pathname === "/admin") {
     return role === "sales_manager";
   }
-  if (pathname.startsWith("/admin/requests")) {
+  if (
+    pathname.startsWith("/admin/requests") ||
+    pathname.startsWith("/admin/proposals")
+  ) {
     return role === "sales_manager";
   }
   if (
