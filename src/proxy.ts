@@ -29,7 +29,11 @@ function isAllowed(role: string, pathname: string): boolean {
   if (pathname.startsWith("/admin/pages")) {
     return role === "content_editor";
   }
-  if (pathname.startsWith("/admin/users") || pathname.startsWith("/admin/employees")) {
+  if (
+    pathname.startsWith("/admin/users") ||
+    pathname.startsWith("/admin/employees") ||
+    pathname.startsWith("/admin/brand")
+  ) {
     return false;
   }
   return false;

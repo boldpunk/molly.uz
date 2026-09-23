@@ -224,3 +224,18 @@ export function ProposalsIcon({ className = base }: IconProps) {
     </svg>
   );
 }
+
+export function BrandIcon({ className = base }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <circle cx="12" cy="12" r="8.25" stroke="currentColor" strokeWidth="1.75" />
+      <path
+        d="M8.4 15.2V9.9l3.6 3.1 3.6-3.1v5.3"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}

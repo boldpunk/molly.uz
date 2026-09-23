@@ -216,6 +216,15 @@ export const employeeApplications = pgTable("employee_applications", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Brand assets an administrator can swap without a deploy. Empty or missing
+// rows mean "use the built-in wordmark from the brand book", so the site is
+// never left without a logo.
+export const siteSettings = pgTable("site_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull().default(""),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const orderCounters = pgTable("order_counters", {
   year: integer("year").primaryKey(),
   seq: integer("seq").notNull().default(0),

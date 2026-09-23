@@ -2,6 +2,7 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { RequestListProvider } from "@/lib/request-list-context";
 import { getCategories, getContactInfo } from "@/lib/data";
+import { getBrandAssets } from "@/lib/brand";
 import { SITE_URL } from "@/lib/site";
 
 // Header/footer nav reads categories from the (admin-editable) database on
@@ -14,9 +15,10 @@ export default async function SiteLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [categories, contact] = await Promise.all([
+  const [categories, contact, brand] = await Promise.all([
     getCategories(),
     getContactInfo(),
+    getBrandAssets(),
   ]);
 
   const organizationJsonLd = {
@@ -49,9 +51,17 @@ export default async function SiteLayout({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
       />
-      <Header categories={categories} phone={contact.phone} />
+      <Header
+        categories={categories}
+        phone={contact.phone}
+        logoSrc={brand.primary}
+      />
       <main className="flex-1">{children}</main>
-      <Footer categories={categories} phone={contact.phone} />
+      <Footer
+        categories={categories}
+        phone={contact.phone}
+        logoSrc={brand.primary}
+      />
     </RequestListProvider>
   );
 }

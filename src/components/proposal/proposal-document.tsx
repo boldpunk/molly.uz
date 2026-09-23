@@ -11,7 +11,7 @@ import {
   unitLabel,
 } from "@/lib/proposal-i18n";
 import { contrastText, readableAccent, withAlpha } from "@/lib/proposal-theme";
-import { CornerJointMark } from "@/components/icons/brand-mark";
+import { MollyWordmark } from "@/components/brand/molly-wordmark";
 
 // A4 at 96dpi, minus the page margin baked into `.kp-page` padding below.
 const PAGE_WIDTH_PX = 794;
@@ -182,11 +182,12 @@ function IntroBlock({
     <div>
       <header className="kp-head">
         <div className="kp-head-brand">
-          <div className="kp-logo" style={{ borderColor: withAlpha(accent, 0.5) }}>
-            <CornerJointMark style={{ width: 28, height: 28 }} />
-          </div>
+          {company.logoUrl ? (
+            <img src={company.logoUrl} alt={company.name} className="kp-logo-img" />
+          ) : (
+            <MollyWordmark className="kp-logo-img" />
+          )}
           <div>
-            <p className="kp-company">{company.name}</p>
             {company.tagline && (
               <p className="kp-tagline" style={{ color: accentText }}>
                 {company.tagline}
@@ -477,18 +478,9 @@ function DocumentStyles() {
         padding-bottom: 14px;
         border-bottom: 1px solid rgba(20, 20, 20, 0.08);
       }
-      .kp-head-brand { display: flex; align-items: center; gap: 12px; }
-      .kp-logo {
-        width: 44px; height: 44px;
-        border: 1.5px solid;
-        border-radius: 8px;
-        display: flex; align-items: center; justify-content: center;
-        font-family: var(--font-heading, Georgia), serif;
-        font-size: 22px; font-weight: 700;
-      }
-      .kp-company {
-        font-family: var(--font-heading, Georgia), serif;
-        font-size: 16px; font-weight: 700; letter-spacing: -0.01em;
+      .kp-head-brand { display: flex; align-items: center; gap: 14px; }
+      .kp-logo-img {
+        width: 168px; height: auto; display: block; flex-shrink: 0;
       }
       .kp-tagline { font-size: 10px; font-style: italic; margin-top: 1px; }
       .kp-company-phone { font-size: 10px; color: rgba(20,20,20,0.5); margin-top: 2px; }

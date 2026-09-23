@@ -18,6 +18,7 @@ import {
   ConfiguratorIcon,
   EmployeesIcon,
   ProposalsIcon,
+  BrandIcon,
 } from "./icons";
 
 function BackIcon({ className = "h-[18px] w-[18px]" }: { className?: string }) {
@@ -79,6 +80,12 @@ const NAV_ITEMS = [
     roles: ["administrator", "catalog_manager"],
   },
   {
+    href: "/admin/brand",
+    label: "Бренд",
+    icon: BrandIcon,
+    roles: ["administrator"],
+  },
+  {
     href: "/admin/employees",
     label: "Сотрудники",
     icon: EmployeesIcon,
@@ -92,10 +99,10 @@ const NAV_ITEMS = [
   },
 ];
 
-function SidebarLogo() {
+function SidebarLogo({ logoSrc }: { logoSrc?: string | null }) {
   return (
     <div className="flex flex-col gap-1">
-      <Logo size={24} />
+      <Logo width={168} src={logoSrc} />
       <p className="text-[11px] leading-tight text-navy/40">
         Панель управления
       </p>
@@ -179,14 +186,20 @@ function AccountFooter({ admin }: { admin: CurrentAdmin }) {
   );
 }
 
-export function AdminSidebar({ admin }: { admin: CurrentAdmin }) {
+export function AdminSidebar({
+  admin,
+  logoSrc,
+}: {
+  admin: CurrentAdmin;
+  logoSrc?: string | null;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
     <>
       {/* Mobile top bar */}
       <div className="flex items-center justify-between border-b border-navy/10 bg-white px-4 py-3 md:hidden">
-        <SidebarLogo />
+        <SidebarLogo logoSrc={logoSrc} />
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -215,7 +228,7 @@ export function AdminSidebar({ admin }: { admin: CurrentAdmin }) {
           />
           <div className="absolute left-0 top-0 flex h-full w-72 max-w-[85%] flex-col bg-white shadow-xl">
             <div className="flex items-center justify-between px-6 py-6">
-              <SidebarLogo />
+              <SidebarLogo logoSrc={logoSrc} />
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -241,7 +254,7 @@ export function AdminSidebar({ admin }: { admin: CurrentAdmin }) {
       {/* Desktop sidebar */}
       <aside className="hidden w-64 shrink-0 flex-col border-r border-navy/10 bg-white md:sticky md:top-0 md:flex md:h-screen md:overflow-y-auto">
         <div className="px-6 py-6">
-          <SidebarLogo />
+          <SidebarLogo logoSrc={logoSrc} />
         </div>
         <NavLinks role={admin.role} />
         <AccountFooter admin={admin} />

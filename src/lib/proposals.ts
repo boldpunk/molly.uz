@@ -9,6 +9,7 @@ import {
 } from "@/db/schema";
 import type { ProposalBrand } from "@/db/schema";
 import { getContactInfo, getPageBySlug } from "./data";
+import { getBrandAssets } from "./brand";
 import type {
   Proposal,
   ProposalCompanyInfo,
@@ -115,9 +116,13 @@ export async function getBrandDirectory(): Promise<ProposalBrand[]> {
 }
 
 export async function getProposalCompanyInfo(): Promise<ProposalCompanyInfo> {
-  const contact = await getContactInfo();
+  const [contact, brand] = await Promise.all([
+    getContactInfo(),
+    getBrandAssets(),
+  ]);
   return {
     name: "Molly Home",
+    logoUrl: brand.primary,
     tagline: "Премиальная корпусная мебель на заказ",
     phone: contact.phone,
     address: contact.address,

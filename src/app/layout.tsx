@@ -1,16 +1,12 @@
 import type { Metadata } from "next";
-import { Golos_Text, Inter } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import { SITE_URL } from "@/lib/site";
 import { GoogleAnalytics } from "@/components/google-analytics";
 import "./globals.css";
 
-const golosText = Golos_Text({
-  variable: "--font-golos-text",
-  subsets: ["cyrillic", "cyrillic-ext", "latin"],
-});
-
-const inter = Inter({
-  variable: "--font-inter",
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
+  weight: ["400", "500", "600"],
   subsets: ["cyrillic", "cyrillic-ext", "latin"],
 });
 
@@ -28,7 +24,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="ru"
-      className={`${golosText.variable} ${inter.variable} h-full antialiased`}
+      className={`${montserrat.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-white text-navy">
         {children}

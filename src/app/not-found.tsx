@@ -52,7 +52,7 @@ export default function NotFound() {
     <div className="flex min-h-[calc(100vh-1px)] flex-col">
       <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center px-6 py-16 text-center">
         <Link href="/" aria-label="Molly Home" className="mb-10">
-          <Logo size={30} />
+          <Logo width={200} />
         </Link>
 
         <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/25 text-accent-dark">
