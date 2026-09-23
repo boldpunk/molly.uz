@@ -9,6 +9,7 @@ import {
 import { PageHeader } from "@/components/admin/page-header";
 import { FormSection } from "@/components/admin/form-section";
 import { BrandAssetField } from "@/components/admin/brand-asset-field";
+import { LogoScaleField } from "@/components/admin/logo-scale-field";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +44,13 @@ export default async function AdminBrandPage() {
           ))}
         </div>
 
+        <div className="grid gap-4 lg:grid-cols-2">
+          <LogoScaleField
+            initialScale={assets.scale}
+            previewUrl={assets.primary ?? BRAND_FALLBACKS.logo_primary}
+          />
+        </div>
+
         <FormSection
           title="Правила из брендбука"
           description="Их стоит держать в голове, меняя логотип"
@@ -65,8 +73,9 @@ export default async function AdminBrandPage() {
               Минимальная ширина на экране 160&nbsp;px.
             </li>
             <li>
-              Для маленьких мест — иконки, аватарки, favicon — берите квадратную
-              версию.
+              Квадратная версия — для аватарок и соцсетей. Favicon сайта собран
+              из одной буквы «m» без фона: на светлой вкладке она тёмно-синяя,
+              на тёмной — кремовая.
             </li>
           </ul>
         </FormSection>

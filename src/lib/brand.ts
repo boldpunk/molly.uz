@@ -1,16 +1,10 @@
 import { inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { siteSettings } from "@/db/schema";
+import { BRAND_SLOTS, LOGO_SCALE_DEFAULT, LOGO_SCALE_KEY, clampLogoScale } from "./brand-config";
+import type { BrandSlot } from "./brand-config";
 
-// Slots an administrator can override under /admin/brand. Each falls back to
-// the built-in wordmark when empty, so the site always has a logo.
-export const BRAND_SLOTS = [
-  "logo_primary",
-  "logo_reversed",
-  "logo_square",
-] as const;
-
-export type BrandSlot = (typeof BRAND_SLOTS)[number];
+export * from "./brand-config";
 
 export interface BrandAssets {
   /** Navy wordmark, for light and cream grounds. */
@@ -19,9 +13,13 @@ export interface BrandAssets {
   reversed: string | null;
   /** Square lockup for avatars and social profiles. */
   square: string | null;
+  /** Percentage applied to every logo width on the site. */
+  scale: number;
 }
 
-const SLOT_TO_FIELD: Record<BrandSlot, keyof BrandAssets> = {
+type BrandLogoField = "primary" | "reversed" | "square";
+
+const SLOT_TO_FIELD: Record<BrandSlot, BrandLogoField> = {
   logo_primary: "primary",
   logo_reversed: "reversed",
   logo_square: "square",
@@ -49,13 +47,22 @@ export const BRAND_FALLBACKS: Record<BrandSlot, string> = {
 };
 
 export async function getBrandAssets(): Promise<BrandAssets> {
-  const assets: BrandAssets = { primary: null, reversed: null, square: null };
+  const assets: BrandAssets = {
+    primary: null,
+    reversed: null,
+    square: null,
+    scale: LOGO_SCALE_DEFAULT,
+  };
   try {
     const rows = await db
       .select({ key: siteSettings.key, value: siteSettings.value })
       .from(siteSettings)
-      .where(inArray(siteSettings.key, [...BRAND_SLOTS]));
+      .where(inArray(siteSettings.key, [...BRAND_SLOTS, LOGO_SCALE_KEY]));
     for (const row of rows) {
+      if (row.key === LOGO_SCALE_KEY) {
+        if (row.value) assets.scale = clampLogoScale(Number(row.value));
+        continue;
+      }
       const field = SLOT_TO_FIELD[row.key as BrandSlot];
       if (field && row.value) assets[field] = row.value;
     }
