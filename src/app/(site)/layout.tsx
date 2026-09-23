@@ -55,12 +55,14 @@ export default async function SiteLayout({
         categories={categories}
         phone={contact.phone}
         logoSrc={brand.primary}
+        logoScale={brand.scale}
       />
       <main className="flex-1">{children}</main>
       <Footer
         categories={categories}
         phone={contact.phone}
         logoSrc={brand.primary}
+        logoScale={brand.scale}
       />
     </RequestListProvider>
   );

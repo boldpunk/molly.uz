@@ -99,10 +99,16 @@ const NAV_ITEMS = [
   },
 ];
 
-function SidebarLogo({ logoSrc }: { logoSrc?: string | null }) {
+function SidebarLogo({
+  logoSrc,
+  logoScale,
+}: {
+  logoSrc?: string | null;
+  logoScale?: number;
+}) {
   return (
     <div className="flex flex-col gap-1">
-      <Logo width={168} src={logoSrc} />
+      <Logo width={168} src={logoSrc} scale={logoScale} />
       <p className="text-[11px] leading-tight text-navy/40">
         Панель управления
       </p>
@@ -189,9 +195,11 @@ function AccountFooter({ admin }: { admin: CurrentAdmin }) {
 export function AdminSidebar({
   admin,
   logoSrc,
+  logoScale,
 }: {
   admin: CurrentAdmin;
   logoSrc?: string | null;
+  logoScale?: number;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -199,7 +207,7 @@ export function AdminSidebar({
     <>
       {/* Mobile top bar */}
       <div className="flex items-center justify-between border-b border-navy/10 bg-white px-4 py-3 md:hidden">
-        <SidebarLogo logoSrc={logoSrc} />
+        <SidebarLogo logoSrc={logoSrc} logoScale={logoScale} />
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -228,7 +236,7 @@ export function AdminSidebar({
           />
           <div className="absolute left-0 top-0 flex h-full w-72 max-w-[85%] flex-col bg-white shadow-xl">
             <div className="flex items-center justify-between px-6 py-6">
-              <SidebarLogo logoSrc={logoSrc} />
+              <SidebarLogo logoSrc={logoSrc} logoScale={logoScale} />
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -254,7 +262,7 @@ export function AdminSidebar({
       {/* Desktop sidebar */}
       <aside className="hidden w-64 shrink-0 flex-col border-r border-navy/10 bg-white md:sticky md:top-0 md:flex md:h-screen md:overflow-y-auto">
         <div className="px-6 py-6">
-          <SidebarLogo logoSrc={logoSrc} />
+          <SidebarLogo logoSrc={logoSrc} logoScale={logoScale} />
         </div>
         <NavLinks role={admin.role} />
         <AccountFooter admin={admin} />

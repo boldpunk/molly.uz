@@ -10,15 +10,24 @@ export function Logo({
   width = MIN_WIDTH_PX,
   tone = "navy",
   src,
+  scale = 100,
   className = "",
 }: {
   width?: number;
   tone?: BrandTone;
   /** Administrator-uploaded override; falls back to the built-in wordmark. */
   src?: string | null;
+  /** Site-wide percentage from /admin/brand. */
+  scale?: number;
   className?: string;
 }) {
-  const style = { width: Math.max(width, MIN_WIDTH_PX), height: "auto" };
+  // The brand book's 160px minimum is a readability floor for the wordmark
+  // itself; an explicit site-wide scale is the owner overriding that on
+  // purpose, so it is applied after the floor rather than clamped by it.
+  const style = {
+    width: (Math.max(width, MIN_WIDTH_PX) * scale) / 100,
+    height: "auto",
+  };
 
   if (src) {
     return (

@@ -14,10 +14,12 @@ export function Header({
   categories,
   phone,
   logoSrc,
+  logoScale,
 }: {
   categories: Category[];
   phone: string;
   logoSrc?: string | null;
+  logoScale?: number;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -87,7 +89,7 @@ export function Header({
         </button>
 
         <Link href="/" aria-label="Molly Home">
-          <Logo width={168} src={logoSrc} />
+          <Logo width={168} src={logoSrc} scale={logoScale} />
         </Link>
 
         {/* Desktop nav */}
@@ -231,7 +233,7 @@ export function Header({
           />
           <div className="absolute left-0 top-0 h-full w-72 max-w-[85%] overflow-y-auto bg-white p-6 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
-              <Logo width={160} src={logoSrc} />
+              <Logo width={160} src={logoSrc} scale={logoScale} />
               <button
                 type="button"
                 onClick={() => setDrawerOpen(false)}

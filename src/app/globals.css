@@ -15,7 +15,7 @@
 
   /* Kept as aliases so existing utility classes keep working. */
   --color-accent: var(--color-cream);
-  --color-accent-dark: #946438;
+  --color-accent-dark: #9a683a;
 }
 
 @theme inline {
