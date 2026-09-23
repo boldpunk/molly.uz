@@ -66,6 +66,65 @@ export async function uploadProductImage(
   return uploadImage(formData, "products");
 }
 
+// An SVG served from our own origin is a script execution context when opened
+// directly, so anything that could carry behaviour or phone out is rejected
+// outright rather than stripped — a logo never needs any of it.
+const SVG_FORBIDDEN = [
+  /<\s*script/i,
+  /<\s*foreignObject/i,
+  /<\s*iframe/i,
+  /<\s*embed/i,
+  /<\s*object/i,
+  /\son\w+\s*=/i,
+  /javascript:/i,
+  /<!ENTITY/i,
+  /(href|xlink:href|src)\s*=\s*["']?\s*(https?:)?\/\//i,
+];
+
+export async function uploadBrandAsset(
+  formData: FormData
+): Promise<{ url: string } | { error: string }> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Файл не выбран." };
+  }
+  if (file.size > MAX_SIZE_BYTES) {
+    return { error: "Файл слишком большой (максимум 8 МБ)." };
+  }
+
+  const isSvg =
+    file.type === "image/svg+xml" || file.name.toLowerCase().endsWith(".svg");
+  if (!isSvg) {
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return { error: "Поддерживаются SVG, PNG, WebP и JPEG." };
+    }
+    return uploadImage(formData, "brand");
+  }
+
+  const markup = await file.text();
+  if (!/<\s*svg[\s>]/i.test(markup)) {
+    return { error: "Это не похоже на SVG-файл." };
+  }
+  if (SVG_FORBIDDEN.some((pattern) => pattern.test(markup))) {
+    return {
+      error:
+        "В SVG есть скрипты, внешние ссылки или обработчики событий — такой файл загрузить нельзя.",
+    };
+  }
+
+  const suffix = randomBytes(8).toString("hex");
+  const base = sanitizeBaseName(path.basename(file.name, ".svg"));
+  const dir = path.join(/* turbopackIgnore: true */ UPLOAD_DIR, "brand");
+  await mkdir(dir, { recursive: true });
+  await writeFile(
+    path.join(/* turbopackIgnore: true */ dir, `${base}-${suffix}.svg`),
+    markup,
+    "utf8"
+  );
+
+  return { url: `/uploads/brand/${base}-${suffix}.svg` };
+}
+
 export async function uploadProposalImage(
   formData: FormData
 ): Promise<{ url: string } | { error: string }> {

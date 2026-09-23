@@ -1,32 +1,37 @@
-import { CornerJointMark } from "@/components/icons/brand-mark";
+/* eslint-disable @next/next/no-img-element */
+
+import { MollyWordmark, type BrandTone } from "@/components/brand/molly-wordmark";
+
+// Brand book minimum width on screen is 160px — below that HOME stops being
+// readable, so callers pass a width rather than a font size.
+const MIN_WIDTH_PX = 160;
 
 export function Logo({
-  size = 28,
+  width = MIN_WIDTH_PX,
+  tone = "navy",
+  src,
   className = "",
 }: {
-  size?: number;
+  width?: number;
+  tone?: BrandTone;
+  /** Administrator-uploaded override; falls back to the built-in wordmark. */
+  src?: string | null;
   className?: string;
 }) {
+  const style = { width: Math.max(width, MIN_WIDTH_PX), height: "auto" };
+
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt="Molly Home"
+        style={style}
+        className={`block ${className}`}
+      />
+    );
+  }
+
   return (
-    <span
-      className={`inline-flex items-center ${className}`}
-      style={{ gap: size * 0.28 }}
-    >
-      <CornerJointMark style={{ width: size, height: size, flexShrink: 0 }} />
-      <span className="flex flex-col" style={{ gap: size * 0.02 }}>
-        <span
-          className="font-heading font-bold leading-none text-navy"
-          style={{ fontSize: size * 0.62 }}
-        >
-          Molly
-        </span>
-        <span
-          className="font-sans font-semibold leading-none text-navy/60"
-          style={{ fontSize: Math.max(size * 0.16, 6), letterSpacing: "0.24em" }}
-        >
-          HOME
-        </span>
-      </span>
-    </span>
+    <MollyWordmark tone={tone} style={style} className={`block ${className}`} />
   );
 }

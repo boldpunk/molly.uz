@@ -77,6 +77,8 @@ export interface Proposal extends ProposalSummary {
 
 export interface ProposalCompanyInfo {
   name: string;
+  /** Administrator-uploaded logo; null uses the built-in wordmark. */
+  logoUrl: string | null;
   tagline: string;
   phone: string;
   address: string;

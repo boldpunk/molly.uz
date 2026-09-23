@@ -13,9 +13,11 @@ import { LocationPicker } from "@/components/location-picker";
 export function Header({
   categories,
   phone,
+  logoSrc,
 }: {
   categories: Category[];
   phone: string;
+  logoSrc?: string | null;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -85,7 +87,7 @@ export function Header({
         </button>
 
         <Link href="/" aria-label="Molly Home">
-          <Logo size={26} />
+          <Logo width={168} src={logoSrc} />
         </Link>
 
         {/* Desktop nav */}
@@ -229,7 +231,7 @@ export function Header({
           />
           <div className="absolute left-0 top-0 h-full w-72 max-w-[85%] overflow-y-auto bg-white p-6 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
-              <Logo size={24} />
+              <Logo width={160} src={logoSrc} />
               <button
                 type="button"
                 onClick={() => setDrawerOpen(false)}

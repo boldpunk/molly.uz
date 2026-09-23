@@ -15,7 +15,7 @@ export default async function AdminLoginPage({
     <div className="flex min-h-screen items-center justify-center bg-navy/[0.025] px-6">
       <div className="w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center text-center">
-          <Logo size={56} />
+          <Logo width={240} />
           <p className="mt-3 text-sm text-navy/50">Панель управления</p>
         </div>
 
