@@ -22,6 +22,10 @@ export function RequestForm({
   const [phone, setPhone] = useState(initialPhone);
   const [notes, setNotes] = useState("");
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [trap, setTrap] = useState("");
+  const [error, setError] = useState(
+    "Не удалось отправить заявку. Попробуйте ещё раз."
+  );
   const [status, setStatus] = useState<"idle" | "submitting" | "submitted" | "error">(
     "idle"
   );
@@ -30,11 +34,24 @@ export function RequestForm({
     e.preventDefault();
     setStatus("submitting");
     try {
-      const result = await submitRequest(name, phone, notes, items, customerId);
+      const result = await submitRequest(
+        name,
+        phone,
+        notes,
+        items,
+        customerId,
+        trap
+      );
+      if (!result.ok) {
+        setError(result.error);
+        setStatus("error");
+        return;
+      }
       setOrderNumber(result.orderNumber);
       setStatus("submitted");
       clear();
     } catch {
+      setError("Не удалось отправить заявку. Попробуйте ещё раз.");
       setStatus("error");
     }
   }
@@ -169,10 +186,20 @@ export function RequestForm({
             </div>
           </div>
 
+          {/* Bots fill every field they find; people never see this one. */}
+          <input
+            type="text"
+            name="company"
+            value={trap}
+            onChange={(e) => setTrap(e.target.value)}
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            className="absolute left-[-9999px] h-px w-px opacity-0"
+          />
+
           {status === "error" && (
-            <p className="text-sm font-medium text-red-600">
-              Не удалось отправить заявку. Попробуйте ещё раз.
-            </p>
+            <p className="text-sm font-medium text-red-600">{error}</p>
           )}
 
           <button

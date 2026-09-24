@@ -391,6 +391,9 @@ export function WardrobeConfigurator({
   const [phone, setPhone] = useState("");
   const [comment, setComment] = useState("");
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [error, setError] = useState(
+    "Не удалось отправить заявку. Попробуйте ещё раз."
+  );
   const [status, setStatus] = useState<"idle" | "submitting" | "submitted" | "error">(
     "idle"
   );
@@ -435,9 +438,15 @@ export function WardrobeConfigurator({
           widthMetres: widthM,
         },
       ]);
+      if (!result.ok) {
+        setError(result.error);
+        setStatus("error");
+        return;
+      }
       setOrderNumber(result.orderNumber);
       setStatus("submitted");
     } catch {
+      setError("Не удалось отправить заявку. Попробуйте ещё раз.");
       setStatus("error");
     }
   }
@@ -783,9 +792,7 @@ export function WardrobeConfigurator({
             </div>
 
             {status === "error" && (
-              <p className="text-sm font-medium text-red-600">
-                Не удалось отправить заявку. Попробуйте ещё раз.
-              </p>
+              <p className="text-sm font-medium text-red-600">{error}</p>
             )}
 
             <button
