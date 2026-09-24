@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import type { Page } from "@/lib/data";
 import { SITE_URL } from "@/lib/site";
 
+const DEFAULT_OG_IMAGE = "/opengraph-image.png";
+
 export function pageMetadata(
   page: Page | undefined,
   fallbackTitle: string,
@@ -12,6 +14,10 @@ export function pageMetadata(
   const title = page?.metaTitle || fallbackTitle;
   const description = page?.metaDescription || fallbackDescription;
   const url = `${SITE_URL}${path}`;
+  // Pages built through generateMetadata don't pick up the app/ image
+  // convention, so the branded card is named here instead of leaving those
+  // links to arrive in Telegram and Instagram with no preview at all.
+  const ogImage = image || DEFAULT_OG_IMAGE;
   return {
     title,
     description,
@@ -20,16 +26,16 @@ export function pageMetadata(
       title,
       description,
       url,
-      images: image ? [image] : undefined,
+      images: [ogImage],
       siteName: "Molly Home",
       locale: "ru_RU",
       type: "website",
     },
     twitter: {
-      card: image ? "summary_large_image" : "summary",
+      card: "summary_large_image",
       title,
       description,
-      images: image ? [image] : undefined,
+      images: [ogImage],
     },
   };
 }
@@ -45,6 +51,7 @@ export function productMetadata({
   image?: string;
   url: string;
 }): Metadata {
+  const ogImage = image || DEFAULT_OG_IMAGE;
   return {
     title,
     description,
@@ -53,16 +60,16 @@ export function productMetadata({
       title,
       description,
       url,
-      images: image ? [image] : undefined,
+      images: [ogImage],
       siteName: "Molly Home",
       locale: "ru_RU",
       type: "website",
     },
     twitter: {
-      card: image ? "summary_large_image" : "summary",
+      card: "summary_large_image",
       title,
       description,
-      images: image ? [image] : undefined,
+      images: [ogImage],
     },
   };
 }

@@ -4,23 +4,42 @@ import { db } from "@/db";
 import { requests, requestItems } from "@/db/schema";
 import { RequestItem } from "./types";
 import { postNewOrderCard, nextOrderNumber } from "./order-bot";
+import { guardRequestSubmission } from "./request-guard";
+
+export type SubmitRequestResult =
+  | { ok: true; id: string; orderNumber: string }
+  | { ok: false; error: string };
 
 export async function submitRequest(
   name: string,
   phone: string,
   notes: string,
   items: RequestItem[],
-  customerId?: string
-) {
+  customerId?: string,
+  trap?: string
+): Promise<SubmitRequestResult> {
+  const checked = await guardRequestSubmission({
+    name,
+    phone,
+    notes,
+    items,
+    trap,
+  });
+  if (!checked.ok) {
+    return { ok: false, error: checked.error };
+  }
+
+  // Numbered only once the submission is known to be good, so rejected spam
+  // can't eat its way through the order sequence.
   const orderNumber = await nextOrderNumber();
 
   const [request] = await db
     .insert(requests)
     .values({
       customerId,
-      customerName: name,
-      customerPhone: phone,
-      notes,
+      customerName: checked.name,
+      customerPhone: checked.phone,
+      notes: checked.notes,
       orderNumber,
       statusHistory: [
         { status: "new_order", changedAt: new Date().toISOString() },
@@ -28,9 +47,9 @@ export async function submitRequest(
     })
     .returning({ id: requests.id });
 
-  if (items.length > 0) {
+  if (checked.items.length > 0) {
     await db.insert(requestItems).values(
-      items.map((item) => ({
+      checked.items.map((item) => ({
         requestId: request.id,
         productId: item.productId,
         productName: item.productName,
@@ -59,5 +78,5 @@ export async function submitRequest(
     console.error("Telegram order card post failed", err);
   }
 
-  return { id: request.id, orderNumber };
+  return { ok: true, id: request.id, orderNumber };
 }

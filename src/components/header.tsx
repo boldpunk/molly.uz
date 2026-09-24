@@ -59,13 +59,6 @@ export function Header({
             >
               {phone}
             </a>
-            <button
-              type="button"
-              className="font-medium hover:text-navy"
-              aria-label="Переключить язык"
-            >
-              RU / UZ
-            </button>
           </div>
         </div>
       </div>
