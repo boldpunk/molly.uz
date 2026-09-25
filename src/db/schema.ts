@@ -313,6 +313,7 @@ export const telegramPendingActions = pgTable("telegram_pending_actions", {
       "amount_paid_full",
       "new_order_entry",
       "product_question",
+      "product_question_reply",
       "conversation_reply",
     ],
   }).notNull(),

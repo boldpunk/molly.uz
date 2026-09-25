@@ -18,6 +18,7 @@ import {
   buildOrderCardKeyboard,
   backTarget,
   sendTelegramMessage,
+  escapeHtml,
   editTelegramMessage,
   getStaffChatId,
   isStaffNotifyConfigured,
@@ -538,6 +539,7 @@ export type ReplyPromptResult =
   | { kind: "new_order_ok"; requestId: string }
   | { kind: "new_order_invalid"; reason: string }
   | { kind: "conversation_reply_ok" }
+  | { kind: "product_question_reply_ok" }
   | { kind: "not_found" };
 
 export async function resolveReplyPrompt(
@@ -555,6 +557,25 @@ export async function resolveReplyPrompt(
 
   if (pending.kind === "new_order_entry") {
     return resolveNewOrderPrompt(key, actor, text);
+  }
+
+  if (pending.kind === "product_question_reply") {
+    if (!pending.payload) return { kind: "not_found" };
+    let asker: { askerChatId?: string; productName?: string };
+    try {
+      asker = JSON.parse(pending.payload);
+    } catch {
+      return { kind: "not_found" };
+    }
+    if (!asker.askerChatId) return { kind: "not_found" };
+    await sendTelegramMessage(
+      asker.askerChatId,
+      `💬 Ответ на ваш вопрос${
+        asker.productName ? ` по «${escapeHtml(asker.productName)}»` : ""
+      }\n\n${escapeHtml(text)}\n\n<i>${escapeHtml(actor.name)}, Molly Home</i>`
+    );
+    await db.delete(telegramPendingActions).where(eq(telegramPendingActions.key, key));
+    return { kind: "product_question_reply_ok" };
   }
 
   if (pending.kind === "conversation_reply") {
