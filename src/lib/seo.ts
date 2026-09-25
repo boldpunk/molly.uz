@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { Page } from "@/lib/data";
 import { SITE_URL } from "@/lib/site";
+import { DEFAULT_COMPANY_NAME } from "@/lib/brand-config";
 
 const DEFAULT_OG_IMAGE = "/opengraph-image.png";
 
@@ -27,7 +28,7 @@ export function pageMetadata(
       description,
       url,
       images: [ogImage],
-      siteName: "Molly Home",
+      siteName: DEFAULT_COMPANY_NAME,
       locale: "ru_RU",
       type: "website",
     },
@@ -61,7 +62,7 @@ export function productMetadata({
       description,
       url,
       images: [ogImage],
-      siteName: "Molly Home",
+      siteName: DEFAULT_COMPANY_NAME,
       locale: "ru_RU",
       type: "website",
     },

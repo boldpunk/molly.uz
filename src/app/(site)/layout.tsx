@@ -24,7 +24,7 @@ export default async function SiteLayout({
   const organizationJsonLd = {
     "@context": "https://schema.org",
     "@type": "FurnitureStore",
-    name: "Molly Home",
+    name: brand.companyName,
     url: SITE_URL,
     telephone: contact.phone,
     email: contact.email,

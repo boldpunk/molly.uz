@@ -1,7 +1,16 @@
 import { inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { siteSettings } from "@/db/schema";
-import { BRAND_SLOTS, LOGO_SCALE_DEFAULT, LOGO_SCALE_KEY, clampLogoScale } from "./brand-config";
+import {
+  BRAND_SLOTS,
+  COMPANY_NAME_KEY,
+  COMPANY_TAGLINE_KEY,
+  DEFAULT_COMPANY_NAME,
+  DEFAULT_COMPANY_TAGLINE,
+  LOGO_SCALE_DEFAULT,
+  LOGO_SCALE_KEY,
+  clampLogoScale,
+} from "./brand-config";
 import type { BrandSlot } from "./brand-config";
 
 export * from "./brand-config";
@@ -15,6 +24,10 @@ export interface BrandAssets {
   square: string | null;
   /** Percentage applied to every logo width on the site. */
   scale: number;
+  /** Company name shown on documents and in structured data. */
+  companyName: string;
+  /** One-line descriptor under the name on a proposal. */
+  companyTagline: string;
 }
 
 type BrandLogoField = "primary" | "reversed" | "square";
@@ -52,15 +65,32 @@ export async function getBrandAssets(): Promise<BrandAssets> {
     reversed: null,
     square: null,
     scale: LOGO_SCALE_DEFAULT,
+    companyName: DEFAULT_COMPANY_NAME,
+    companyTagline: DEFAULT_COMPANY_TAGLINE,
   };
   try {
     const rows = await db
       .select({ key: siteSettings.key, value: siteSettings.value })
       .from(siteSettings)
-      .where(inArray(siteSettings.key, [...BRAND_SLOTS, LOGO_SCALE_KEY]));
+      .where(
+        inArray(siteSettings.key, [
+          ...BRAND_SLOTS,
+          LOGO_SCALE_KEY,
+          COMPANY_NAME_KEY,
+          COMPANY_TAGLINE_KEY,
+        ])
+      );
     for (const row of rows) {
       if (row.key === LOGO_SCALE_KEY) {
         if (row.value) assets.scale = clampLogoScale(Number(row.value));
+        continue;
+      }
+      if (row.key === COMPANY_NAME_KEY) {
+        if (row.value) assets.companyName = row.value;
+        continue;
+      }
+      if (row.key === COMPANY_TAGLINE_KEY) {
+        if (row.value) assets.companyTagline = row.value;
         continue;
       }
       const field = SLOT_TO_FIELD[row.key as BrandSlot];

@@ -121,9 +121,9 @@ export async function getProposalCompanyInfo(): Promise<ProposalCompanyInfo> {
     getBrandAssets(),
   ]);
   return {
-    name: "Molly Home",
+    name: brand.companyName,
     logoUrl: brand.primary,
-    tagline: "Премиальная корпусная мебель на заказ",
+    tagline: brand.companyTagline,
     phone: contact.phone,
     address: contact.address,
     instagram: contact.instagram,

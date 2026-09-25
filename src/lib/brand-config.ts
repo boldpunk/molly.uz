@@ -11,6 +11,15 @@ export const BRAND_SLOTS = [
 
 export type BrandSlot = (typeof BRAND_SLOTS)[number];
 
+export const COMPANY_NAME_KEY = "company_name";
+export const COMPANY_TAGLINE_KEY = "company_tagline";
+
+// Used wherever settings can't be read (sync metadata helpers) and as the
+// fallback when the fields are left empty, so there is one place to change
+// the name rather than a literal scattered through the code.
+export const DEFAULT_COMPANY_NAME = "Molly Home";
+export const DEFAULT_COMPANY_TAGLINE = "Премиальная корпусная мебель на заказ";
+
 export const LOGO_SCALE_KEY = "logo_scale";
 
 export const LOGO_SCALE_MIN = 50;
