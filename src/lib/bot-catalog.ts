@@ -204,15 +204,41 @@ export async function relayProductQuestion(
   if (!isStaffNotifyConfigured()) return;
   const text = `❓ Вопрос по товару «${escapeHtml(productName)}»\nОт: ${escapeHtml(
     fromLabel
-  )}\n\n${escapeHtml(question)}`;
+  )}\n\n${escapeHtml(
+    question
+  )}\n\n<i>Ответьте на это сообщение, чтобы ответ ушёл клиенту.</i>`;
+
+  // The asker's chat and the product travel with the relay, so a manager
+  // replying to the card — in the group or in their own DM — has their answer
+  // delivered back. Without this the reply fell through to the "who are you"
+  // fallback and the customer never heard back.
+  const payload = JSON.stringify({
+    askerChatId: String(chatId),
+    productName,
+  });
+
+  async function track(sent: { message_id: number } | null) {
+    if (!sent) return;
+    await db
+      .insert(telegramPendingActions)
+      .values({
+        key: `msg:${sent.message_id}`,
+        kind: "product_question_reply",
+        payload,
+      })
+      .onConflictDoUpdate({
+        target: telegramPendingActions.key,
+        set: { kind: "product_question_reply", payload },
+      });
+  }
 
   const staffChatId = getStaffChatId();
-  if (staffChatId) await sendTelegramMessage(staffChatId, text);
+  if (staffChatId) await track(await sendTelegramMessage(staffChatId, text));
 
   const recipients = await db.select({ telegramId: employees.telegramId }).from(employees);
   await Promise.all(
     recipients
-      .filter((r) => /^\d+$/.test(r.telegramId))
-      .map((r) => sendTelegramMessage(r.telegramId, text))
+      .filter((r) => /^\d+$/.test(r.telegramId) && r.telegramId !== String(chatId))
+      .map(async (r) => track(await sendTelegramMessage(r.telegramId, text)))
   );
 }

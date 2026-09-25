@@ -291,6 +291,13 @@ async function handleMessage(message: TelegramMessage) {
       } else if (result.kind === "new_order_ok") {
         revalidatePath("/admin/requests");
         revalidatePath("/admin");
+      } else if (
+        result.kind === "conversation_reply_ok" ||
+        result.kind === "product_question_reply_ok"
+      ) {
+        await sendTelegramMessage(chatId, "✅ Отправлено клиенту.", {
+          replyToMessageId: message.message_id,
+        });
       }
     }
     return;
@@ -309,7 +316,10 @@ async function handleMessage(message: TelegramMessage) {
       actor,
       message.text
     );
-    if (result.kind === "conversation_reply_ok") {
+    if (
+      result.kind === "conversation_reply_ok" ||
+      result.kind === "product_question_reply_ok"
+    ) {
       await sendTelegramMessage(chatId, "✅ Отправлено клиенту.");
       return;
     }
@@ -396,6 +406,18 @@ async function handleMessage(message: TelegramMessage) {
       );
       return;
     }
+    // A confirmed employee is already known — asking "who are you" and for a
+    // name they already have was the bot's most confusing behaviour. Show
+    // them what they can actually do instead.
+    if (await isApprovedEmployee(String(chatId))) {
+      await sendTelegramMessage(
+        chatId,
+        "Чтобы ответить клиенту, ответьте на его сообщение через «Reply». Или выберите действие:",
+        { replyMarkup: MANAGER_MENU_KEYBOARD }
+      );
+      return;
+    }
+
     // No pending manager-name prompt active — never guess. Free text alone
     // used to silently register the sender as staff; now it just re-shows
     // the explicit role choice.

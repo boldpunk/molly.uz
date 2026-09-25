@@ -5,6 +5,9 @@ import type { StatusHistoryEntry } from "@/db/schema";
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const STAFF_CHAT_ID = process.env.TELEGRAM_STAFF_CHAT_ID;
+// Overridable so the bot's conversation flows can be exercised against a
+// local recorder; unset everywhere except in tests.
+const API_BASE = process.env.TELEGRAM_API_BASE || "https://api.telegram.org";
 
 export function isTelegramBotConfigured(): boolean {
   return Boolean(BOT_TOKEN);
@@ -30,7 +33,7 @@ async function callTelegramApi<T = unknown>(
   if (!BOT_TOKEN) return null;
   try {
     const res = await fetch(
-      `https://api.telegram.org/bot${BOT_TOKEN}/${method}`,
+      `${API_BASE}/bot${BOT_TOKEN}/${method}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
