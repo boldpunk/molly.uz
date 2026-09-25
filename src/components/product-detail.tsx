@@ -13,6 +13,7 @@ import { ProductCard } from "@/components/product-card";
 import { useRequestList } from "@/lib/request-list-context";
 import { getHardwareBrandBadge } from "@/lib/hardware-brands";
 import { SITE_URL } from "@/lib/site";
+import { DEFAULT_COMPANY_NAME } from "@/lib/brand-config";
 import { FavouriteButton } from "@/components/favourite-button";
 import { ImageLightbox } from "@/components/image-lightbox";
 import { PageBlocks } from "@/components/page-blocks";
@@ -133,7 +134,7 @@ export function ProductDetail({
     description: product.specLine || product.description || undefined,
     image: product.imageUrl || undefined,
     url: productUrl,
-    brand: { "@type": "Brand", name: "Molly Home" },
+    brand: { "@type": "Brand", name: DEFAULT_COMPANY_NAME },
     offers:
       offerPrice !== undefined
         ? {

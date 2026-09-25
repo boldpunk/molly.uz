@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/admin/page-header";
 import { FormSection } from "@/components/admin/form-section";
 import { BrandAssetField } from "@/components/admin/brand-asset-field";
 import { LogoScaleField } from "@/components/admin/logo-scale-field";
+import { CompanyDetailsField } from "@/components/admin/company-details-field";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +49,10 @@ export default async function AdminBrandPage() {
           <LogoScaleField
             initialScale={assets.scale}
             previewUrl={assets.primary ?? BRAND_FALLBACKS.logo_primary}
+          />
+          <CompanyDetailsField
+            name={assets.companyName}
+            tagline={assets.companyTagline}
           />
         </div>
 

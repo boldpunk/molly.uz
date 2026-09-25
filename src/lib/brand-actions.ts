@@ -5,6 +5,8 @@ import { db } from "@/db";
 import { siteSettings } from "@/db/schema";
 import {
   BRAND_SLOTS,
+  COMPANY_NAME_KEY,
+  COMPANY_TAGLINE_KEY,
   LOGO_SCALE_KEY,
   clampLogoScale,
   type BrandSlot,
@@ -44,6 +46,29 @@ export async function saveBrandAsset(slot: string, formData: FormData) {
 
 export async function resetBrandAsset(slot: string) {
   await saveBrandAsset(slot, new FormData());
+}
+
+export async function saveCompanyDetails(formData: FormData) {
+  const read = (key: string) => {
+    const value = formData.get(key);
+    return typeof value === "string" ? value.trim().slice(0, 120) : "";
+  };
+
+  for (const [key, value] of [
+    [COMPANY_NAME_KEY, read("companyName")],
+    [COMPANY_TAGLINE_KEY, read("companyTagline")],
+  ] as const) {
+    await db
+      .insert(siteSettings)
+      .values({ key, value })
+      .onConflictDoUpdate({
+        target: siteSettings.key,
+        set: { value, updatedAt: new Date() },
+      });
+  }
+
+  revalidatePath("/", "layout");
+  revalidatePath("/admin", "layout");
 }
 
 export async function saveLogoScale(percent: number) {

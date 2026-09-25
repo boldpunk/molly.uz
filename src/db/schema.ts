@@ -11,6 +11,7 @@ import {
   uuid,
   pgEnum,
   unique,
+  index,
 } from "drizzle-orm/pg-core";
 
 export const pricingModeEnum = pgEnum("pricing_mode", [
@@ -109,7 +110,10 @@ export const products = pgTable("products", {
   metaDescription: text("meta_description"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("products_category_name_idx").on(table.categoryId, table.name),
+  index("products_featured_idx").on(table.isFeatured),
+]);
 
 export type PageBlock =
   | { type: "heading"; text: string }
@@ -168,7 +172,10 @@ export const favourites = pgTable(
       .references(() => products.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
-  (table) => [unique().on(table.customerId, table.productId)]
+  (table) => [
+    unique().on(table.customerId, table.productId),
+    index("favourites_customer_idx").on(table.customerId),
+  ]
 );
 
 export interface StatusHistoryEntry {
@@ -186,7 +193,9 @@ export interface StatusHistoryEntry {
 export const telegramProcessedUpdates = pgTable("telegram_processed_updates", {
   updateId: text("update_id").primaryKey(),
   processedAt: timestamp("processed_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("telegram_processed_updates_processed_at_idx").on(table.processedAt),
+]);
 
 export const wardrobeFinishes = pgTable("wardrobe_finishes", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -241,7 +250,10 @@ export const conversations = pgTable("conversations", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
   closedAt: timestamp("closed_at"),
-});
+}, (table) => [
+  index("conversations_status_updated_idx").on(table.status, table.updatedAt),
+  index("conversations_customer_idx").on(table.customerTelegramId, table.status),
+]);
 
 export const conversationMessages = pgTable("conversation_messages", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -252,7 +264,12 @@ export const conversationMessages = pgTable("conversation_messages", {
   authorName: text("author_name"),
   text: text("text").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("conversation_messages_conversation_idx").on(
+    table.conversationId,
+    table.createdAt
+  ),
+]);
 
 export const requests = pgTable("requests", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -280,7 +297,12 @@ export const requests = pgTable("requests", {
   telegramMessageId: text("telegram_message_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("requests_created_at_idx").on(table.createdAt),
+  index("requests_status_created_at_idx").on(table.status, table.createdAt),
+  index("requests_customer_idx").on(table.customerId),
+  index("requests_assigned_manager_idx").on(table.assignedManagerId),
+]);
 
 export const telegramPendingActions = pgTable("telegram_pending_actions", {
   key: text("key").primaryKey(),
@@ -301,7 +323,9 @@ export const telegramPendingActions = pgTable("telegram_pending_actions", {
   // stores the product id, conversation_reply stores the conversation id.
   payload: text("payload"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("telegram_pending_actions_request_idx").on(table.requestId),
+]);
 
 export interface ProposalBrand {
   name: string;
@@ -362,7 +386,10 @@ export const commercialProposals = pgTable("commercial_proposals", {
   }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("commercial_proposals_created_at_idx").on(table.createdAt),
+  index("commercial_proposals_source_request_idx").on(table.sourceRequestId),
+]);
 
 export const commercialProposalItems = pgTable("commercial_proposal_items", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -426,4 +453,6 @@ export const requestItems = pgTable("request_items", {
   colourLabel: text("colour_label"),
   widthMetres: doublePrecision("width_metres"),
   estimate: integer("estimate"),
-});
+}, (table) => [
+  index("request_items_request_idx").on(table.requestId),
+]);
