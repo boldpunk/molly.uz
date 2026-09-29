@@ -1,12 +1,22 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Category, Product } from "@/lib/types";
 import { ProductCard } from "@/components/product-card";
 import { getCategoryIcon, FurnitureIcon } from "@/components/icons/categories";
 import { getHardwareBrandBadge } from "@/lib/hardware-brands";
 import { getDisplayPrice } from "@/lib/pricing";
+import { CATEGORY_IMAGES } from "@/lib/category-images";
+
+function pluralModels(n: number) {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return "модель";
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "модели";
+  return "моделей";
+}
 
 type SortKey = "default" | "price-asc" | "price-desc" | "name";
 
@@ -26,6 +36,21 @@ export function CatalogView({
   const [colour, setColour] = useState<string | "all">("all");
   const [hardware, setHardware] = useState<string | "all">("all");
   const [sort, setSort] = useState<SortKey>("default");
+  const tabsRef = useRef<HTMLDivElement>(null);
+
+  // On a phone the tab row scrolls sideways; bring the current section into
+  // view so the visitor sees where they are.
+  useEffect(() => {
+    const row = tabsRef.current;
+    const active = row?.querySelector<HTMLElement>("[aria-current=page]");
+    if (row && active) {
+      row.scrollLeft = active.offsetLeft - (row.clientWidth - active.clientWidth) / 2;
+    }
+  }, [category?.id]);
+
+  const bannerImage = category
+    ? CATEGORY_IMAGES[category.slug]
+    : "/images/hero.jpg";
 
   const colourOptions = useMemo(() => {
     const map = new Map<string, { label: string; swatch: string }>();
@@ -73,23 +98,46 @@ export function CatalogView({
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
-      <nav className="text-xs text-navy/50">
-        <Link href="/" className="hover:underline">
-          Главная
-        </Link>{" "}
-        /{" "}
-        <span className="text-navy">
+      {/* Banner: the section's photo behind its name */}
+      <div className="relative isolate overflow-hidden rounded-[2rem] bg-ink px-6 py-10 text-white sm:px-10 sm:py-14">
+        {bannerImage && (
+          <Image
+            src={bannerImage}
+            alt=""
+            fill
+            priority
+            sizes="(min-width: 1280px) 1232px, 100vw"
+            className="-z-10 animate-kenburns object-cover"
+          />
+        )}
+        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-ink/90 via-ink/65 to-ink/20" />
+        <nav className="animate-fade-up text-xs text-white/60">
+          <Link href="/" className="transition hover:text-white">
+            Главная
+          </Link>{" "}
+          /{" "}
+          <span className="text-white">
+            {category ? category.name : "Все продукты"}
+          </span>
+        </nav>
+        <h1 className="mt-4 animate-fade-up font-heading text-3xl font-bold tracking-tight [animation-delay:120ms] sm:text-5xl">
           {category ? category.name : "Все продукты"}
-        </span>
-      </nav>
+        </h1>
+        {!category?.isPlaceholder && (
+          <p className="mt-3 animate-fade-up text-sm text-white/70 [animation-delay:220ms]">
+            {products.length} {pluralModels(products.length)} в разделе
+          </p>
+        )}
+      </div>
 
       {/* Category tabs */}
-      <div className="mt-4 flex flex-wrap gap-2 border-b border-navy/10 pb-4">
+      <div ref={tabsRef} className="no-scrollbar relative -mx-6 mt-6 flex gap-2 overflow-x-auto scroll-smooth px-6 pb-2">
         <Link
           href="/catalog"
-          className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${
+          aria-current={!category ? "page" : undefined}
+          className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${
             !category
-              ? "bg-navy text-white"
+              ? "bg-navy text-white shadow-md shadow-navy/20"
               : "bg-navy/5 text-navy/70 hover:bg-navy/10"
           }`}
         >
@@ -105,9 +153,10 @@ export function CatalogView({
             <Link
               key={cat.id}
               href={`/catalog/${cat.slug}`}
-              className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${
+              aria-current={active ? "page" : undefined}
+              className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${
                 active
-                  ? "bg-navy text-white"
+                  ? "bg-navy text-white shadow-md shadow-navy/20"
                   : "bg-navy/5 text-navy/70 hover:bg-navy/10"
               }`}
             >
@@ -119,10 +168,6 @@ export function CatalogView({
           );
         })}
       </div>
-
-      <h1 className="font-heading mt-6 text-2xl font-bold text-navy">
-        {category ? category.name : "Все продукты"}
-      </h1>
 
       {category?.isPlaceholder ? (
         <div className="mt-8 rounded-xl border border-dashed border-navy/20 bg-navy/[0.02] px-6 py-16 text-center">
@@ -179,7 +224,7 @@ export function CatalogView({
             <div className="flex items-center justify-between">
               <span className="text-sm text-navy/60">
                 {filtered.length}{" "}
-                {filtered.length === 1 ? "модель" : "моделей"}
+                {pluralModels(filtered.length)}
               </span>
               <select
                 value={sort}
@@ -197,9 +242,17 @@ export function CatalogView({
                 Ничего не найдено по этим фильтрам.
               </p>
             ) : (
-              <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3">
-                {filtered.map((p) => (
-                  <ProductCard key={p.id} product={p} />
+              <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3">
+                {filtered.map((p, i) => (
+                  // Keyed by the active filters so a change replays the
+                  // entrance and the grid visibly responds.
+                  <div
+                    key={`${colour}-${hardware}-${sort}-${p.id}`}
+                    className="animate-fade-up"
+                    style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}
+                  >
+                    <ProductCard product={p} />
+                  </div>
                 ))}
               </div>
             )}

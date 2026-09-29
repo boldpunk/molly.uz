@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
@@ -9,6 +10,7 @@ import { useRequestList } from "@/lib/request-list-context";
 import { Logo } from "@/components/logo";
 import { getCategoryIcon } from "@/components/icons/categories";
 import { LocationPicker } from "@/components/location-picker";
+import { CATEGORY_IMAGES } from "@/lib/category-images";
 
 export function Header({
   categories,
@@ -26,6 +28,24 @@ export function Header({
   const { items } = useRequestList();
   const pathname = usePathname();
   const closeMenuTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [scrolled, setScrolled] = useState(false);
+  const progressRef = useRef<HTMLSpanElement>(null);
+
+  // Past the first few pixels the header tightens up and a thin line along
+  // its bottom edge tracks how far down the page the visitor is. The line is
+  // written straight to the DOM so scrolling never re-renders the header.
+  useEffect(() => {
+    function onScroll() {
+      setScrolled(window.scrollY > 24);
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      if (progressRef.current) {
+        progressRef.current.style.transform = `scaleX(${max > 0 ? window.scrollY / max : 0})`;
+      }
+    }
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -47,9 +67,17 @@ export function Header({
 
   return (
     <>
-    <header className="sticky top-0 z-50 border-b border-navy/10 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
-      {/* Utility bar — hidden on mobile */}
-      <div className="hidden border-b border-navy/10 text-xs text-navy/70 md:block">
+    <header
+      className={`sticky top-0 z-50 border-b bg-white/95 backdrop-blur transition-shadow duration-300 supports-[backdrop-filter]:bg-white/80 ${
+        scrolled ? "border-transparent shadow-lg shadow-navy/[0.06]" : "border-navy/10"
+      }`}
+    >
+      {/* Utility bar — hidden on mobile, folds away once scrolling starts */}
+      <div
+        className={`hidden overflow-hidden border-b border-navy/10 text-xs text-navy/70 transition-[max-height,opacity] duration-300 md:block ${
+          scrolled ? "max-h-0 opacity-0" : "max-h-12 opacity-100"
+        }`}
+      >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-2">
           <LocationPicker />
           <div className="flex items-center gap-4">
@@ -64,7 +92,11 @@ export function Header({
       </div>
 
       {/* Main bar */}
-      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 md:px-6">
+      <div
+        className={`mx-auto flex max-w-7xl items-center gap-4 px-4 transition-[padding] duration-300 md:px-6 ${
+          scrolled ? "py-2" : "py-3"
+        }`}
+      >
         <button
           type="button"
           onClick={() => setDrawerOpen(true)}
@@ -103,7 +135,7 @@ export function Header({
               Каталог
             </Link>
             {menuOpen && (
-              <div className="absolute left-0 top-full z-50 w-[56rem] max-w-[calc(100vw-3rem)] rounded-lg border border-navy/10 bg-white p-6 pt-8 shadow-lg">
+              <div className="absolute left-0 top-full z-50 w-[56rem] max-w-[calc(100vw-3rem)] animate-fade-up rounded-2xl border border-navy/10 bg-white p-6 pt-8 shadow-2xl shadow-navy/10 [animation-duration:0.35s]">
                 <div className="grid grid-cols-5 gap-4">
                   {categories.map((cat) => {
                     const Icon = getCategoryIcon(cat.slug);
@@ -113,10 +145,20 @@ export function Header({
                         href={`/catalog/${cat.slug}`}
                         className="group flex flex-col gap-2"
                       >
-                        <div className="flex aspect-square items-center justify-center rounded-md border border-navy/10 bg-navy/[0.03] transition group-hover:bg-accent/10">
-                          <Icon className="h-8 w-8 text-navy/40 transition group-hover:text-accent-dark" />
+                        <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-cream-light transition group-hover:bg-clay-light">
+                          {CATEGORY_IMAGES[cat.slug] && !cat.isPlaceholder ? (
+                            <Image
+                              src={CATEGORY_IMAGES[cat.slug]}
+                              alt=""
+                              fill
+                              sizes="170px"
+                              className="object-cover transition duration-500 group-hover:scale-110"
+                            />
+                          ) : (
+                            <Icon className="h-8 w-8 text-navy/40 transition group-hover:text-clay" />
+                          )}
                         </div>
-                        <span className="text-sm font-medium text-navy group-hover:text-accent-dark">
+                        <span className="text-sm font-medium text-navy transition group-hover:text-clay">
                           {cat.name}
                         </span>
                       </Link>
@@ -212,6 +254,11 @@ export function Header({
         </div>
       </div>
 
+      <span
+        ref={progressRef}
+        aria-hidden
+        className="absolute bottom-0 left-0 h-[2px] w-full origin-left scale-x-0 bg-gradient-to-r from-clay to-accent-dark"
+      />
     </header>
 
     {/* Mobile drawer */}
@@ -220,11 +267,11 @@ export function Header({
         <div className="fixed inset-0 z-50 md:hidden">
           <button
             type="button"
-            className="absolute inset-0 bg-navy/40"
+            className="absolute inset-0 animate-fade-in bg-navy/40 backdrop-blur-sm"
             aria-label="Закрыть меню"
             onClick={() => setDrawerOpen(false)}
           />
-          <div className="absolute left-0 top-0 h-full w-72 max-w-[85%] overflow-y-auto bg-white p-6 shadow-xl">
+          <div className="absolute left-0 top-0 h-full w-72 max-w-[85%] animate-drawer overflow-y-auto rounded-r-3xl bg-white p-6 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
               <Logo width={160} src={logoSrc} scale={logoScale} />
               <button
