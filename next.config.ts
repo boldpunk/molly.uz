@@ -44,6 +44,12 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
+    // All resizing happens in app/api/img — see lib/image-loader.ts.
+    loader: "custom",
+    loaderFile: "./src/lib/image-loader.ts",
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
+    imageSizes: [256, 384],
+    qualities: [60, 75, 85],
     // Product photos uploaded before the self-host migration still live on
     // Vercel Blob; new uploads are same-origin under /uploads and need no
     // remote pattern.

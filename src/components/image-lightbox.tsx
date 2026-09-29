@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
-import { isLocalUpload } from "@/lib/image-src";
 
 export function ImageLightbox({
   src,
@@ -52,7 +51,6 @@ export function ImageLightbox({
           fill
           sizes="100vw"
           quality={90}
-          unoptimized={isLocalUpload(src)}
           className="rounded-lg object-contain"
         />
       </div>

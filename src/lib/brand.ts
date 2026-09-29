@@ -12,6 +12,7 @@ import {
   clampLogoScale,
 } from "./brand-config";
 import type { BrandSlot } from "./brand-config";
+import { cached } from "./data-cache";
 
 export * from "./brand-config";
 
@@ -59,7 +60,7 @@ export const BRAND_FALLBACKS: Record<BrandSlot, string> = {
   logo_square: "/brand/molly-home-logo-square.svg",
 };
 
-export async function getBrandAssets(): Promise<BrandAssets> {
+async function loadBrandAssets(): Promise<BrandAssets> {
   const assets: BrandAssets = {
     primary: null,
     reversed: null,
@@ -102,3 +103,6 @@ export async function getBrandAssets(): Promise<BrandAssets> {
   }
   return assets;
 }
+
+// Served from memory; see lib/data-cache.ts.
+export const getBrandAssets = cached("getBrandAssets", loadBrandAssets);
