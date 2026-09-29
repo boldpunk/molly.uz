@@ -48,7 +48,7 @@ export function FavouriteButton({
       onClick={handleClick}
       disabled={isPending}
       aria-pressed={isFavourite}
-      className={`flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition disabled:opacity-60 ${
+      className={`flex items-center justify-center gap-2 whitespace-nowrap rounded-full border px-5 py-3 text-sm font-medium transition disabled:opacity-60 ${
         isFavourite
           ? "border-accent-dark bg-accent/15 text-accent-dark"
           : "border-navy/15 text-navy hover:bg-navy/5"

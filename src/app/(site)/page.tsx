@@ -1,7 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
-import { isLocalUpload } from "@/lib/image-src";
-import { getCategories, getFeaturedProducts, getPageBySlug } from "@/lib/data";
+import {
+  getCategories,
+  getFeaturedProducts,
+  getPageBySlug,
+  getProductsByCategory,
+} from "@/lib/data";
+import { formatSum } from "@/lib/format";
+import { getDisplayPrice } from "@/lib/pricing";
+import type { Product } from "@/lib/types";
 import { ProductCard } from "@/components/product-card";
 import { PlaceholderImage } from "@/components/placeholder-image";
 import { getCategoryIcon } from "@/components/icons/categories";
@@ -11,7 +18,6 @@ import { PhotoSlider } from "@/components/photo-slider";
 import { BrandSlider } from "@/components/brand-slider";
 import { ReviewsGrid } from "@/components/reviews-grid";
 import { HeroSlider, type HeroSlide } from "@/components/hero-slider";
-import { Marquee } from "@/components/marquee";
 import { FeaturedProducts } from "@/components/home/featured-products";
 import { pageMetadata } from "@/lib/seo";
 import { CATEGORY_IMAGES } from "@/lib/category-images";
@@ -47,15 +53,6 @@ const GALLERY_PHOTOS = [
   { src: "/images/gallery/reading-nook.jpg", caption: "Гостиная" },
   { src: "/images/gallery/entryway.jpg", caption: "Прихожая" },
   { src: "/images/gallery/office.jpg", caption: "Кабинет" },
-];
-
-const RIBBON = [
-  "Бесплатный замер",
-  "Собственное производство в Ташкенте",
-  "Мебель под ваши размеры",
-  "Фурнитура HIGOLD и BLUM",
-  "Доставка и монтаж",
-  "Онлайн-конфигуратор шкафа",
 ];
 
 // Extra hero slides point at sections of the catalogue. Each is shown only
@@ -173,10 +170,36 @@ export default async function HomePage() {
   const partnerBrands = pick(blocks, 8, "brand_list")?.items ?? [];
   const reviews = pick(blocks, 9, "reviews")?.items ?? [];
 
-  const liveCategories = categories.filter((c) => !c.isPlaceholder);
+  // Each category slide shows a real model from that category — its
+  // featured one if there is one — so the photo is a sharp product render
+  // and the slide links straight to it.
+  const liveCategories = categories.filter(
+    (c) => !c.isPlaceholder && CATEGORY_SLIDES[c.slug]
+  );
+  const slideProducts = await Promise.all(
+    liveCategories.map(async (c) => {
+      const pool = featured.filter((p) => p.categorySlug === c.slug);
+      const candidates = pool.length > 0 ? pool : await getProductsByCategory(c.id, c.slug);
+      return candidates.find((p) => p.imageUrl);
+    })
+  );
+  const productChip = (p: Product) => {
+    const price = getDisplayPrice(p);
+    return {
+      name: p.name,
+      href: `/catalog/${p.categorySlug}/${p.slug}`,
+      note: price
+        ? `${p.pricingMode === "per_metre" ? "от " : ""}${formatSum(price.amount)}${
+            p.pricingMode === "per_metre" ? " / пог.м" : ""
+          }`
+        : "Цена по запросу",
+    };
+  };
+  const heroProduct = featured.find((p) => p.imageUrl);
+
   const slides: HeroSlide[] = [
     {
-      image: heroImage?.url || "/images/hero.jpg",
+      image: heroImage?.url || heroProduct?.imageUrl || "/images/hero.jpg",
       alt: heroImage?.alt || "Интерьер с мебелью Molly Home",
       eyebrow: "Мебельная фабрика в Ташкенте",
       title: heroHeading,
@@ -184,13 +207,19 @@ export default async function HomePage() {
       cta: { label: "Смотреть каталог", href: "/catalog" },
       secondary: { label: "Заявка на замер", href: "/request" },
     },
-    ...liveCategories
-      .filter((c) => CATEGORY_SLIDES[c.slug] && CATEGORY_IMAGES[c.slug])
-      .map((c) => ({
-        ...CATEGORY_SLIDES[c.slug],
-        image: CATEGORY_IMAGES[c.slug],
-        alt: c.name,
-      })),
+    ...liveCategories.flatMap((c, i) => {
+      const product = slideProducts[i];
+      const image = product?.imageUrl ?? CATEGORY_IMAGES[c.slug];
+      if (!image) return [];
+      return [
+        {
+          ...CATEGORY_SLIDES[c.slug],
+          image,
+          alt: product?.name ?? c.name,
+          product: product ? productChip(product) : undefined,
+        },
+      ];
+    }),
   ];
 
   const cards = Object.fromEntries(
@@ -200,10 +229,6 @@ export default async function HomePage() {
   return (
     <div className="overflow-x-clip">
       <HeroSlider slides={slides} />
-
-      <div className="bg-navy py-4 text-sm font-medium text-cream sm:text-base">
-        <Marquee items={RIBBON} />
-      </div>
 
       {/* Categories — bento grid */}
       <section className="mx-auto max-w-7xl px-6 py-20">
@@ -301,7 +326,6 @@ export default async function HomePage() {
                 alt={brandImage.alt}
                 fill
                 sizes="(min-width: 1024px) 50vw, 100vw"
-                unoptimized={isLocalUpload(brandImage.url)}
                 className="object-cover"
               />
             ) : (
@@ -430,7 +454,7 @@ export default async function HomePage() {
               {[
                 { icon: "layers", text: "Модули шириной 366 мм — любая конфигурация" },
                 { icon: "palette", text: "4 цвета фасада, зеркало и декоративные рейки" },
-                { icon: "wrench", text: "Петли Blum или Hettich на выбор" },
+                { icon: "wrench", text: "Петли Blum или Higold на выбор" },
               ].map((f) => (
                 <li key={f.text} className="flex items-center gap-3 text-sm text-navy/80">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-clay shadow-sm">
@@ -503,7 +527,6 @@ export default async function HomePage() {
                       alt="Molly Home в Instagram"
                       fill
                       sizes="(min-width: 768px) 16vw, 33vw"
-                      unoptimized={isLocalUpload(url)}
                       className="object-cover transition duration-700 group-hover:scale-110"
                     />
                     <span className="absolute inset-0 flex items-center justify-center bg-navy/0 text-white opacity-0 transition duration-300 group-hover:bg-navy/40 group-hover:opacity-100">
