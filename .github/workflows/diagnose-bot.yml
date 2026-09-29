@@ -1,0 +1,60 @@
+name: Diagnose Telegram bot
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  telegram-side:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ask Telegram where the webhook points and what failed
+        env:
+          TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          SITE: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+        run: |
+          set -eu
+          echo "token length: ${#TOKEN}"
+          echo "--- getMe ---"
+          curl -s "https://api.telegram.org/bot${TOKEN}/getMe" \
+            | jq '{ok, username: .result.username, id: .result.id}'
+          echo "--- getWebhookInfo ---"
+          curl -s "https://api.telegram.org/bot${TOKEN}/getWebhookInfo" \
+            | jq '.result | {url, pending_update_count, last_error_date,
+                   last_error_message, last_synchronization_error_date,
+                   max_connections, allowed_updates, ip_address}'
+          echo "expected site: $SITE"
+          echo "--- last error as a date ---"
+          ts=$(curl -s "https://api.telegram.org/bot${TOKEN}/getWebhookInfo" | jq -r '.result.last_error_date // empty')
+          if [ -n "$ts" ]; then date -u -d "@$ts"; else echo "no errors recorded"; fi
+
+  server-side:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect the running container
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -u
+            cd /opt/molly-uz
+            echo "--- containers ---"
+            docker compose ps
+            echo "--- image the app runs ---"
+            docker compose images
+            echo "--- env present in container (lengths only) ---"
+            cid=$(docker compose ps -q | head -1)
+            for v in TELEGRAM_BOT_TOKEN TELEGRAM_STAFF_CHAT_ID TELEGRAM_WEBHOOK_SECRET NEXT_PUBLIC_SITE_URL; do
+              val=$(docker exec "$cid" printenv "$v" 2>/dev/null || true)
+              echo "$v length: ${#val}"
+            done
+            echo "--- .env on disk vs container: webhook secret lengths ---"
+            disk=$(grep '^TELEGRAM_WEBHOOK_SECRET=' .env | cut -d= -f2- || true)
+            echo "on-disk TELEGRAM_WEBHOOK_SECRET length: ${#disk}"
+            echo "--- bot-related log lines, last 96h ---"
+            docker logs --since 96h "$cid" 2>&1 \
+              | grep -iE "telegram|webhook|order card|unhandled|error|typeerror|referenceerror" \
+              | tail -n 80 || echo "(none)"
+            echo "--- total log lines last 96h ---"
+            docker logs --since 96h "$cid" 2>&1 | wc -l
