@@ -58,3 +58,42 @@ jobs:
               | tail -n 80 || echo "(none)"
             echo "--- total log lines last 96h ---"
             docker logs --since 96h "$cid" 2>&1 | wc -l
+
+  container-network:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Can the app container reach Telegram?
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 5m
+          script: |
+            set -u
+            cd /opt/molly-uz
+            cid=$(docker compose ps -q | head -1)
+            echo "--- DNS answers for api.telegram.org (order matters) ---"
+            docker exec "$cid" getent ahosts api.telegram.org | awk '{print $1}' | uniq | head -6
+            echo "--- does the container have a global IPv6 address? ---"
+            docker exec "$cid" sh -c 'grep -v " lo$" /proc/net/if_inet6 | grep -v "^fe80" || echo "no global IPv6"'
+            echo "--- node fetch, default DNS order (15s cap) ---"
+            docker exec "$cid" node -e '
+              const t=Date.now();
+              fetch("https://api.telegram.org/bot"+process.env.TELEGRAM_BOT_TOKEN+"/getMe",{signal:AbortSignal.timeout(15000)})
+                .then(r=>r.json()).then(j=>console.log("OK", j.ok, (Date.now()-t)+"ms"))
+                .catch(e=>console.log("FAIL", e.name, e.cause&&e.cause.code, (Date.now()-t)+"ms"));'
+            echo "--- node fetch, IPv4 first (15s cap) ---"
+            docker exec "$cid" node --dns-result-order=ipv4first -e '
+              const t=Date.now();
+              fetch("https://api.telegram.org/bot"+process.env.TELEGRAM_BOT_TOKEN+"/getMe",{signal:AbortSignal.timeout(15000)})
+                .then(r=>r.json()).then(j=>console.log("OK", j.ok, (Date.now()-t)+"ms"))
+                .catch(e=>console.log("FAIL", e.name, e.cause&&e.cause.code, (Date.now()-t)+"ms"));'
+            echo "--- node fetch to the database host for comparison ---"
+            docker exec "$cid" node -e '
+              const t=Date.now();
+              fetch("https://console.neon.tech",{signal:AbortSignal.timeout(15000)})
+                .then(r=>console.log("neon reachable", r.status, (Date.now()-t)+"ms"))
+                .catch(e=>console.log("neon FAIL", e.name, (Date.now()-t)+"ms"));'
+            echo "--- recent bot errors in the app log ---"
+            docker logs --since 24h "$cid" 2>&1 | grep -iE "telegram|fetch failed|timeout|ETIMEDOUT|ECONN|UND_ERR" | tail -n 40 || echo "(none)"
