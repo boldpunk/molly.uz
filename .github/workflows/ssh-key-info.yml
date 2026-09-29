@@ -1,0 +1,25 @@
+name: Show deploy key fingerprint
+
+# Prints only the PUBLIC half of the deploy key and its fingerprint, so it
+# can be compared with /root/.ssh/authorized_keys on the server. The private
+# key never leaves the runner's temp file.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  info:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Derive public key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          set -eu
+          umask 077
+          printf '%s\n' "$SSH_PRIVATE_KEY" > /tmp/k
+          echo "Fingerprint:"
+          ssh-keygen -y -f /tmp/k > /tmp/k.pub
+          ssh-keygen -lf /tmp/k.pub
+          echo "Public key (add this line to /root/.ssh/authorized_keys if missing):"
+          cat /tmp/k.pub
+          rm -f /tmp/k /tmp/k.pub
