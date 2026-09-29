@@ -27,73 +27,21 @@ jobs:
           ts=$(curl -s "https://api.telegram.org/bot${TOKEN}/getWebhookInfo" | jq -r '.result.last_error_date // empty')
           if [ -n "$ts" ]; then date -u -d "@$ts"; else echo "no errors recorded"; fi
 
-  server-side:
+  resources:
     runs-on: ubuntu-latest
     steps:
-      - name: Inspect the running container
+      - name: Memory, load and container usage
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          timeout: 120s
+          command_timeout: 3m
           script: |
-            set -u
-            cd /opt/molly-uz
-            echo "--- containers ---"
-            docker compose ps
-            echo "--- image the app runs ---"
-            docker compose images
-            echo "--- env present in container (lengths only) ---"
-            cid=$(docker compose ps -q | head -1)
-            for v in TELEGRAM_BOT_TOKEN TELEGRAM_STAFF_CHAT_ID TELEGRAM_WEBHOOK_SECRET NEXT_PUBLIC_SITE_URL; do
-              val=$(docker exec "$cid" printenv "$v" 2>/dev/null || true)
-              echo "$v length: ${#val}"
-            done
-            echo "--- .env on disk vs container: webhook secret lengths ---"
-            disk=$(grep '^TELEGRAM_WEBHOOK_SECRET=' .env | cut -d= -f2- || true)
-            echo "on-disk TELEGRAM_WEBHOOK_SECRET length: ${#disk}"
-            echo "--- bot-related log lines, last 96h ---"
-            docker logs --since 96h "$cid" 2>&1 \
-              | grep -iE "telegram|webhook|order card|unhandled|error|typeerror|referenceerror" \
-              | tail -n 80 || echo "(none)"
-            echo "--- total log lines last 96h ---"
-            docker logs --since 96h "$cid" 2>&1 | wc -l
-
-  container-network:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Can the app container reach Telegram?
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          command_timeout: 5m
-          script: |
-            set -u
-            cd /opt/molly-uz
-            cid=$(docker compose ps -q | head -1)
-            echo "--- DNS answers for api.telegram.org (order matters) ---"
-            docker exec "$cid" getent ahosts api.telegram.org | awk '{print $1}' | uniq | head -6
-            echo "--- does the container have a global IPv6 address? ---"
-            docker exec "$cid" sh -c 'grep -v " lo$" /proc/net/if_inet6 | grep -v "^fe80" || echo "no global IPv6"'
-            echo "--- node fetch, default DNS order (15s cap) ---"
-            docker exec "$cid" node -e '
-              const t=Date.now();
-              fetch("https://api.telegram.org/bot"+process.env.TELEGRAM_BOT_TOKEN+"/getMe",{signal:AbortSignal.timeout(15000)})
-                .then(r=>r.json()).then(j=>console.log("OK", j.ok, (Date.now()-t)+"ms"))
-                .catch(e=>console.log("FAIL", e.name, e.cause&&e.cause.code, (Date.now()-t)+"ms"));'
-            echo "--- node fetch, IPv4 first (15s cap) ---"
-            docker exec "$cid" node --dns-result-order=ipv4first -e '
-              const t=Date.now();
-              fetch("https://api.telegram.org/bot"+process.env.TELEGRAM_BOT_TOKEN+"/getMe",{signal:AbortSignal.timeout(15000)})
-                .then(r=>r.json()).then(j=>console.log("OK", j.ok, (Date.now()-t)+"ms"))
-                .catch(e=>console.log("FAIL", e.name, e.cause&&e.cause.code, (Date.now()-t)+"ms"));'
-            echo "--- node fetch to the database host for comparison ---"
-            docker exec "$cid" node -e '
-              const t=Date.now();
-              fetch("https://console.neon.tech",{signal:AbortSignal.timeout(15000)})
-                .then(r=>console.log("neon reachable", r.status, (Date.now()-t)+"ms"))
-                .catch(e=>console.log("neon FAIL", e.name, (Date.now()-t)+"ms"));'
-            echo "--- recent bot errors in the app log ---"
-            docker logs --since 24h "$cid" 2>&1 | grep -iE "telegram|fetch failed|timeout|ETIMEDOUT|ECONN|UND_ERR" | tail -n 40 || echo "(none)"
+            uptime
+            free -m
+            nproc
+            docker stats --no-stream --format "{{.Name}}  cpu={{.CPUPerc}}  mem={{.MemUsage}}  pids={{.PIDs}}"
+            ps -eo pid,pcpu,pmem,rss,comm --sort=-rss | head -12
+            dmesg 2>/dev/null | grep -i -E "out of memory|oom|killed process" | tail -5 || true
