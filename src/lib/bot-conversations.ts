@@ -6,6 +6,7 @@ import {
   getStaffChatId,
   isStaffNotifyConfigured,
   escapeHtml,
+  replyPromptKey,
 } from "./telegram";
 
 export async function sendOpenConversationsList(chatId: number | string): Promise<void> {
@@ -125,7 +126,7 @@ export async function relayCustomerMessage(
       await db
         .insert(telegramPendingActions)
         .values({
-          key: `msg:${sent.message_id}`,
+          key: replyPromptKey(sent.chat.id, sent.message_id),
           kind: "conversation_reply",
           payload: conversation.id,
         })
@@ -148,7 +149,7 @@ export async function relayCustomerMessage(
           await db
             .insert(telegramPendingActions)
             .values({
-              key: `msg:${sent.message_id}`,
+              key: replyPromptKey(sent.chat.id, sent.message_id),
               kind: "conversation_reply",
               payload: conversation.id,
             })

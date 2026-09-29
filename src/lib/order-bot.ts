@@ -23,6 +23,7 @@ import {
   getStaffChatId,
   isStaffNotifyConfigured,
   notifyCustomerStatusChange,
+  replyPromptKey,
 } from "./telegram";
 import { resolveConversationReply } from "./bot-conversations";
 
@@ -509,7 +510,7 @@ export async function startAmountPrompt(
   await db
     .insert(telegramPendingActions)
     .values({
-      key: `msg:${sent.message_id}`,
+      key: replyPromptKey(sent.chat.id, sent.message_id),
       kind: promptKind,
       requestId,
     })
@@ -528,7 +529,7 @@ export async function startNewOrderPrompt(actor: Actor): Promise<void> {
   );
   if (!sent) return;
   await db.insert(telegramPendingActions).values({
-    key: `msg:${sent.message_id}`,
+    key: replyPromptKey(sent.chat.id, sent.message_id),
     kind: "new_order_entry",
   });
 }
@@ -542,18 +543,37 @@ export type ReplyPromptResult =
   | { kind: "product_question_reply_ok" }
   | { kind: "not_found" };
 
-export async function resolveReplyPrompt(
-  promptMessageId: number,
-  actor: Actor,
-  text: string
-): Promise<ReplyPromptResult> {
-  const key = `msg:${promptMessageId}`;
+async function findReplyPrompt(chatId: number | string, promptMessageId: number) {
+  const key = replyPromptKey(chatId, promptMessageId);
   const [pending] = await db
     .select()
     .from(telegramPendingActions)
     .where(eq(telegramPendingActions.key, key))
     .limit(1);
+  if (pending) return pending;
+
+  // Prompts sent before keys carried the chat. Only the staff group is
+  // trusted with them — in any other chat the bare id may belong to a
+  // different conversation entirely.
+  if (String(chatId) !== getStaffChatId()) return null;
+  const legacyKey = `msg:${promptMessageId}`;
+  const [legacy] = await db
+    .select()
+    .from(telegramPendingActions)
+    .where(eq(telegramPendingActions.key, legacyKey))
+    .limit(1);
+  return legacy ?? null;
+}
+
+export async function resolveReplyPrompt(
+  chatId: number | string,
+  promptMessageId: number,
+  actor: Actor,
+  text: string
+): Promise<ReplyPromptResult> {
+  const pending = await findReplyPrompt(chatId, promptMessageId);
   if (!pending) return { kind: "not_found" };
+  const key = pending.key;
 
   if (pending.kind === "new_order_entry") {
     return resolveNewOrderPrompt(key, actor, text);
@@ -574,14 +594,14 @@ export async function resolveReplyPrompt(
         asker.productName ? ` по «${escapeHtml(asker.productName)}»` : ""
       }\n\n${escapeHtml(text)}\n\n<i>${escapeHtml(actor.name)}, Molly Home</i>`
     );
-    await db.delete(telegramPendingActions).where(eq(telegramPendingActions.key, key));
+    // Kept, not consumed: a manager often answers in more than one message,
+    // and the second reply used to vanish without a trace.
     return { kind: "product_question_reply_ok" };
   }
 
   if (pending.kind === "conversation_reply") {
     if (!pending.payload) return { kind: "not_found" };
     await resolveConversationReply(pending.payload, actor.name, text);
-    await db.delete(telegramPendingActions).where(eq(telegramPendingActions.key, key));
     return { kind: "conversation_reply_ok" };
   }
 
