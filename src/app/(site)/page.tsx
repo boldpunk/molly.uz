@@ -1,6 +1,6 @@
 import Image from "next/image";
-import { isLocalUpload } from "@/lib/image-src";
 import Link from "next/link";
+import { isLocalUpload } from "@/lib/image-src";
 import { getCategories, getFeaturedProducts, getPageBySlug } from "@/lib/data";
 import { ProductCard } from "@/components/product-card";
 import { PlaceholderImage } from "@/components/placeholder-image";
@@ -10,6 +10,9 @@ import { Reveal } from "@/components/reveal";
 import { PhotoSlider } from "@/components/photo-slider";
 import { BrandSlider } from "@/components/brand-slider";
 import { ReviewsGrid } from "@/components/reviews-grid";
+import { HeroSlider, type HeroSlide } from "@/components/hero-slider";
+import { Marquee } from "@/components/marquee";
+import { FeaturedProducts } from "@/components/home/featured-products";
 import { pageMetadata } from "@/lib/seo";
 import { CATEGORY_IMAGES } from "@/lib/category-images";
 import type { PageBlock } from "@/db/schema";
@@ -46,6 +49,40 @@ const GALLERY_PHOTOS = [
   { src: "/images/gallery/office.jpg", caption: "Кабинет" },
 ];
 
+const RIBBON = [
+  "Бесплатный замер",
+  "Собственное производство в Ташкенте",
+  "Мебель под ваши размеры",
+  "Фурнитура HIGOLD и BLUM",
+  "Доставка и монтаж",
+  "Онлайн-конфигуратор шкафа",
+];
+
+// Extra hero slides point at sections of the catalogue. Each is shown only
+// while its category is live, so the slider never links to an empty page.
+const CATEGORY_SLIDES: Record<string, Omit<HeroSlide, "image" | "alt">> = {
+  "kuhonnaya-mebel": {
+    eyebrow: "Кухни на заказ",
+    title: "Кухня, собранная по вашим размерам",
+    text: "Фасады МДФ с окраской, влагостойкие корпуса и фурнитура HIGOLD или BLUM. Стоимость — за погонный метр.",
+    cta: { label: "Смотреть кухни", href: "/catalog/kuhonnaya-mebel" },
+    secondary: { label: "Бесплатный замер", href: "/request" },
+  },
+  garderoby: {
+    eyebrow: "Конфигуратор",
+    title: "Соберите свой шкаф онлайн",
+    text: "Модули, наполнение, цвет фасада и петли — спецификация готова за пару минут, заявка прямо со страницы.",
+    cta: { label: "Собрать шкаф", href: "/configurator/shkaf" },
+    secondary: { label: "Гардеробы", href: "/catalog/garderoby" },
+  },
+  "spalnye-garnitury": {
+    eyebrow: "Спальни",
+    title: "Спальня, в которой хочется отдыхать",
+    text: "Кровати, тумбы и шкафы одной коллекции — спокойные фактуры и продуманное хранение.",
+    cta: { label: "Смотреть спальни", href: "/catalog/spalnye-garnitury" },
+  },
+};
+
 export async function generateMetadata() {
   const home = await getPageBySlug("home");
   const heroImage = home?.blocks?.[2];
@@ -67,6 +104,44 @@ function pick<T extends PageBlock["type"]>(
 ): Extract<PageBlock, { type: T }> | undefined {
   const b = blocks[index];
   return b && b.type === type ? (b as Extract<PageBlock, { type: T }>) : undefined;
+}
+
+function SectionHeading({
+  eyebrow,
+  title,
+  text,
+  light = false,
+}: {
+  eyebrow: string;
+  title: string;
+  text?: string;
+  light?: boolean;
+}) {
+  return (
+    <div className="max-w-2xl">
+      <span className={`eyebrow ${light ? "text-cream" : ""}`}>{eyebrow}</span>
+      <h2
+        className={`mt-3 font-heading text-3xl font-bold tracking-tight sm:text-4xl ${
+          light ? "text-white" : "text-navy"
+        }`}
+      >
+        {title}
+      </h2>
+      {text && (
+        <p className={`mt-3 text-sm sm:text-base ${light ? "text-white/65" : "text-navy/60"}`}>
+          {text}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ArrowIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
+      <path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
 }
 
 export default async function HomePage() {
@@ -98,391 +173,360 @@ export default async function HomePage() {
   const partnerBrands = pick(blocks, 8, "brand_list")?.items ?? [];
   const reviews = pick(blocks, 9, "reviews")?.items ?? [];
 
+  const liveCategories = categories.filter((c) => !c.isPlaceholder);
+  const slides: HeroSlide[] = [
+    {
+      image: heroImage?.url || "/images/hero.jpg",
+      alt: heroImage?.alt || "Интерьер с мебелью Molly Home",
+      eyebrow: "Мебельная фабрика в Ташкенте",
+      title: heroHeading,
+      text: heroSubtitle,
+      cta: { label: "Смотреть каталог", href: "/catalog" },
+      secondary: { label: "Заявка на замер", href: "/request" },
+    },
+    ...liveCategories
+      .filter((c) => CATEGORY_SLIDES[c.slug] && CATEGORY_IMAGES[c.slug])
+      .map((c) => ({
+        ...CATEGORY_SLIDES[c.slug],
+        image: CATEGORY_IMAGES[c.slug],
+        alt: c.name,
+      })),
+  ];
+
+  const cards = Object.fromEntries(
+    featured.map((p) => [p.id, <ProductCard key={p.id} product={p} hideFeaturedBadge />])
+  );
+
   return (
-    <div>
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-white">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-accent/40 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-32 top-1/4 h-96 w-96 rounded-full bg-navy/[0.06] blur-3xl"
-        />
-        <div className="relative mx-auto grid max-w-7xl items-center gap-8 px-6 py-16 md:grid-cols-2 md:py-24">
-          <Reveal>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/25 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent-dark">
-              Мебельная фабрика в Ташкенте
-            </span>
-            <h1 className="mt-4 font-heading text-3xl font-bold leading-tight text-navy md:text-5xl">
-              {heroHeading}
-            </h1>
-            <p className="mt-4 max-w-md text-navy/70">{heroSubtitle}</p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/catalog/kuhonnaya-mebel"
-                className="rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white transition hover:bg-navy/90 hover:shadow-lg hover:shadow-navy/20"
-              >
-                Смотреть каталог
-              </Link>
-              <Link
-                href="/request"
-                className="rounded-full border border-navy/20 px-6 py-3 text-sm font-semibold text-navy transition hover:bg-navy/5"
-              >
-                Оставить заявку на замер
-              </Link>
-            </div>
-            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 border-t border-navy/10 pt-6">
-              <div className="flex items-center gap-2 text-sm text-navy/70">
-                <UspIcon icon="ruler" className="h-4 w-4 text-accent-dark" />
-                Бесплатный замер
-              </div>
-              <div className="flex items-center gap-2 text-sm text-navy/70">
-                <UspIcon icon="wrench" className="h-4 w-4 text-accent-dark" />
-                Под ваши размеры
-              </div>
-              <div className="flex items-center gap-2 text-sm text-navy/70">
-                <UspIcon icon="truck" className="h-4 w-4 text-accent-dark" />
-                Доставка и монтаж
-              </div>
-            </div>
-          </Reveal>
-          <Reveal delay={150}>
-            <div className="relative">
-              {heroImage?.url ? (
-                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg shadow-xl shadow-navy/10">
-                  <Image
-                    src={heroImage.url}
-                    alt={heroImage.alt}
-                    fill
-                    sizes="(min-width: 768px) 50vw, 100vw"
-                    priority
-                    unoptimized={isLocalUpload(heroImage.url)}
-                    className="object-cover"
-                  />
-                </div>
-              ) : (
-                <PlaceholderImage
-                  label={heroImage?.alt || "Молли Хоум — интерьер"}
-                  aspect="aspect-[4/3]"
-                />
-              )}
-              <div className="absolute -bottom-5 -left-5 hidden items-center gap-3 rounded-xl border border-navy/10 bg-white px-4 py-3 shadow-lg sm:flex">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/25 text-accent-dark">
-                  <UspIcon icon="shield" className="h-4.5 w-4.5" />
-                </span>
-                <div>
-                  <p className="text-sm font-semibold text-navy">
-                    Собственное производство
-                  </p>
-                  <p className="text-xs text-navy/50">Ташкент</p>
-                </div>
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
+    <div className="overflow-x-clip">
+      <HeroSlider slides={slides} />
 
-      {/* USP strip */}
-      <section className="border-y border-navy/10 bg-white">
-        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-6 py-8 text-center md:grid-cols-4">
-          {uspStats.map((item) => (
-            <div key={item.label} className="flex flex-col items-center gap-2">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-navy/5 text-navy">
-                <UspIcon icon={item.icon} className="h-5 w-5" />
-              </span>
-              <div>
-                <p className="text-sm font-semibold text-navy">{item.value}</p>
-                <p className="mt-1 text-xs text-navy/60">{item.label}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      <div className="bg-navy py-4 text-sm font-medium text-cream sm:text-base">
+        <Marquee items={RIBBON} />
+      </div>
 
-      {/* Category grid */}
-      <section className="mx-auto max-w-7xl px-6 py-14">
-        <Reveal>
-          <h2 className="font-heading text-2xl font-bold text-navy">
-            Каталог
-          </h2>
+      {/* Categories — bento grid */}
+      <section className="mx-auto max-w-7xl px-6 py-20">
+        <Reveal className="flex flex-wrap items-end justify-between gap-4">
+          <SectionHeading
+            eyebrow="Каталог"
+            title="Мебель для каждой комнаты"
+            text="От кухни по размерам вашей комнаты до спальных гарнитуров и гардеробов."
+          />
+          <Link href="/catalog" className="btn btn-outline">
+            Весь каталог <ArrowIcon />
+          </Link>
         </Reveal>
-        <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-5">
+        <div className="mt-10 grid auto-rows-[180px] grid-cols-2 gap-4 sm:auto-rows-[220px] md:grid-cols-4">
           {categories.map((cat, i) => {
             const Icon = getCategoryIcon(cat.slug);
+            const image = CATEGORY_IMAGES[cat.slug];
+            const big = i === 0;
             return (
-              <Reveal key={cat.id} delay={i * 60}>
-              <Link
-                href={`/catalog/${cat.slug}`}
-                className="group flex flex-col gap-3"
+              <Reveal
+                key={cat.id}
+                delay={i * 70}
+                className={big ? "col-span-2 row-span-2" : ""}
               >
-                {cat.isPlaceholder ? (
-                  <div className="flex aspect-square flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-navy/20 bg-navy/[0.02] text-center">
-                    <Icon className="h-8 w-8 text-navy/25" />
-                    <span className="text-xs font-medium text-navy/40">
-                      Каталог
-                    </span>
-                    <span className="text-[11px] text-navy/30">
-                      наполняется
+                <Link
+                  href={`/catalog/${cat.slug}`}
+                  className="group relative flex h-full overflow-hidden rounded-3xl bg-cream-light"
+                >
+                  {image && !cat.isPlaceholder ? (
+                    <Image
+                      src={image}
+                      alt={cat.name}
+                      fill
+                      sizes={big ? "(min-width: 768px) 50vw, 100vw" : "(min-width: 768px) 25vw, 50vw"}
+                      className="object-cover transition duration-700 ease-out group-hover:scale-110"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Icon className="h-14 w-14 text-navy/15" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-ink/75 via-ink/10 to-transparent transition duration-500 group-hover:from-ink/85" />
+                  <div className="relative mt-auto flex w-full items-end justify-between gap-3 p-4 sm:p-6">
+                    <div>
+                      <span className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur">
+                        <Icon className="h-[18px] w-[18px]" />
+                      </span>
+                      <h3
+                        className={`font-heading font-bold text-white ${
+                          big ? "text-2xl sm:text-3xl" : "text-base sm:text-lg"
+                        }`}
+                      >
+                        {cat.name}
+                      </h3>
+                      {cat.isPlaceholder && (
+                        <span className="mt-1 block text-xs text-white/70">Каталог наполняется</span>
+                      )}
+                    </div>
+                    <span className="flex h-10 w-10 shrink-0 translate-x-2 items-center justify-center rounded-full bg-white text-navy opacity-0 transition duration-500 group-hover:translate-x-0 group-hover:opacity-100 max-sm:hidden">
+                      <ArrowIcon />
                     </span>
                   </div>
-                ) : (
-                  <div className="relative">
-                    {CATEGORY_IMAGES[cat.slug] ? (
-                      <div className="relative aspect-square w-full overflow-hidden rounded-xl">
-                        <Image
-                          src={CATEGORY_IMAGES[cat.slug]}
-                          alt={cat.name}
-                          fill
-                          sizes="(min-width: 768px) 20vw, 50vw"
-                          className="object-cover transition group-hover:scale-[1.02]"
-                        />
-                      </div>
-                    ) : (
-                      <PlaceholderImage
-                        label={cat.name}
-                        aspect="aspect-square"
-                        className="transition group-hover:scale-[1.02]"
-                      />
-                    )}
-                    <span className="absolute left-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-sm">
-                      <Icon className="h-[18px] w-[18px] text-navy/60" />
-                    </span>
-                  </div>
-                )}
-                <span className="text-center text-sm font-medium text-navy">
-                  {cat.name}
-                </span>
-              </Link>
+                </Link>
               </Reveal>
             );
           })}
         </div>
       </section>
 
-      {/* Process steps */}
-      <section className="border-y border-navy/10 bg-navy/[0.015]">
-        <div className="mx-auto max-w-7xl px-6 py-14">
+      {/* Featured products */}
+      {featured.length > 0 && (
+        <section className="bg-cream-light/70 py-20">
+          <div className="mx-auto max-w-7xl px-6">
+            <Reveal className="flex flex-wrap items-end justify-between gap-4">
+              <SectionHeading
+                eyebrow="Популярное"
+                title="Модели, которые выбирают"
+                text="Выберите раздел, чтобы сузить подборку."
+              />
+            </Reveal>
+            <Reveal delay={100} className="mt-8">
+              <FeaturedProducts products={featured} categories={categories} cards={cards} />
+            </Reveal>
+          </div>
+        </section>
+      )}
+
+      {/* Why us */}
+      <section className="mx-auto grid max-w-7xl items-center gap-12 px-6 py-20 lg:grid-cols-2">
+        <Reveal className="relative">
+          <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[2rem] sm:aspect-[5/4]">
+            {brandImage?.url ? (
+              <Image
+                src={brandImage.url}
+                alt={brandImage.alt}
+                fill
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                unoptimized={isLocalUpload(brandImage.url)}
+                className="object-cover"
+              />
+            ) : (
+              <Image
+                src="/images/brand-band.jpg"
+                alt="Производство Molly Home"
+                fill
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                className="object-cover"
+              />
+            )}
+          </div>
+          <div className="absolute -bottom-6 right-4 flex animate-float items-center gap-3 rounded-2xl bg-white px-5 py-4 shadow-xl shadow-navy/10 sm:-right-6">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-sage-light text-sage">
+              <UspIcon icon="shield" className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-sm font-bold text-navy">Собственное производство</p>
+              <p className="text-xs text-navy/50">Ташкент, Узбекистан</p>
+            </div>
+          </div>
+          <div aria-hidden className="absolute -left-6 -top-6 -z-10 h-40 w-40 rounded-full bg-clay-light blur-2xl" />
+        </Reveal>
+
+        <Reveal delay={120}>
+          <SectionHeading eyebrow="Почему Molly Home" title={brandHeading} text={brandParagraph} />
+          <div className="mt-8 grid grid-cols-2 gap-3">
+            {uspStats.map((item, i) => (
+              <div
+                key={item.label}
+                className="group rounded-2xl border border-navy/10 bg-white p-4 transition duration-300 hover:-translate-y-1 hover:border-transparent hover:shadow-xl hover:shadow-navy/10"
+              >
+                <span
+                  className={`flex h-10 w-10 items-center justify-center rounded-xl transition duration-300 group-hover:scale-110 ${
+                    ["bg-clay-light text-clay", "bg-sage-light text-sage", "bg-cream text-accent-dark", "bg-navy/5 text-navy"][i % 4]
+                  }`}
+                >
+                  <UspIcon icon={item.icon} className="h-5 w-5" />
+                </span>
+                <p className="mt-3 text-sm font-bold text-navy">{item.value}</p>
+                <p className="mt-0.5 text-xs text-navy/55">{item.label}</p>
+              </div>
+            ))}
+          </div>
+          <Link href="/about" className="btn btn-primary mt-8">
+            Узнать о бренде <ArrowIcon />
+          </Link>
+        </Reveal>
+      </section>
+
+      {/* Process */}
+      <section className="relative overflow-hidden bg-ink py-20 text-white">
+        <div aria-hidden className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-clay/20 blur-3xl" />
+        <div aria-hidden className="absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-sage/20 blur-3xl" />
+        <div className="relative mx-auto max-w-7xl px-6">
           <Reveal>
-            <h2 className="font-heading text-2xl font-bold text-navy">
-              Как мы работаем
-            </h2>
+            <SectionHeading
+              light
+              eyebrow="Как мы работаем"
+              title="Четыре шага до новой мебели"
+              text="Без лишних звонков и поездок — от заявки до сборки у вас дома."
+            />
           </Reveal>
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="relative mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <span aria-hidden className="absolute left-0 right-0 top-7 hidden h-px bg-gradient-to-r from-cream/0 via-cream/30 to-cream/0 lg:block" />
             {PROCESS_STEPS.map((step, i) => (
-              <Reveal key={step.title} delay={i * 100}>
-                <div className="relative flex flex-col gap-3 rounded-xl border border-navy/10 bg-white p-5">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/25 text-accent-dark">
-                    <UspIcon icon={step.icon} className="h-5 w-5" />
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-heading text-sm font-bold text-navy/30">
+              <Reveal key={step.title} delay={i * 120}>
+                <div className="group relative flex h-full flex-col gap-4 rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur transition duration-500 hover:-translate-y-1 hover:border-cream/30 hover:bg-white/[0.08]">
+                  <div className="flex items-center justify-between">
+                    <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-cream text-navy transition duration-500 group-hover:rotate-6 group-hover:bg-clay group-hover:text-white">
+                      <UspIcon icon={step.icon} className="h-6 w-6" />
+                    </span>
+                    <span className="font-heading text-5xl font-bold text-white/10 transition group-hover:text-cream/30">
                       {String(i + 1).padStart(2, "0")}
                     </span>
-                    <h3 className="font-heading text-base font-bold text-navy">
-                      {step.title}
-                    </h3>
                   </div>
-                  <p className="text-sm text-navy/60">{step.text}</p>
+                  <h3 className="font-heading text-lg font-bold">{step.title}</h3>
+                  <p className="text-sm leading-relaxed text-white/60">{step.text}</p>
                 </div>
               </Reveal>
             ))}
           </div>
+          <Reveal delay={200} className="mt-12 flex flex-wrap gap-3">
+            <Link href="/request" className="btn btn-light">
+              Оставить заявку <ArrowIcon />
+            </Link>
+            <Link href="/delivery" className="btn btn-ghost-light">
+              Доставка и оплата
+            </Link>
+          </Reveal>
         </div>
       </section>
 
-      {/* Featured products */}
-      <section className="mx-auto max-w-7xl px-6 py-14">
-        <Reveal>
-        <div className="flex items-center justify-between">
-          <h2 className="font-heading text-2xl font-bold text-navy">
-            Популярные модели
-          </h2>
-          <Link
-            href="/catalog/kuhonnaya-mebel"
-            className="text-sm font-medium text-navy hover:underline"
-          >
-            Смотреть все →
-          </Link>
-        </div>
-        </Reveal>
-        <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-          {featured.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-        </div>
-      </section>
-
-      {/* Wardrobe configurator teaser */}
-      <section className="border-y border-navy/10 bg-navy/[0.015]">
-        <div className="mx-auto max-w-7xl px-6 py-14">
-          <div className="grid items-center gap-8 overflow-hidden rounded-2xl border border-navy/10 md:grid-cols-2">
-            <Reveal className="h-full md:order-1">
-              <div className="relative h-64 w-full md:h-full">
-                <Image
-                  src="/images/categories/garderoby.jpg"
-                  alt="Шкаф-купе, собранный в конфигураторе"
-                  fill
-                  sizes="(min-width: 768px) 50vw, 100vw"
-                  className="object-cover"
+      {/* Configurator teaser */}
+      <section className="mx-auto max-w-7xl px-6 py-20">
+        <div className="grid overflow-hidden rounded-[2rem] bg-cream md:grid-cols-2">
+          <Reveal className="relative min-h-72 md:order-2">
+            <Image
+              src="/images/categories/garderoby.jpg"
+              alt="Шкаф, собранный в конфигураторе"
+              fill
+              sizes="(min-width: 768px) 50vw, 100vw"
+              className="object-cover"
+            />
+            <div className="absolute left-5 top-5 flex flex-wrap gap-2">
+              {["#f4f1ec", "#3b3d40", "#d9c6a5", "#9caf88"].map((c, i) => (
+                <span
+                  key={c}
+                  className="h-8 w-8 animate-float rounded-full border-[3px] border-white shadow-lg"
+                  style={{ backgroundColor: c, animationDelay: `${i * 400}ms` }}
                 />
-              </div>
-            </Reveal>
-            <Reveal delay={120} className="p-8 sm:p-10 md:order-2">
-              <span className="rounded-full bg-accent/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent-dark">
-                Онлайн-конфигуратор
-              </span>
-              <h2 className="mt-4 font-heading text-2xl font-bold text-navy sm:text-3xl">
-                Соберите свой шкаф онлайн
-              </h2>
-              <p className="mt-3 max-w-lg text-sm text-navy/70">
-                Задайте количество модулей, наполнение, отделку фасада и
-                фурнитуру — получите готовую спецификацию и оставьте заявку
-                прямо на странице конфигуратора.
-              </p>
-              <div className="mt-6 flex flex-col gap-3 border-y border-navy/10 py-5">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/20 text-accent-dark">
-                    <UspIcon icon="layers" className="h-4 w-4" />
+              ))}
+            </div>
+          </Reveal>
+          <Reveal delay={120} className="p-8 sm:p-12">
+            <span className="eyebrow">Онлайн-конфигуратор</span>
+            <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight text-navy sm:text-4xl">
+              Соберите свой шкаф онлайн
+            </h2>
+            <p className="mt-4 max-w-lg text-sm text-navy/70 sm:text-base">
+              Задайте количество модулей, наполнение, отделку фасада и
+              фурнитуру — получите готовую спецификацию и оставьте заявку прямо
+              на странице конфигуратора.
+            </p>
+            <ul className="mt-6 flex flex-col gap-3">
+              {[
+                { icon: "layers", text: "Модули шириной 366 мм — любая конфигурация" },
+                { icon: "palette", text: "4 цвета фасада, зеркало и декоративные рейки" },
+                { icon: "wrench", text: "Петли Blum или Hettich на выбор" },
+              ].map((f) => (
+                <li key={f.text} className="flex items-center gap-3 text-sm text-navy/80">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-clay shadow-sm">
+                    <UspIcon icon={f.icon} className="h-4 w-4" />
                   </span>
-                  <span className="text-sm text-navy/70">
-                    Модули шириной 366 мм — любая конфигурация
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/20 text-accent-dark">
-                    <UspIcon icon="palette" className="h-4 w-4" />
-                  </span>
-                  <span className="text-sm text-navy/70">
-                    4 цвета фасада, зеркало и декоративные рейки
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/20 text-accent-dark">
-                    <UspIcon icon="wrench" className="h-4 w-4" />
-                  </span>
-                  <span className="text-sm text-navy/70">
-                    Петли Blum или Hettich на выбор
-                  </span>
-                </div>
-              </div>
-              <Link
-                href="/configurator/shkaf"
-                className="mt-6 inline-block rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white transition hover:bg-navy/90 hover:shadow-lg hover:shadow-navy/20"
-              >
-                Собрать шкаф
-              </Link>
-            </Reveal>
-          </div>
+                  {f.text}
+                </li>
+              ))}
+            </ul>
+            <Link href="/configurator/shkaf" className="btn btn-primary mt-8">
+              Собрать шкаф <ArrowIcon />
+            </Link>
+          </Reveal>
         </div>
       </section>
 
       {/* Gallery slider */}
-      <section className="mx-auto max-w-7xl px-6 py-14">
+      <section className="mx-auto max-w-7xl px-6 pb-20">
         <Reveal>
-          <h2 className="font-heading text-2xl font-bold text-navy">
-            Мебель Molly Home в интерьере
-          </h2>
-          <p className="mt-2 max-w-lg text-sm text-navy/60">
-            Подборка вдохновляющих интерьеров — идеи для тех, кто выбирает
-            мебель под свой дом.
-          </p>
+          <SectionHeading
+            eyebrow="Вдохновение"
+            title="Мебель Molly Home в интерьере"
+            text="Подборка интерьеров — идеи для тех, кто выбирает мебель под свой дом."
+          />
         </Reveal>
-        <Reveal delay={120} className="mt-6">
+        <Reveal delay={120} className="mt-8">
           <PhotoSlider items={GALLERY_PHOTOS} />
         </Reveal>
       </section>
 
-      {/* Brand band */}
-      <section className="mx-auto grid max-w-7xl items-center gap-8 px-6 py-14 md:grid-cols-2">
-        <Reveal>
-        {brandImage?.url ? (
-          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg">
-            <Image
-              src={brandImage.url}
-              alt={brandImage.alt}
-              fill
-              sizes="(min-width: 768px) 50vw, 100vw"
-              unoptimized={isLocalUpload(brandImage.url)}
-              className="object-cover"
-            />
+      {/* Reviews */}
+      {reviews.length > 0 && (
+        <section className="bg-sage-light/60 py-20">
+          <div className="mx-auto max-w-7xl px-6">
+            <Reveal>
+              <SectionHeading eyebrow="Отзывы" title="Что говорят клиенты" />
+            </Reveal>
+            <Reveal delay={100} className="mt-8">
+              <ReviewsGrid items={reviews} />
+            </Reveal>
           </div>
-        ) : (
-          <PlaceholderImage
-            label={brandImage?.alt || "О бренде Molly Home"}
-            aspect="aspect-[4/3]"
-          />
-        )}
-        </Reveal>
-        <Reveal delay={150}>
-        <div>
-          <h2 className="font-heading text-2xl font-bold text-navy">
-            {brandHeading}
-          </h2>
-          <p className="mt-4 text-sm text-navy/70">{brandParagraph}</p>
-          <Link
-            href="/about"
-            className="mt-4 inline-block text-sm font-medium text-navy hover:underline"
-          >
-            Узнать больше →
-          </Link>
-        </div>
-        </Reveal>
-      </section>
+        </section>
+      )}
 
-      {/* Instagram strip */}
-      <section className="mx-auto max-w-7xl px-6 pb-16">
-        <Reveal>
-        <div className="flex items-center justify-between">
-          <h2 className="font-heading text-xl font-bold text-navy">
-            Мы в Instagram
-          </h2>
+      {/* Instagram */}
+      <section className="mx-auto max-w-7xl px-6 py-20">
+        <Reveal className="flex flex-wrap items-end justify-between gap-4">
+          <SectionHeading eyebrow="Instagram" title="Следите за новинками" />
           <a
             href="https://www.instagram.com/molly_home.uz"
             target="_blank"
             rel="noreferrer"
-            className="text-sm font-medium text-navy hover:underline"
+            className="btn btn-outline"
           >
-            @molly_home.uz
+            @molly_home.uz <ArrowIcon />
           </a>
-        </div>
         </Reveal>
-        <div className="mt-4 grid grid-cols-3 gap-2 md:grid-cols-6">
+        <div className="mt-8 grid grid-cols-3 gap-2 sm:gap-3 md:grid-cols-6">
           {instagramUrls.length > 0
-            ? instagramUrls.map((url) => (
-                <a
-                  key={url}
-                  href="https://www.instagram.com/molly_home.uz"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="relative block aspect-square overflow-hidden rounded-lg"
-                >
-                  <Image
-                    src={url}
-                    alt="Molly Home в Instagram"
-                    fill
-                    sizes="(min-width: 768px) 16vw, 33vw"
-                    unoptimized={isLocalUpload(url)}
-                    className="object-cover transition hover:scale-105"
-                  />
-                </a>
+            ? instagramUrls.slice(0, 6).map((url, i) => (
+                <Reveal key={url} delay={i * 60}>
+                  <a
+                    href="https://www.instagram.com/molly_home.uz"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group relative block aspect-square overflow-hidden rounded-2xl"
+                  >
+                    <Image
+                      src={url}
+                      alt="Molly Home в Instagram"
+                      fill
+                      sizes="(min-width: 768px) 16vw, 33vw"
+                      unoptimized={isLocalUpload(url)}
+                      className="object-cover transition duration-700 group-hover:scale-110"
+                    />
+                    <span className="absolute inset-0 flex items-center justify-center bg-navy/0 text-white opacity-0 transition duration-300 group-hover:bg-navy/40 group-hover:opacity-100">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden>
+                        <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.8" />
+                        <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
+                        <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
+                      </svg>
+                    </span>
+                  </a>
+                </Reveal>
               ))
             : Array.from({ length: 6 }).map((_, i) => (
-                <PlaceholderImage
-                  key={i}
-                  label="Instagram"
-                  aspect="aspect-square"
-                />
+                <PlaceholderImage key={i} label="Instagram" aspect="aspect-square" />
               ))}
         </div>
       </section>
 
       {/* Partner brands */}
       {partnerBrands.length > 0 && (
-        <section className="border-t border-navy/10 bg-white">
-          <Reveal className="mx-auto max-w-7xl px-6 py-10">
-            <p className="text-center text-xs font-semibold uppercase tracking-wide text-navy/40">
+        <section className="border-t border-navy/10">
+          <Reveal className="mx-auto max-w-7xl px-6 py-12">
+            <p className="text-center text-xs font-semibold uppercase tracking-[0.18em] text-navy/40">
               Работаем на фурнитуре мировых брендов
             </p>
             <div className="mt-4">
@@ -492,21 +536,37 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Reviews (prefooter) */}
-      {reviews.length > 0 && (
-        <section className="border-t border-navy/10 bg-navy/[0.015]">
-          <div className="mx-auto max-w-7xl px-6 py-14">
-            <Reveal>
-              <h2 className="font-heading text-2xl font-bold text-navy">
-                Отзывы клиентов
+      {/* Closing CTA */}
+      <section className="px-4 pb-4 sm:px-6">
+        <Reveal className="relative mx-auto max-w-7xl overflow-hidden rounded-[2rem] bg-clay px-8 py-14 text-white sm:px-14">
+          <div aria-hidden className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-white/10" />
+          <div aria-hidden className="absolute -bottom-28 right-40 h-56 w-56 rounded-full bg-navy/15" />
+          <div className="relative flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
+            <div className="max-w-xl">
+              <h2 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
+                Замер — бесплатно
               </h2>
-            </Reveal>
-            <Reveal delay={100} className="mt-6">
-              <ReviewsGrid items={reviews} />
-            </Reveal>
+              <p className="mt-3 text-white/85">
+                Приедем, снимем размеры и подскажем, что лучше подойдёт вашему
+                помещению. Точный расчёт стоимости — после замера.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link href="/request" className="btn btn-light">
+                Записаться на замер <ArrowIcon />
+              </Link>
+              <a
+                href="https://t.me/mollyhomeuzbot"
+                target="_blank"
+                rel="noreferrer"
+                className="btn btn-ghost-light"
+              >
+                Спросить в Telegram
+              </a>
+            </div>
           </div>
-        </section>
-      )}
+        </Reveal>
+      </section>
     </div>
   );
 }

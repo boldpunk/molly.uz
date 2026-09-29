@@ -1,5 +1,6 @@
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { FloatingContact } from "@/components/floating-contact";
 import { RequestListProvider } from "@/lib/request-list-context";
 import { getCategories, getContactInfo } from "@/lib/data";
 import { getBrandAssets } from "@/lib/brand";
@@ -61,8 +62,12 @@ export default async function SiteLayout({
       <Footer
         categories={categories}
         phone={contact.phone}
-        logoSrc={brand.primary}
+        logoSrc={brand.reversed}
         logoScale={brand.scale}
+      />
+      <FloatingContact
+        phone={contact.phone}
+        telegramBot={contact.telegram || "mollyhomeuzbot"}
       />
     </RequestListProvider>
   );

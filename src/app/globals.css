@@ -1,10 +1,13 @@
 @import "tailwindcss";
 
 /* Brand book palette. Navy and cream carry the brand; the rest stay quiet and
-   are used sparingly (roughly 60% cream, 30% navy, the rest supporting). */
+   are used sparingly (roughly 60% cream, 30% navy, the rest supporting).
+   Clay and sage are storefront additions: warm and natural accents that sit
+   beside navy/cream without competing with the logo. */
 :root {
   --color-navy: #182b4c;
   --color-navy-light: #22375e;
+  --color-ink: #0f1d36;
   --color-cream: #f9e8d8;
   --color-cream-light: #fdf5ee;
   --color-slate: #56617a;
@@ -12,6 +15,10 @@
   --color-sand: #e3cdb8;
   --color-info: #1f5f7a;
   --color-rust: #9c3d22;
+  --color-clay: #c77d52;
+  --color-clay-light: #f3dccb;
+  --color-sage: #7c8f76;
+  --color-sage-light: #e4ebe0;
 
   /* Kept as aliases so existing utility classes keep working. */
   --color-accent: var(--color-cream);
@@ -21,6 +28,7 @@
 @theme inline {
   --color-navy: var(--color-navy);
   --color-navy-light: var(--color-navy-light);
+  --color-ink: var(--color-ink);
   --color-cream: var(--color-cream);
   --color-cream-light: var(--color-cream-light);
   --color-slate: var(--color-slate);
@@ -28,14 +36,74 @@
   --color-sand: var(--color-sand);
   --color-info: var(--color-info);
   --color-rust: var(--color-rust);
+  --color-clay: var(--color-clay);
+  --color-clay-light: var(--color-clay-light);
+  --color-sage: var(--color-sage);
+  --color-sage-light: var(--color-sage-light);
   --color-accent: var(--color-accent);
   --color-accent-dark: var(--color-accent-dark);
   --font-sans: var(--font-montserrat);
   --font-heading: var(--font-montserrat);
+
+  --animate-marquee: marquee 38s linear infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-kenburns: kenburns 9s ease-out forwards;
+  --animate-fade-up: fade-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-progress: progress linear forwards;
+  --animate-pulse-ring: pulse-ring 2.4s cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
+  --animate-shimmer: shimmer 2.2s linear infinite;
+  --animate-drawer: drawer 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-fade-in: fade-in 0.3s ease-out both;
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  @keyframes kenburns {
+    from { transform: scale(1.12); }
+    to { transform: scale(1); }
+  }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes progress {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+  @keyframes pulse-ring {
+    0% { transform: scale(1); opacity: 0.55; }
+    100% { transform: scale(1.9); opacity: 0; }
+  }
+  @keyframes drawer {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes shimmer {
+    from { background-position: -200% 0; }
+    to { background-position: 200% 0; }
+  }
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+::selection {
+  background: var(--color-clay-light);
+  color: var(--color-navy);
 }
 
 h1,
@@ -50,5 +118,70 @@ h4,
   .input {
     @apply w-full rounded-md border border-navy/15 bg-white px-3 py-2 text-sm text-navy outline-none transition;
     @apply focus:border-navy/40 focus:ring-2 focus:ring-navy/[0.06];
+  }
+
+  /* Pill buttons shared across the storefront. The fill slides in from the
+     left on hover, which reads as responsive without being loud. */
+  .btn {
+    @apply relative isolate inline-flex items-center justify-center gap-2 overflow-hidden rounded-full px-6 py-3 text-sm font-semibold transition-[color,box-shadow,transform] duration-300 active:scale-[0.98];
+  }
+  .btn::before {
+    content: "";
+    @apply absolute inset-0 -z-10 origin-left scale-x-0 transition-transform duration-500 ease-out;
+  }
+  .btn:hover::before {
+    @apply scale-x-100;
+  }
+  .btn-primary {
+    @apply bg-navy text-white hover:shadow-lg hover:shadow-navy/25;
+  }
+  .btn-primary::before {
+    @apply bg-clay;
+  }
+  .btn-light {
+    @apply bg-white text-navy hover:text-white;
+  }
+  .btn-light::before {
+    @apply bg-navy;
+  }
+  .btn-outline {
+    @apply border border-navy/20 text-navy hover:border-navy hover:text-white;
+  }
+  .btn-outline::before {
+    @apply bg-navy;
+  }
+  .btn-ghost-light {
+    @apply border border-white/40 text-white hover:text-navy;
+  }
+  .btn-ghost-light::before {
+    @apply bg-white;
+  }
+
+  .eyebrow {
+    @apply inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-clay;
+  }
+  .eyebrow::before {
+    content: "";
+    @apply h-px w-6 bg-current;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
