@@ -8,6 +8,7 @@ const STAFF_CHAT_ID = process.env.TELEGRAM_STAFF_CHAT_ID;
 // Overridable so the bot's conversation flows can be exercised against a
 // local recorder; unset everywhere except in tests.
 const API_BASE = process.env.TELEGRAM_API_BASE || "https://api.telegram.org";
+const TELEGRAM_TIMEOUT_MS = 10_000;
 
 export function isTelegramBotConfigured(): boolean {
   return Boolean(BOT_TOKEN);
@@ -32,12 +33,16 @@ async function callTelegramApi<T = unknown>(
 ): Promise<T | null> {
   if (!BOT_TOKEN) return null;
   try {
+    // Without a cap a stalled connection never errors and never returns: the
+    // webhook then sits until Telegram gives up ("Read timeout expired"),
+    // redelivers, and updates pile up while nothing reaches the logs.
     const res = await fetch(
       `${API_BASE}/bot${BOT_TOKEN}/${method}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(TELEGRAM_TIMEOUT_MS),
       }
     );
     const body = await res.json();

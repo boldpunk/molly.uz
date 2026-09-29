@@ -75,6 +75,24 @@ export async function startConversation(
   );
 }
 
+// A customer who just types into the bot wants a person. Opening the thread
+// for them means that first message reaches a manager instead of being met
+// with a menu they have to decode first.
+export async function ensureConversation(
+  chatId: number | string,
+  customerName: string
+): Promise<{ id: string; created: boolean }> {
+  const telegramId = String(chatId);
+  const existing = await getOpenConversation(telegramId);
+  if (existing) return { id: existing.id, created: false };
+
+  const [created] = await db
+    .insert(conversations)
+    .values({ customerTelegramId: telegramId, customerName })
+    .returning({ id: conversations.id });
+  return { id: created.id, created: true };
+}
+
 export async function relayCustomerMessage(
   chatId: number | string,
   customerName: string,
