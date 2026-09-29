@@ -105,13 +105,24 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Telegram only waits a short while for this response; if we reply after
+  // doing the work, any slow downstream call (DB, a relay to ten managers)
+  // turns into "Read timeout expired", a redelivery, and a backlog. So the
+  // update is acknowledged now and handled afterwards — this is a
+  // long-running Node server, so the work carries on after the response.
+  void processUpdate(update).catch((err) => {
+    console.error("Telegram update failed", update.update_id, err);
+  });
+
+  return NextResponse.json({ ok: true });
+}
+
+async function processUpdate(update: TelegramUpdate): Promise<void> {
   if (update.callback_query) {
     await handleCallbackQuery(update.callback_query);
   } else if (update.message) {
     await handleMessage(update.message);
   }
-
-  return NextResponse.json({ ok: true });
 }
 
 function displayName(from: TelegramFrom): string {
