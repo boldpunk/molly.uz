@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { PageBlock } from "@/db/schema";
-import { isLocalUpload } from "@/lib/image-src";
 import { PlaceholderImage } from "@/components/placeholder-image";
 import { BrandSlider } from "@/components/brand-slider";
 import { UspIcon, isBrandLogoIcon } from "@/components/usp-icons";
@@ -21,13 +20,13 @@ function PageBlockView({ block }: { block: PageBlock }) {
   switch (block.type) {
     case "heading":
       return (
-        <h2 className="font-heading mt-8 text-xl font-bold text-navy first:mt-0">
+        <h2 className="font-heading mt-14 text-2xl font-bold tracking-tight text-navy first:mt-0 sm:text-3xl">
           {block.text}
         </h2>
       );
     case "paragraph":
       return (
-        <p className="mt-4 text-sm leading-relaxed text-navy/70 first:mt-0">
+        <p className="mt-5 text-base leading-relaxed text-navy/70 first:mt-0">
           {block.text}
         </p>
       );
@@ -42,25 +41,30 @@ function PageBlockView({ block }: { block: PageBlock }) {
         );
       }
       return (
-        <div className="relative mt-6 aspect-[16/9] w-full overflow-hidden rounded-lg first:mt-0">
+        <div className="relative mt-8 aspect-[16/9] w-full overflow-hidden rounded-[1.75rem] first:mt-0">
           <Image
             src={block.url}
             alt={block.alt}
             fill
-            sizes="100vw"
-            unoptimized={isLocalUpload(block.url)}
+            quality={85}
+            sizes="(min-width: 1024px) 900px, 100vw"
             className="object-cover"
           />
         </div>
       );
     case "stat_list": {
       const colsClass =
-        block.items.length >= 5 ? "grid-cols-3 sm:grid-cols-5" : "grid-cols-2 sm:grid-cols-4";
+        block.items.length >= 5
+          ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5"
+          : "grid-cols-2 lg:grid-cols-4";
       return (
-        <div className={`mt-6 grid ${colsClass} gap-6 border-y border-navy/10 py-6 first:mt-0`}>
+        <div className={`mt-8 grid ${colsClass} gap-3 first:mt-0`}>
           {block.items.map((item, i) =>
             isBrandLogoIcon(item.icon) ? (
-              <div key={i} className="flex flex-col gap-2">
+              <div
+                key={i}
+                className="flex flex-col gap-3 rounded-2xl border border-navy/10 bg-white p-4 transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-navy/10"
+              >
                 <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-navy/10 bg-white">
                   <UspIcon icon={item.icon} className="h-9 w-9" />
                 </span>
@@ -70,9 +74,16 @@ function PageBlockView({ block }: { block: PageBlock }) {
                 </div>
               </div>
             ) : (
-              <div key={i} className="flex flex-col gap-2">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-navy/5 text-navy">
-                  <UspIcon icon={item.icon} className="h-4.5 w-4.5" />
+              <div
+                key={i}
+                className="flex flex-col gap-3 rounded-2xl border border-navy/10 bg-white p-4 transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-navy/10"
+              >
+                <span
+                  className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                    ["bg-clay-light text-clay", "bg-sage-light text-sage", "bg-cream text-accent-dark", "bg-navy/5 text-navy"][i % 4]
+                  }`}
+                >
+                  <UspIcon icon={item.icon} className="h-5 w-5" />
                 </span>
                 <div>
                   <p className="text-sm font-semibold text-navy">{item.value}</p>
@@ -88,20 +99,20 @@ function PageBlockView({ block }: { block: PageBlock }) {
       return (
         <Link
           href={block.href}
-          className="mt-6 inline-block rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white transition hover:bg-navy/90 first:mt-0"
+          className="btn btn-primary mt-10 first:mt-0"
         >
           {block.label}
         </Link>
       );
     case "brand_list":
       return (
-        <div className="mt-6 first:mt-0">
+        <div className="mt-8 first:mt-0">
           <BrandSlider items={block.items} />
         </div>
       );
     case "reviews":
       return (
-        <div className="mt-6 first:mt-0">
+        <div className="mt-8 first:mt-0">
           <ReviewsGrid items={block.items} />
         </div>
       );

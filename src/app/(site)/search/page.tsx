@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { searchProducts } from "@/lib/data";
 import { ProductCard } from "@/components/product-card";
+import { PageHero } from "@/components/page-hero";
 
 export const metadata = {
   title: "Поиск — Molly Home",
@@ -18,11 +19,11 @@ export default async function SearchPage({
   const results = query ? await searchProducts(query) : [];
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-14">
-      <h1 className="font-heading text-2xl font-bold text-navy">Поиск</h1>
-      <form action="/search" method="GET" className="mt-6 max-w-lg">
-        <label className="flex items-center gap-2 rounded-full border border-navy/15 bg-white px-4 py-2.5 focus-within:border-navy/40">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0 text-navy/40">
+    <>
+    <PageHero title="Поиск" text="Найдите модель по названию, коллекции или типу мебели.">
+      <form action="/search" method="GET" className="max-w-xl">
+        <label className="flex items-center gap-3 rounded-full border border-navy/15 bg-white py-2 pl-5 pr-2 shadow-lg shadow-navy/5 transition focus-within:border-navy/40">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="shrink-0 text-navy/40">
             <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
             <path d="M21 21l-4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
@@ -32,13 +33,18 @@ export default async function SearchPage({
             defaultValue={query}
             autoFocus
             placeholder="Название модели, коллекция, тип мебели…"
-            className="w-full bg-transparent text-sm text-navy outline-none placeholder:text-navy/40"
+            className="w-full bg-transparent py-2 text-base text-navy outline-none placeholder:text-navy/40"
           />
+          <button type="submit" className="btn btn-primary shrink-0 px-5 py-2.5">
+            Найти
+          </button>
         </label>
       </form>
+    </PageHero>
+    <div className="mx-auto max-w-7xl px-6 pb-16 pt-8">
 
       {query && (
-        <p className="mt-6 text-sm text-navy/50">
+        <p className="text-sm text-navy/50">
           {results.length === 0
             ? `Ничего не найдено по запросу «${query}»`
             : `${results.length} ${resultsWord(results.length)} по запросу «${query}»`}
@@ -46,9 +52,11 @@ export default async function SearchPage({
       )}
 
       {results.length > 0 && (
-        <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-          {results.map((p) => (
-            <ProductCard key={p.id} product={p} />
+        <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 lg:grid-cols-4">
+          {results.map((p, i) => (
+            <div key={p.id} className="animate-fade-up" style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}>
+              <ProductCard product={p} />
+            </div>
           ))}
         </div>
       )}
@@ -56,13 +64,14 @@ export default async function SearchPage({
       {query && results.length === 0 && (
         <p className="mt-2 text-sm text-navy/40">
           Попробуйте другой запрос или посмотрите{" "}
-          <Link href="/catalog/kuhonnaya-mebel" className="text-navy underline">
+          <Link href="/catalog" className="text-navy underline">
             весь каталог
           </Link>
           .
         </p>
       )}
     </div>
+    </>
   );
 }
 

@@ -2,12 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Category, Product } from "@/lib/types";
 import { formatSum } from "@/lib/format";
 import { applyDiscount, getDisplayPrice } from "@/lib/pricing";
-import { isLocalUpload } from "@/lib/image-src";
 import { PlaceholderImage } from "@/components/placeholder-image";
 import { ProductCard } from "@/components/product-card";
 import { useRequestList } from "@/lib/request-list-context";
@@ -18,6 +17,7 @@ import { FavouriteButton } from "@/components/favourite-button";
 import { ImageLightbox } from "@/components/image-lightbox";
 import { PageBlocks } from "@/components/page-blocks";
 import type { PageBlock } from "@/db/schema";
+import { UspIcon } from "@/components/usp-icons";
 
 const MIN_WIDTH = 2;
 const MAX_WIDTH = 15;
@@ -49,6 +49,7 @@ export function ProductDetail({
     "description"
   );
   const [submitted, setSubmitted] = useState(false);
+  const touchStartX = useRef<number | null>(null);
 
   const isConfigurable = product.pricingMode === "per_metre";
   const isFixedPrice = product.pricingMode === "fixed";
@@ -165,8 +166,64 @@ export function ProductDetail({
     ],
   };
 
+  const productPath = `/catalog/${category.slug}/${product.slug}`;
+  const activeIndex = Math.max(0, galleryImages.indexOf(activeImage ?? ""));
+  function stepImage(dir: -1 | 1) {
+    if (galleryImages.length < 2) return;
+    const next = (activeIndex + dir + galleryImages.length) % galleryImages.length;
+    setActiveImage(galleryImages[next]);
+  }
+
+  const swatchPicker = (title: string) =>
+    product.colourOptions && product.colourOptions.length > 0 ? (
+      <div>
+        <h3 className="text-sm font-semibold text-navy">
+          {title}
+          {colour && <span className="font-normal text-navy/50"> · {colour.label}</span>}
+        </h3>
+        <div className="mt-3 flex flex-wrap gap-3">
+          {product.colourOptions.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => setColourId(c.id)}
+              title={c.label}
+              aria-label={c.label}
+              aria-pressed={colourId === c.id}
+              className={`relative h-11 w-11 rounded-full p-1 transition duration-300 ${
+                colourId === c.id
+                  ? "ring-2 ring-navy ring-offset-2"
+                  : "ring-1 ring-navy/15 hover:scale-110"
+              }`}
+            >
+              <span
+                className="block h-full w-full rounded-full shadow-inner"
+                style={{ backgroundColor: c.swatch }}
+              />
+            </button>
+          ))}
+        </div>
+      </div>
+    ) : null;
+
+  const favourite = (
+    <FavouriteButton
+      productId={product.id}
+      productPath={productPath}
+      initialIsFavourite={initialIsFavourite}
+    />
+  );
+
+  const primaryLabel = submitted
+    ? "Добавлено ✓"
+    : isConfigurable
+      ? "Оставить заявку на замер"
+      : isFixedPrice
+        ? "Оставить заявку"
+        : "Узнать цену";
+
   return (
-    <div className="mx-auto max-w-7xl px-6 py-10">
+    <div className="mx-auto max-w-7xl px-6 pb-10 pt-8">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
@@ -175,40 +232,88 @@ export function ProductDetail({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
-      <nav className="text-xs text-navy/50">
-        <Link href="/" className="hover:underline">
+      <nav className="flex flex-wrap items-center gap-1.5 text-xs text-navy/50">
+        <Link href="/" className="transition hover:text-navy">
           Главная
-        </Link>{" "}
-        /{" "}
-        <Link href={`/catalog/${category.slug}`} className="hover:underline">
+        </Link>
+        <span aria-hidden>/</span>
+        <Link href={`/catalog/${category.slug}`} className="transition hover:text-navy">
           {category.name}
-        </Link>{" "}
-        / <span className="text-navy">{product.name}</span>
+        </Link>
+        <span aria-hidden>/</span>
+        <span className="text-navy">{product.name}</span>
       </nav>
 
-      <div className="mt-6 grid gap-10 lg:grid-cols-2">
+      <div className="mt-6 grid gap-10 lg:grid-cols-[1.15fr_1fr] lg:gap-14">
         {/* Gallery */}
-        <div className="flex flex-col gap-3">
-          {activeImage ? (
-            <button
-              type="button"
-              onClick={() => setLightboxOpen(true)}
-              className="relative aspect-[4/3] w-full cursor-zoom-in overflow-hidden rounded-lg bg-navy/[0.03]"
-              aria-label="Открыть фото на весь экран"
-            >
-              <Image
-                src={activeImage}
-                alt={product.name}
-                fill
-                sizes="(min-width: 1024px) 50vw, 100vw"
-                priority
-                unoptimized={isLocalUpload(activeImage)}
-                className="object-contain"
-              />
-            </button>
-          ) : (
-            <PlaceholderImage label={product.name} aspect="aspect-[4/3]" />
-          )}
+        <div className="lg:sticky lg:top-24 lg:self-start">
+          <div
+            className="group relative overflow-hidden rounded-[2rem] bg-cream-light"
+            onTouchStart={(e) => (touchStartX.current = e.touches[0].clientX)}
+            onTouchEnd={(e) => {
+              if (touchStartX.current === null) return;
+              const dx = e.changedTouches[0].clientX - touchStartX.current;
+              if (Math.abs(dx) > 40) stepImage(dx < 0 ? 1 : -1);
+              touchStartX.current = null;
+            }}
+          >
+            {activeImage ? (
+              <button
+                type="button"
+                onClick={() => setLightboxOpen(true)}
+                className="relative block aspect-[5/4] w-full cursor-zoom-in"
+                aria-label="Открыть фото на весь экран"
+              >
+                <Image
+                  key={activeImage}
+                  src={activeImage}
+                  alt={product.name}
+                  fill
+                  sizes="(min-width: 1024px) 55vw, 100vw"
+                  priority
+                  className="animate-fade-in object-contain"
+                />
+              </button>
+            ) : (
+              <PlaceholderImage label={product.name} aspect="aspect-[5/4]" className="rounded-none border-0" />
+            )}
+
+            {product.discountPercent ? (
+              <span className="absolute left-5 top-5 rounded-full bg-clay px-3 py-1.5 text-xs font-bold text-white shadow">
+                −{product.discountPercent}%
+              </span>
+            ) : null}
+
+            {galleryImages.length > 1 && (
+              <>
+                {([-1, 1] as const).map((dir) => (
+                  <button
+                    key={dir}
+                    type="button"
+                    onClick={() => stepImage(dir)}
+                    aria-label={dir < 0 ? "Предыдущее фото" : "Следующее фото"}
+                    className={`absolute top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-navy shadow-lg backdrop-blur transition hover:bg-navy hover:text-white md:opacity-0 md:group-hover:opacity-100 ${
+                      dir < 0 ? "left-4" : "right-4"
+                    }`}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+                      <path
+                        d={dir < 0 ? "M15 5l-7 7 7 7" : "M9 5l7 7-7 7"}
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                ))}
+                <span className="absolute bottom-4 right-4 rounded-full bg-navy/80 px-3 py-1 text-xs font-medium text-white backdrop-blur">
+                  {activeIndex + 1} / {galleryImages.length}
+                </span>
+              </>
+            )}
+          </div>
+
           {lightboxOpen && activeImage && (
             <ImageLightbox
               src={activeImage}
@@ -216,123 +321,112 @@ export function ProductDetail({
               onClose={() => setLightboxOpen(false)}
             />
           )}
-          {galleryImages.length > 1 ? (
-            <div className="grid grid-cols-4 gap-3">
-              {galleryImages.map((url) => (
+
+          {galleryImages.length > 1 && (
+            <div className="no-scrollbar mt-4 flex gap-3 overflow-x-auto pb-1">
+              {galleryImages.map((url, i) => (
                 <button
                   key={url}
                   type="button"
                   onClick={() => setActiveImage(url)}
-                  className={`relative aspect-square w-full overflow-hidden rounded-lg border-2 transition ${
+                  aria-label={`Фото ${i + 1}`}
+                  className={`relative aspect-square w-20 shrink-0 overflow-hidden rounded-2xl bg-cream-light transition duration-300 sm:w-24 ${
                     activeImage === url
-                      ? "border-accent-dark"
-                      : "border-transparent hover:border-navy/15"
+                      ? "ring-2 ring-navy ring-offset-2"
+                      : "opacity-60 hover:opacity-100"
                   }`}
                 >
                   <Image
                     src={url}
                     alt=""
                     fill
-                    sizes="25vw"
-                    unoptimized={isLocalUpload(url)}
+                    sizes="96px"
                     className="object-cover"
                   />
                 </button>
               ))}
             </div>
-          ) : (
-            <div className="grid grid-cols-4 gap-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <PlaceholderImage
-                  key={i}
-                  label="Ракурс"
-                  aspect="aspect-square"
-                />
-              ))}
-            </div>
           )}
         </div>
 
-        {/* Buy box — appears before description on mobile too, since it's DOM-first */}
-        <div>
-          <h1 className="font-heading text-2xl font-bold text-navy md:text-3xl">
+        {/* Buy box */}
+        <div className="flex flex-col">
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href={`/catalog/${category.slug}`}
+              className="rounded-full bg-navy/5 px-3 py-1 text-xs font-medium text-navy/70 transition hover:bg-navy hover:text-white"
+            >
+              {category.name}
+            </Link>
+            {product.collection && (
+              <span className="rounded-full bg-clay-light px-3 py-1 text-xs font-semibold uppercase tracking-wider text-clay">
+                {product.collection}
+              </span>
+            )}
+            {product.isFeatured && (
+              <span className="rounded-full bg-navy px-3 py-1 text-xs font-semibold uppercase tracking-wider text-cream">
+                Хит
+              </span>
+            )}
+          </div>
+          <h1 className="mt-4 font-heading text-3xl font-bold tracking-tight text-navy md:text-4xl">
             {product.name}
           </h1>
-          <p className="mt-1 text-sm text-navy/60">{product.specLine}</p>
+          {product.specLine && (
+            <p className="mt-2 text-sm text-navy/60">{product.specLine}</p>
+          )}
 
-          {isConfigurable ? (
-            <div className="mt-6 flex flex-col gap-6 rounded-xl border border-navy/10 bg-white p-5">
-              {product.hardwareOptions && (
-                <div>
-                  <h3 className="text-sm font-semibold text-navy">
-                    Фурнитура
-                  </h3>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {product.hardwareOptions.map((h) => {
-                      const badge = getHardwareBrandBadge(h.id, h.label);
-                      return (
-                        <button
-                          key={h.id}
-                          type="button"
-                          onClick={() => setHardwareId(h.id)}
-                          className={`flex items-center gap-2 rounded-lg border px-4 py-2 text-sm transition ${
-                            hardwareId === h.id
-                              ? "border-accent-dark bg-accent/20 font-medium text-navy"
-                              : "border-navy/15 text-navy/70 hover:bg-navy/5"
-                          }`}
-                        >
-                          <span
-                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[8px] font-bold"
-                            style={{ backgroundColor: badge.bg, color: badge.fg }}
-                          >
-                            {badge.letter}
-                          </span>
-                          <span className="text-left">
-                            {h.label}
-                            <span className="block text-xs text-navy/50">
-                              {formatSum(h.pricePerMetre)} / пог.м
-                            </span>
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {product.colourOptions && (
-                <div>
-                  <h3 className="text-sm font-semibold text-navy">
-                    Цвет фасада
-                  </h3>
-                  <div className="mt-2 flex gap-2">
-                    {product.colourOptions.map((c) => (
+          <div className="mt-6 flex flex-col gap-6 rounded-[1.75rem] border border-navy/10 bg-white p-6 shadow-xl shadow-navy/[0.04]">
+            {isConfigurable && product.hardwareOptions && (
+              <div>
+                <h3 className="text-sm font-semibold text-navy">Фурнитура</h3>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  {product.hardwareOptions.map((h) => {
+                    const badge = getHardwareBrandBadge(h.id, h.label);
+                    const active = hardwareId === h.id;
+                    return (
                       <button
-                        key={c.id}
+                        key={h.id}
                         type="button"
-                        onClick={() => setColourId(c.id)}
-                        title={c.label}
-                        style={{ backgroundColor: c.swatch }}
-                        className={`h-9 w-9 rounded-full border-2 transition ${
-                          colourId === c.id
-                            ? "border-accent-dark"
-                            : "border-transparent hover:border-navy/20"
+                        onClick={() => setHardwareId(h.id)}
+                        aria-pressed={active}
+                        className={`flex items-center gap-3 rounded-2xl border p-3 text-left text-sm transition duration-300 ${
+                          active
+                            ? "border-navy bg-navy text-white shadow-lg shadow-navy/20"
+                            : "border-navy/15 text-navy hover:border-navy/40"
                         }`}
-                      />
-                    ))}
-                  </div>
-                  {colour && (
-                    <p className="mt-1 text-xs text-navy/50">{colour.label}</p>
-                  )}
+                      >
+                        <span
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
+                          style={{ backgroundColor: badge.bg, color: badge.fg }}
+                        >
+                          {badge.letter}
+                        </span>
+                        <span>
+                          <span className="block font-semibold">{h.label}</span>
+                          <span className={`block text-xs ${active ? "text-white/70" : "text-navy/50"}`}>
+                            {formatSum(applyDiscount(h.pricePerMetre, product.discountPercent))} / пог.м
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
-              )}
+              </div>
+            )}
 
+            {swatchPicker(isConfigurable ? "Цвет фасада" : isFixedPrice ? "Цвет" : "Отделка")}
+
+            {isConfigurable && (
               <div>
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="text-sm font-semibold text-navy">
-                    Ширина (ширина без ограничений — под ваше помещение)
+                    Ширина кухни
+                    <span className="block text-xs font-normal text-navy/50">
+                      без ограничений — под ваше помещение
+                    </span>
                   </h3>
-                  <div className="flex shrink-0 items-center gap-1.5">
+                  <div className="flex shrink-0 items-center gap-1.5 rounded-xl border border-navy/15 px-3 py-1.5 focus-within:border-navy">
                     <input
                       type="number"
                       inputMode="decimal"
@@ -340,13 +434,12 @@ export function ProductDetail({
                       min={0}
                       value={widthText}
                       onChange={(e) => handleWidthTextChange(e.target.value)}
-                      className={`w-20 rounded-md border px-2 py-1 text-right text-sm font-medium focus:outline-none ${
-                        widthBelowMin
-                          ? "border-red-600 text-red-600"
-                          : "border-navy/15 text-navy"
+                      aria-label="Ширина в метрах"
+                      className={`w-14 bg-transparent text-right text-base font-semibold focus:outline-none ${
+                        widthBelowMin ? "text-red-600" : "text-navy"
                       }`}
                     />
-                    <span className="text-sm font-medium text-navy">м</span>
+                    <span className="text-sm font-medium text-navy/60">м</span>
                   </div>
                 </div>
                 <input
@@ -356,7 +449,8 @@ export function ProductDetail({
                   step={0.01}
                   value={width}
                   onChange={(e) => handleWidthSliderChange(e.target.value)}
-                  className="mt-2 w-full accent-accent-dark"
+                  aria-label="Ширина"
+                  className="mt-4 w-full accent-clay"
                 />
                 <div className="mt-1 flex justify-between text-xs text-navy/40">
                   <span>{MIN_WIDTH} м</span>
@@ -368,185 +462,101 @@ export function ProductDetail({
                   </p>
                 )}
               </div>
+            )}
 
-              <div className="border-t border-navy/10 pt-4">
-                <div className="flex items-center gap-2">
-                  <p className="text-xs uppercase tracking-wide text-navy/50">
-                    Примерная стоимость
-                  </p>
-                  {product.discountPercent && (
-                    <span className="rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white">
-                      -{product.discountPercent}%
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <p className="font-heading text-2xl font-bold text-navy">
-                    {estimate !== null ? formatSum(estimate) : "—"}
-                  </p>
-                  {originalEstimate !== null && (
-                    <p className="text-sm text-navy/40 line-through">
-                      {formatSum(originalEstimate)}
-                    </p>
-                  )}
-                </div>
-                <p className="mt-1 text-xs text-navy/50">
-                  Это предварительная оценка. Точная цена подтверждается
-                  после выезда замерщика.
+            {/* Price panel */}
+            <div className="relative overflow-hidden rounded-2xl bg-navy p-5 text-white">
+              <div aria-hidden className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-clay/30 blur-2xl" />
+              <div className="relative flex items-center gap-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cream/70">
+                  {isConfigurable ? "Примерная стоимость" : isFixedPrice ? "Цена" : "Стоимость"}
                 </p>
+                {(isConfigurable ? product.discountPercent : displayPrice?.discountPercent) ? (
+                  <span className="rounded-full bg-clay px-2 py-0.5 text-[10px] font-bold">
+                    −{isConfigurable ? product.discountPercent : displayPrice?.discountPercent}%
+                  </span>
+                ) : null}
               </div>
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={handleAddToRequest}
-                  className="flex-1 rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white hover:bg-navy/90"
-                >
-                  {submitted ? "Добавлено ✓" : "Оставить заявку на замер"}
-                </button>
-                <FavouriteButton
-                  productId={product.id}
-                  productPath={`/catalog/${category.slug}/${product.slug}`}
-                  initialIsFavourite={initialIsFavourite}
-                />
-              </div>
-            </div>
-          ) : isFixedPrice ? (
-            <div className="mt-6 flex flex-col gap-4 rounded-xl border border-navy/10 bg-white p-5">
-              {product.colourOptions && product.colourOptions.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-semibold text-navy">Цвет</h3>
-                  <div className="mt-2 flex gap-2">
-                    {product.colourOptions.map((c) => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        onClick={() => setColourId(c.id)}
-                        title={c.label}
-                        style={{ backgroundColor: c.swatch }}
-                        className={`h-9 w-9 rounded-full border-2 transition ${
-                          colourId === c.id
-                            ? "border-accent-dark"
-                            : "border-transparent hover:border-navy/20"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  {colour && (
-                    <p className="mt-1 text-xs text-navy/50">{colour.label}</p>
-                  )}
-                </div>
-              )}
-
-              <div>
-                <div className="flex items-center gap-2">
-                  {displayPrice?.discountPercent && (
-                    <span className="rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white">
-                      -{displayPrice.discountPercent}%
-                    </span>
-                  )}
-                </div>
-                <div className="mt-1 flex items-baseline gap-2">
-                  <p className="font-heading text-2xl font-bold text-navy">
-                    {displayPrice ? formatSum(displayPrice.amount) : "—"}
-                  </p>
-                  {displayPrice?.originalAmount && (
-                    <p className="text-sm text-navy/40 line-through">
-                      {formatSum(displayPrice.originalAmount)}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={handleAddToRequest}
-                  className="rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white hover:bg-navy/90"
-                >
-                  {submitted ? "Добавлено ✓" : "Оставить заявку"}
-                </button>
-                <a
-                  href="https://t.me/mollyhomeuzbot"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-full border border-navy/20 px-6 py-3 text-sm font-semibold text-navy hover:bg-navy/5"
-                >
-                  Написать в Telegram
-                </a>
-                <FavouriteButton
-                  productId={product.id}
-                  productPath={`/catalog/${category.slug}/${product.slug}`}
-                  initialIsFavourite={initialIsFavourite}
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="mt-6 flex flex-col gap-4 rounded-xl border border-navy/10 bg-white p-5">
-              {product.colourOptions && product.colourOptions.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-semibold text-navy">
-                    Отделка
-                  </h3>
-                  <div className="mt-2 flex gap-2">
-                    {product.colourOptions.map((c) => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        onClick={() => setColourId(c.id)}
-                        title={c.label}
-                        style={{ backgroundColor: c.swatch }}
-                        className={`h-9 w-9 rounded-full border-2 transition ${
-                          colourId === c.id
-                            ? "border-accent-dark"
-                            : "border-transparent hover:border-navy/20"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-              <span className="inline-block w-fit rounded-full bg-accent/15 px-3 py-1 text-xs font-semibold text-accent-dark">
-                Цена по запросу
-              </span>
-              <div className="flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={handleAddToRequest}
-                  className="rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white hover:bg-navy/90"
-                >
-                  {submitted ? "Добавлено ✓" : "Узнать цену"}
-                </button>
-                {category.slug === "garderoby" && (
-                  <Link
-                    href="/configurator/shkaf"
-                    className="rounded-full border border-navy/20 px-6 py-3 text-sm font-semibold text-navy hover:bg-navy/5"
-                  >
-                    Открыть конфигуратор
-                  </Link>
+              <div className="relative mt-1 flex flex-wrap items-baseline gap-x-3">
+                <p key={estimate ?? displayPrice?.amount ?? 0} className="animate-fade-in font-heading text-3xl font-bold">
+                  {isConfigurable
+                    ? estimate !== null
+                      ? formatSum(estimate)
+                      : "—"
+                    : isFixedPrice
+                      ? displayPrice
+                        ? formatSum(displayPrice.amount)
+                        : "—"
+                      : "По запросу"}
+                </p>
+                {isConfigurable && originalEstimate !== null && (
+                  <p className="text-sm text-white/50 line-through">{formatSum(originalEstimate)}</p>
                 )}
-                <a
-                  href="https://t.me/mollyhomeuzbot"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-full border border-navy/20 px-6 py-3 text-sm font-semibold text-navy hover:bg-navy/5"
-                >
-                  Написать в Telegram
-                </a>
-                <FavouriteButton
-                  productId={product.id}
-                  productPath={`/catalog/${category.slug}/${product.slug}`}
-                  initialIsFavourite={initialIsFavourite}
-                />
+                {isFixedPrice && displayPrice?.originalAmount && (
+                  <p className="text-sm text-white/50 line-through">
+                    {formatSum(displayPrice.originalAmount)}
+                  </p>
+                )}
               </div>
+              <p className="relative mt-2 text-xs text-white/60">
+                {isConfigurable
+                  ? `${width} м × ${hardware ? hardware.label : ""}. Точная цена — после бесплатного замера.`
+                  : isFixedPrice
+                    ? "Доставка и сборка — по согласованию с менеджером."
+                    : "Менеджер рассчитает стоимость под ваш размер и отделку."}
+              </p>
             </div>
-          )}
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={handleAddToRequest}
+                className="btn btn-primary py-3.5 sm:flex-1"
+              >
+                {primaryLabel}
+              </button>
+              {favourite}
+            </div>
+            <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+              {category.slug === "garderoby" && (
+                <Link href="/configurator/shkaf" className="font-medium text-clay underline-offset-4 hover:underline">
+                  Собрать в конфигураторе →
+                </Link>
+              )}
+              <a
+                href="https://t.me/mollyhomeuzbot"
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-navy/70 underline-offset-4 transition hover:text-navy hover:underline"
+              >
+                Задать вопрос в Telegram →
+              </a>
+            </div>
+          </div>
+
+          <ul className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
+            {[
+              { icon: "ruler", title: "Бесплатный замер", tone: "bg-clay-light text-clay" },
+              { icon: "shield", title: "Своё производство", tone: "bg-sage-light text-sage" },
+              { icon: "truck", title: "Доставка и монтаж", tone: "bg-cream text-accent-dark" },
+            ].map((f) => (
+              <li
+                key={f.title}
+                className="flex flex-col items-center gap-2 rounded-2xl border border-navy/10 p-3 text-center sm:flex-row sm:text-left"
+              >
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${f.tone}`}>
+                  <UspIcon icon={f.icon} className="h-4 w-4" />
+                </span>
+                <span className="text-xs font-semibold text-navy">{f.title}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="mt-12">
-        <div className="flex gap-6 border-b border-navy/10">
+      {/* Details */}
+      <div className="mt-16">
+        <div className="inline-flex max-w-full gap-1 overflow-x-auto rounded-full bg-navy/5 p-1 no-scrollbar">
           {(
             [
               ["description", "Описание"],
@@ -558,35 +568,37 @@ export function ProductDetail({
               key={key}
               type="button"
               onClick={() => setTab(key)}
-              className={`-mb-px border-b-2 pb-3 text-sm font-medium transition ${
-                tab === key
-                  ? "border-navy text-navy"
-                  : "border-transparent text-navy/50 hover:text-navy"
+              aria-pressed={tab === key}
+              className={`shrink-0 rounded-full px-5 py-2.5 text-sm font-medium transition duration-300 ${
+                tab === key ? "bg-white text-navy shadow-md" : "text-navy/60 hover:text-navy"
               }`}
             >
               {label}
             </button>
           ))}
         </div>
-        <div className="py-6 text-sm text-navy/70">
-          {tab === "description" && <p>{product.description}</p>}
-          {tab === "specs" && (
-            <table className="w-full max-w-md border-collapse text-sm">
-              <tbody>
-                {product.attributes.map((attr) => (
-                  <tr key={attr.key} className="border-b border-navy/10">
-                    <td className="py-2 pr-4 text-navy/50">{attr.key}</td>
-                    <td className="py-2 font-medium text-navy">
-                      {attr.value}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <div key={tab} className="animate-fade-in py-8 text-sm leading-relaxed text-navy/70 sm:text-base">
+          {tab === "description" && (
+            <p className="max-w-3xl">{product.description || "Описание скоро появится."}</p>
           )}
+          {tab === "specs" &&
+            (product.attributes.length > 0 ? (
+              <dl className="grid max-w-3xl gap-3 sm:grid-cols-2">
+                {product.attributes.map((attr) => (
+                  <div key={attr.key} className="rounded-2xl bg-cream-light px-4 py-3">
+                    <dt className="text-xs text-navy/50">{attr.key}</dt>
+                    <dd className="mt-0.5 text-sm font-semibold text-navy">{attr.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : (
+              <p>Характеристики уточнит менеджер.</p>
+            ))}
           {tab === "delivery" &&
             (deliveryBlocks.length > 0 ? (
-              <PageBlocks blocks={deliveryBlocks} />
+              <div className="max-w-3xl">
+                <PageBlocks blocks={deliveryBlocks} />
+              </div>
             ) : (
               <p>
                 Сроки доставки и условия оплаты уточняются менеджером после
@@ -598,11 +610,12 @@ export function ProductDetail({
 
       {/* Related products */}
       {related.length > 0 && (
-        <div className="mt-12">
-          <h2 className="font-heading text-xl font-bold text-navy">
+        <div className="mt-10 border-t border-navy/10 pt-14">
+          <span className="eyebrow">Ещё из раздела</span>
+          <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight text-navy">
             Похожие модели
           </h2>
-          <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-4">
             {related.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}

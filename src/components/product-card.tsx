@@ -3,7 +3,6 @@ import Link from "next/link";
 import { Product } from "@/lib/types";
 import { formatSum } from "@/lib/format";
 import { getDisplayPrice } from "@/lib/pricing";
-import { isLocalUpload } from "@/lib/image-src";
 import { PlaceholderImage } from "./placeholder-image";
 
 const MAX_SWATCHES = 4;
@@ -36,7 +35,6 @@ export function ProductCard({
               alt={product.name}
               fill
               sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
-              unoptimized={isLocalUpload(product.imageUrl)}
               className={`object-cover transition duration-700 ease-out group-hover:scale-[1.06] ${
                 altImage ? "group-hover:opacity-0" : ""
               }`}
@@ -48,7 +46,6 @@ export function ProductCard({
                 aria-hidden
                 fill
                 sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
-                unoptimized={isLocalUpload(altImage)}
                 className="scale-[1.06] object-cover opacity-0 transition duration-700 ease-out group-hover:scale-100 group-hover:opacity-100"
               />
             )}

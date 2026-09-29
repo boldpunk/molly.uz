@@ -1,3 +1,4 @@
+import { PageHero } from "@/components/page-hero";
 import { SITE_URL } from "@/lib/site";
 
 export const metadata = {
@@ -13,9 +14,9 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="mt-8">
-      <h2 className="font-heading text-lg font-bold text-navy">{title}</h2>
-      <div className="mt-2 flex flex-col gap-2 text-sm leading-relaxed text-navy/70">
+    <section className="mt-10">
+      <h2 className="font-heading text-xl font-bold tracking-tight text-navy">{title}</h2>
+      <div className="mt-3 flex flex-col gap-3 text-base leading-relaxed text-navy/70">
         {children}
       </div>
     </section>
@@ -24,11 +25,9 @@ function Section({
 
 export default function PrivacyPage() {
   return (
-    <div className="mx-auto max-w-3xl px-6 py-14">
-      <h1 className="font-heading text-3xl font-bold text-navy">
-        Политика конфиденциальности
-      </h1>
-      <p className="mt-3 text-sm text-navy/50">Действует с 2026 года</p>
+    <>
+    <PageHero eyebrow="Документы" title="Политика конфиденциальности" text="Действует с 2026 года" />
+    <article className="mx-auto max-w-3xl px-6 pb-16 pt-6">
 
       <Section title="1. Общие положения">
         <p>
@@ -121,6 +120,7 @@ export default function PrivacyPage() {
           начале страницы.
         </p>
       </Section>
-    </div>
+    </article>
+    </>
   );
 }
