@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "./revalidate";
 import { db } from "@/db";
 import { siteSettings } from "@/db/schema";
 import {

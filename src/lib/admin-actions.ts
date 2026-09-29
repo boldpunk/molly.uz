@@ -2,7 +2,7 @@
 
 import { and, eq, inArray, ne } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "./revalidate";
 import { db } from "@/db";
 import {
   categories,

@@ -11,6 +11,7 @@ import {
 } from "@/db/schema";
 import type { PageBlock } from "@/db/schema";
 import { Category, Product } from "./types";
+import { cached } from "./data-cache";
 
 const DEFAULT_CONTACT_INFO: Extract<PageBlock, { type: "contact_info" }> = {
   type: "contact_info",
@@ -42,7 +43,7 @@ export interface Page {
   metaDescription: string | null;
 }
 
-export async function getPageBySlug(slug: string): Promise<Page | undefined> {
+async function loadPageBySlug(slug: string): Promise<Page | undefined> {
   const rows = await db
     .select()
     .from(pagesTable)
@@ -94,7 +95,7 @@ function toProduct(
   };
 }
 
-export async function getCategories(): Promise<Category[]> {
+async function loadCategories(): Promise<Category[]> {
   const rows = await db
     .select()
     .from(categoriesTable)
@@ -109,7 +110,7 @@ export interface WardrobeFinish {
   hex: string;
 }
 
-export async function getWardrobeFinishes(): Promise<WardrobeFinish[]> {
+async function loadWardrobeFinishes(): Promise<WardrobeFinish[]> {
   const rows = await db
     .select()
     .from(wardrobeFinishesTable)
@@ -145,7 +146,7 @@ export async function getEmployeeApplications(): Promise<EmployeeApplication[]> 
     .orderBy(desc(employeeApplicationsTable.createdAt));
 }
 
-export async function getCategoryBySlug(
+async function loadCategoryBySlug(
   slug: string
 ): Promise<Category | undefined> {
   const rows = await db
@@ -156,7 +157,7 @@ export async function getCategoryBySlug(
   return rows[0] ? toCategory(rows[0]) : undefined;
 }
 
-export async function getProductsByCategory(
+async function loadProductsByCategory(
   categoryId: string,
   categorySlug: string
 ): Promise<Product[]> {
@@ -168,7 +169,7 @@ export async function getProductsByCategory(
   return rows.map((r) => toProduct(r, categorySlug));
 }
 
-export async function getProduct(
+async function loadProduct(
   categorySlug: string,
   productSlug: string
 ): Promise<Product | undefined> {
@@ -187,7 +188,7 @@ export async function getProduct(
   return rows[0] ? toProduct(rows[0], categorySlug) : undefined;
 }
 
-export async function getProductById(id: string): Promise<Product | undefined> {
+async function loadProductById(id: string): Promise<Product | undefined> {
   const rows = await db
     .select({ product: productsTable, categorySlug: categoriesTable.slug })
     .from(productsTable)
@@ -197,7 +198,7 @@ export async function getProductById(id: string): Promise<Product | undefined> {
   return rows[0] ? toProduct(rows[0].product, rows[0].categorySlug) : undefined;
 }
 
-export async function getFeaturedProducts(): Promise<Product[]> {
+async function loadFeaturedProducts(): Promise<Product[]> {
   const rows = await db
     .select({
       product: productsTable,
@@ -212,7 +213,7 @@ export async function getFeaturedProducts(): Promise<Product[]> {
   return rows.map((r) => toProduct(r.product, r.categorySlug));
 }
 
-export async function getAllProducts(): Promise<Product[]> {
+async function loadAllProducts(): Promise<Product[]> {
   const rows = await db
     .select({
       product: productsTable,
@@ -254,7 +255,7 @@ export async function searchProducts(query: string): Promise<Product[]> {
   return rows.map((r) => toProduct(r.product, r.categorySlug));
 }
 
-export async function getRelatedProducts(product: Product): Promise<Product[]> {
+async function loadRelatedProducts(product: Product): Promise<Product[]> {
   const rows = await db
     .select()
     .from(productsTable)
@@ -303,3 +304,15 @@ export async function getFavouriteProducts(
     .orderBy(desc(favouritesTable.createdAt));
   return rows.map((r) => toProduct(r.product, r.categorySlug));
 }
+
+// Storefront reads are served from memory; see lib/data-cache.ts.
+export const getPageBySlug = cached("getPageBySlug", loadPageBySlug);
+export const getCategories = cached("getCategories", loadCategories);
+export const getWardrobeFinishes = cached("getWardrobeFinishes", loadWardrobeFinishes);
+export const getCategoryBySlug = cached("getCategoryBySlug", loadCategoryBySlug);
+export const getProductsByCategory = cached("getProductsByCategory", loadProductsByCategory);
+export const getProduct = cached("getProduct", loadProduct);
+export const getProductById = cached("getProductById", loadProductById);
+export const getFeaturedProducts = cached("getFeaturedProducts", loadFeaturedProducts);
+export const getAllProducts = cached("getAllProducts", loadAllProducts);
+export const getRelatedProducts = cached("getRelatedProducts", loadRelatedProducts);
