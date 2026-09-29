@@ -10,7 +10,7 @@ import {
   getStaffChatId,
   REQUEST_CONTACT_KEYBOARD,
   CLIENT_LINKS_KEYBOARD,
-  ROLE_KEYBOARD,
+  WELCOME_KEYBOARD,
   MANAGER_MENU_KEYBOARD,
 } from "@/lib/telegram";
 import {
@@ -36,6 +36,7 @@ import {
 } from "@/lib/bot-catalog";
 import {
   startConversation,
+  ensureConversation,
   relayCustomerMessage,
   closeConversation,
   sendOpenConversationsList,
@@ -282,6 +283,7 @@ async function handleMessage(message: TelegramMessage) {
         name: displayName(message.from),
       };
       const result = await resolveReplyPrompt(
+        chatId,
         message.reply_to_message.message_id,
         actor,
         message.text
@@ -323,6 +325,7 @@ async function handleMessage(message: TelegramMessage) {
   if (message.reply_to_message && message.text && message.from) {
     const actor = { telegramId: String(message.from.id), name: displayName(message.from) };
     const result = await resolveReplyPrompt(
+      chatId,
       message.reply_to_message.message_id,
       actor,
       message.text
@@ -361,18 +364,20 @@ async function handleMessage(message: TelegramMessage) {
     if (await isApprovedEmployee(String(chatId))) {
       await sendTelegramMessage(
         chatId,
-        "👋 С возвращением! Вы подтверждённый сотрудник Molly Home.",
+        "👋 С возвращением! Вы подтверждённый сотрудник Molly Home.\n\nЧтобы ответить клиенту, ответьте на его сообщение через «Reply».",
         { replyMarkup: MANAGER_MENU_KEYBOARD }
       );
       return;
     }
 
+    // One message, not a welcome followed by "who are you?": nearly everyone
+    // here is a customer, so they get their options straight away and staff
+    // sign-up waits quietly at the bottom of the same menu.
     await sendTelegramMessage(
       chatId,
-      "👋 Добро пожаловать в Molly Home — мебельную фабрику в Ташкенте!\n\nЧерез этого бота вы можете:\n✅ Проверить статус своего заказа в любое время\n🔔 Получать уведомления, когда статус меняется — не нужно звонить и уточнять\n🛋 Посмотреть каталог и оставить заявку на замер\n💬 Написать менеджеру и получить ответ прямо здесь",
-      { replyMarkup: CLIENT_LINKS_KEYBOARD }
+      "👋 Добро пожаловать в Molly Home — мебельную фабрику в Ташкенте.\n\nНапишите сюда любой вопрос — его сразу получит менеджер, а ответ придёт в этот чат. Или выберите:",
+      { replyMarkup: WELCOME_KEYBOARD }
     );
-    await sendTelegramMessage(chatId, "Кто вы?", { replyMarkup: ROLE_KEYBOARD });
     return;
   }
 
@@ -383,59 +388,68 @@ async function handleMessage(message: TelegramMessage) {
     return;
   }
 
-  if (message.text && message.from) {
-    const question = await consumeProductQuestion(chatId);
-    if (question) {
-      await relayProductQuestion(
-        chatId,
-        displayName(message.from),
-        question.productName,
-        message.text
-      );
-      await sendTelegramMessage(
-        chatId,
-        "✅ Вопрос отправлен менеджеру. Мы ответим вам здесь же."
-      );
-      return;
-    }
-
-    const relayed = await relayCustomerMessage(chatId, displayName(message.from), message.text);
-    if (relayed) {
-      await sendTelegramMessage(chatId, "✅ Передал менеджеру. Ответим здесь же.");
-      return;
-    }
-
-    const wasPending = await consumePendingRegistration(chatId);
-    if (wasPending) {
-      const name = message.text.trim().slice(0, 80);
-      const outcome = await submitEmployeeApplication(String(message.from.id), name);
-      await sendTelegramMessage(
-        chatId,
-        outcome === "already_staff"
-          ? `✅ Обновил имя на «${name}». Ваши действия в заказах теперь будут подписаны этим именем.`
-          : `📨 Заявка отправлена администратору как «${name}». Как только вас подтвердят, вы начнёте получать уведомления о заказах.`
-      );
-      return;
-    }
-    // A confirmed employee is already known — asking "who are you" and for a
-    // name they already have was the bot's most confusing behaviour. Show
-    // them what they can actually do instead.
+  if (message.text && /^\/menu(@\w+)?\s*$/i.test(message.text.trim())) {
     if (await isApprovedEmployee(String(chatId))) {
-      await sendTelegramMessage(
-        chatId,
-        "Чтобы ответить клиенту, ответьте на его сообщение через «Reply». Или выберите действие:",
-        { replyMarkup: MANAGER_MENU_KEYBOARD }
-      );
-      return;
+      await sendTelegramMessage(chatId, "Меню сотрудника:", {
+        replyMarkup: MANAGER_MENU_KEYBOARD,
+      });
+    } else {
+      await sendTelegramMessage(chatId, "Чем помочь?", {
+        replyMarkup: CLIENT_LINKS_KEYBOARD,
+      });
     }
-
-    // No pending manager-name prompt active — never guess. Free text alone
-    // used to silently register the sender as staff; now it just re-shows
-    // the explicit role choice.
-    await sendTelegramMessage(chatId, "Уточните, пожалуйста, кто вы:", {
-      replyMarkup: ROLE_KEYBOARD,
-    });
+    return;
   }
+
+  if (!message.text || !message.from) return;
+  const text = message.text;
+  const from = message.from;
+
+  // 1. A question about a specific product the person just chose to ask.
+  const question = await consumeProductQuestion(chatId);
+  if (question) {
+    await relayProductQuestion(chatId, displayName(from), question.productName, text);
+    await sendTelegramMessage(
+      chatId,
+      "✅ Вопрос отправлен менеджеру. Ответ придёт сюда же."
+    );
+    return;
+  }
+
+  // 2. Someone who tapped "Я сотрудник" and is now giving their name.
+  if (await consumePendingRegistration(chatId)) {
+    const name = text.trim().slice(0, 80);
+    const outcome = await submitEmployeeApplication(String(from.id), name);
+    await sendTelegramMessage(
+      chatId,
+      outcome === "already_staff"
+        ? `✅ Обновил имя на «${name}».`
+        : `📨 Заявка отправлена администратору как «${name}». После подтверждения вы начнёте получать заявки.`
+    );
+    return;
+  }
+
+  // 3. Staff typing freely: they are known, so show what they can do.
+  if (await isApprovedEmployee(String(chatId))) {
+    await sendTelegramMessage(
+      chatId,
+      "Чтобы ответить клиенту, ответьте на его сообщение через «Reply». Или выберите действие:",
+      { replyMarkup: MANAGER_MENU_KEYBOARD }
+    );
+    return;
+  }
+
+  // 4. Everyone else is a customer, and a customer typing wants a person.
+  // Their message goes straight to the managers — previously it was met with
+  // "who are you?", which is where people gave up.
+  const conversation = await ensureConversation(chatId, displayName(from));
+  await relayCustomerMessage(chatId, displayName(from), text);
+  await sendTelegramMessage(
+    chatId,
+    conversation.created
+      ? "✅ Передал ваше сообщение менеджеру. Ответ придёт в этот чат — обычно в течение рабочего дня."
+      : "✅ Передал менеджеру."
+  );
 }
 
 async function handleCustomerContact(chatId: number, contact: TelegramContact) {

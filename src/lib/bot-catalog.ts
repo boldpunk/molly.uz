@@ -17,6 +17,7 @@ import {
   escapeHtml,
   getStaffChatId,
   isStaffNotifyConfigured,
+  replyPromptKey,
 } from "./telegram";
 
 const PAGE_SIZE = 6;
@@ -217,12 +218,12 @@ export async function relayProductQuestion(
     productName,
   });
 
-  async function track(sent: { message_id: number } | null) {
+  async function track(sent: { message_id: number; chat: { id: number } } | null) {
     if (!sent) return;
     await db
       .insert(telegramPendingActions)
       .values({
-        key: `msg:${sent.message_id}`,
+        key: replyPromptKey(sent.chat.id, sent.message_id),
         kind: "product_question_reply",
         payload,
       })

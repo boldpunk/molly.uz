@@ -27,6 +27,14 @@ interface TelegramApiMessage {
   chat: { id: number };
 }
 
+// Telegram numbers messages per chat, so a message id alone is ambiguous:
+// message 57 in the group and message 57 in a manager's DM are different
+// messages. Keying reply prompts by id alone let one overwrite the other and
+// could route a reply to the wrong customer.
+export function replyPromptKey(chatId: number | string, messageId: number): string {
+  return `msg:${chatId}:${messageId}`;
+}
+
 async function callTelegramApi<T = unknown>(
   method: string,
   payload: Record<string, unknown>
@@ -134,9 +142,22 @@ export const REQUEST_CONTACT_KEYBOARD = {
 export const CLIENT_LINKS_KEYBOARD = {
   inline_keyboard: [
     [{ text: "🛋 Каталог мебели", callback_data: "cat:root" }],
-    [{ text: "📝 Оставить заявку на замер", url: `${SITE_URL}/request` }],
-    [{ text: "💬 Написать менеджеру", callback_data: "conv:new" }],
+    [
+      { text: "💬 Написать менеджеру", callback_data: "conv:new" },
+      { text: "📦 Статус заказа", callback_data: "role:client" },
+    ],
+    [{ text: "📝 Заявка на замер", url: `${SITE_URL}/request` }],
     [{ text: "📞 Контакты", url: `${SITE_URL}/contacts` }],
+  ],
+};
+
+// Welcome for anyone the bot doesn't know yet. Nearly everyone writing in is
+// a customer, so the customer actions come first and staff sign-up is a
+// single quiet row at the end rather than a question put to everybody.
+export const WELCOME_KEYBOARD = {
+  inline_keyboard: [
+    ...CLIENT_LINKS_KEYBOARD.inline_keyboard,
+    [{ text: "👔 Я сотрудник Molly Home", callback_data: "role:manager" }],
   ],
 };
 
