@@ -29,6 +29,7 @@ import {
   getStaffChatId,
   isStaffNotifyConfigured,
   sendTelegramMessage,
+  MANAGER_REPLY_KEYBOARD,
 } from "./telegram";
 
 function parseJsonArray<T>(raw: FormDataEntryValue | null): T[] {
@@ -427,7 +428,8 @@ export async function approveEmployeeApplication(applicationId: string) {
 
   await sendTelegramMessage(
     application.telegramId,
-    "✅ Вас подтвердили как сотрудника. Теперь вы будете получать уведомления о новых заказах."
+    "✅ Вас подтвердили как сотрудника. Теперь вы будете получать уведомления о новых заказах.\n\nМеню сотрудника — на кнопках внизу 👇",
+    { replyMarkup: MANAGER_REPLY_KEYBOARD }
   ).catch((err) => console.error("Employee approval notify failed", err));
 
   revalidatePath("/admin/employees");

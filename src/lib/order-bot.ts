@@ -520,8 +520,12 @@ export async function startAmountPrompt(
     });
 }
 
-export async function startNewOrderPrompt(actor: Actor): Promise<void> {
-  const chatId = getStaffChatId();
+export async function startNewOrderPrompt(
+  actor: Actor,
+  // Defaults to the staff group; a manager working from their own chat with
+  // the bot gets the prompt there instead.
+  chatId: number | string | undefined = getStaffChatId()
+): Promise<void> {
   if (!chatId) return;
   const sent = await sendTelegramMessage(
     chatId,
