@@ -8,24 +8,20 @@ import { PhoneInput } from "@/components/phone-input";
 import { buildStatusDeepLink } from "@/lib/telegram-links";
 import type { WardrobeFinish } from "@/lib/data";
 
+// All measurements follow the production drawings: 366 mm modules, a
+// 2300 mm carcass on a 100 mm plinth, 600 mm deep, 2 mm gaps between
+// facades and four hinges per door.
 const MODULE_WIDTH_MM = 366;
 const HEIGHT_MM = 2300;
 const DEPTH_MM = 600;
+const PLINTH_MM = 100;
+const PANEL_MM = 16;
+const GAP_MM = 2;
+const HINGES_PER_DOOR = 4;
+const ROD_HEIGHT_MM = 1700;
+const DRAWER_HEIGHT_MM = 200;
 const MIN_MODULES = 2;
 const MAX_MODULES = 8;
-
-const FILLINGS = [
-  {
-    id: "classic",
-    label: "Классическое наполнение",
-    description: "Полки, штанга для одежды, ящики по бокам",
-  },
-  {
-    id: "system",
-    label: "Гардеробная система",
-    description: "Секции с ящиками, полками и местом для аксессуаров",
-  },
-] as const;
 
 // Used only if the admin hasn't configured any finishes yet (see
 // /admin/configurator) — keeps the page from ever showing an empty state.
@@ -36,10 +32,59 @@ const DEFAULT_FINISHES: WardrobeFinish[] = [
   { id: "default-black", label: "Чёрный матовый", ral: "RAL 9005", hex: "#1c1c1c" },
 ];
 
-const HANDLE_TYPES = [
-  { id: "накладные", label: "Накладные" },
-  { id: "врезные", label: "Врезные (без ручек, push-to-open)" },
+type SectionKind = "shelves" | "hanging" | "drawers" | "combo";
+
+const SECTIONS: Record<SectionKind, { label: string; hint: string }> = {
+  shelves: { label: "Полки", hint: "6 полок по всей высоте" },
+  hanging: { label: "Штанга", hint: "Длинная одежда, полка сверху и снизу" },
+  drawers: { label: "Полки и ящики", hint: "3 ящика по 200 мм и полки над ними" },
+  combo: { label: "Штанга и полки", hint: "Короткая одежда и полки под ней" },
+};
+const SECTION_ORDER: SectionKind[] = ["shelves", "hanging", "drawers", "combo"];
+
+// Shelves (not counting the carcass top and bottom) each section adds.
+const SHELVES_IN: Record<SectionKind, number> = { shelves: 6, hanging: 2, drawers: 4, combo: 3 };
+
+const PRESETS: { id: string; label: string; build: (n: number) => SectionKind[] }[] = [
+  {
+    id: "classic",
+    label: "Классика",
+    build: (n) =>
+      Array.from({ length: n }, (_, i) =>
+        i === 0 || i === n - 1 ? "drawers" : i % 2 === 1 ? "hanging" : "shelves"
+      ),
+  },
+  {
+    id: "hanging",
+    label: "Больше вешал",
+    build: (n) =>
+      Array.from({ length: n }, (_, i) =>
+        i === 0 ? "drawers" : i % 3 === 2 ? "combo" : "hanging"
+      ),
+  },
+  {
+    id: "shelves",
+    label: "Больше полок",
+    build: (n) =>
+      Array.from({ length: n }, (_, i) =>
+        i === Math.floor(n / 2) ? "hanging" : i % 2 === 0 ? "drawers" : "shelves"
+      ),
+  },
+];
+
+const MIRRORS = [
+  { id: "none", label: "Без зеркала" },
+  { id: "center", label: "2 центральных" },
+  { id: "all", label: "Все фасады" },
 ] as const;
+type MirrorId = (typeof MIRRORS)[number]["id"];
+
+const HANDLES = [
+  { id: "накладные", label: "Накладные", note: "Чёрная планка" },
+  { id: "врезные", label: "Врезной профиль", note: "Латунь, в торце" },
+  { id: "push", label: "Без ручек", note: "Push-to-open" },
+] as const;
+type HandleId = (typeof HANDLES)[number]["id"];
 
 const HINGES = [
   { id: "blum", label: "Blum" },
@@ -53,124 +98,35 @@ function isDarkColour(hex: string): boolean {
   return (r * 299 + g * 587 + b * 114) / 1000 < 140;
 }
 
-type FillingId = (typeof FILLINGS)[number]["id"];
-type InteriorKind = "rod" | "shelves" | "drawers" | "cubbies";
-
-// Deterministic per-module layout so the interior view visibly differs
-// between the two filling types, matching their descriptions: classic is
-// mostly hanging space with drawers at the sides; the system variant is
-// mostly shelving with a dedicated accessories module.
-function moduleInteriorKind(i: number, modules: number, filling: FillingId): InteriorKind {
-  const mid = Math.floor(modules / 2);
-  if (filling === "classic") {
-    if (i === 0 || i === modules - 1) return "drawers";
-    if (i === mid) return "rod";
-    return "shelves";
-  }
-  if (i === modules - 1) return "drawers";
-  if (i === 0) return "cubbies";
-  if (i === mid) return "rod";
-  return "shelves";
+function mirrorDoors(modules: number, mirror: MirrorId): Set<number> {
+  if (mirror === "all") return new Set(Array.from({ length: modules }, (_, i) => i));
+  if (mirror === "none") return new Set();
+  const mid = modules / 2;
+  return modules % 2 === 0 ? new Set([mid - 1, mid]) : new Set([Math.floor(mid)]);
 }
 
-function InteriorShelves({
-  x,
-  doorW,
-  h,
-  count,
-  lineColour,
-}: {
-  x: number;
-  doorW: number;
-  h: number;
-  count: number;
-  lineColour: string;
-}) {
-  return (
-    <>
-      {Array.from({ length: count }).map((_, i) => {
-        const y = ((i + 1) / (count + 1)) * h;
-        return (
-          <rect key={i} x={x + 4} y={y} width={doorW - 8} height={2.5} fill={lineColour} />
-        );
-      })}
-    </>
-  );
-}
+/* ------------------------------------------------------------------ */
+/* Drawing — every coordinate is in millimetres                        */
+/* ------------------------------------------------------------------ */
 
-function InteriorRod({
-  x,
-  doorW,
-  h,
-  lineColour,
-  withShelfBelow,
-}: {
-  x: number;
-  doorW: number;
-  h: number;
-  lineColour: string;
-  withShelfBelow: boolean;
-}) {
-  const rodY = h * 0.16;
-  const hangerXs = [x + doorW * 0.3, x + doorW * 0.5, x + doorW * 0.7];
-  return (
-    <>
-      <rect x={x + 4} y={rodY} width={doorW - 8} height={2.5} fill={lineColour} />
-      {hangerXs.map((hx, i) => (
-        <path
-          key={i}
-          d={`M ${hx} ${rodY + 2} l -3 8 l 6 0 Z`}
-          fill={lineColour}
-        />
-      ))}
-      {withShelfBelow && (
-        <InteriorShelves x={x} doorW={doorW} h={h - h * 0.55} count={2} lineColour={lineColour} />
-      )}
-    </>
-  );
-}
+const OAK = "#eadfce";
+const OAK_DARK = "#d6c6b0";
+const OAK_EDGE = "#c4b098";
+const GARMENTS = ["#2f3b4f", "#c9b8a3", "#8a7a70", "#e7e0d4", "#56617a", "#a99578"];
 
-function InteriorDrawers({
-  x,
-  doorW,
-  h,
-  lineColour,
-  dark,
-}: {
-  x: number;
-  doorW: number;
-  h: number;
-  lineColour: string;
-  dark: boolean;
-}) {
-  const count = 3;
-  const gap = 4;
-  const drawerH = (h - gap * (count + 1)) / count;
+function Garments({ x, w, top, length, seed }: { x: number; w: number; top: number; length: number; seed: number }) {
+  const count = Math.max(2, Math.floor(w / 80));
+  const step = (w - 60) / count;
   return (
     <>
-      {Array.from({ length: count }).map((_, i) => {
-        const y = gap + i * (drawerH + gap);
+      {Array.from({ length: count }, (_, i) => {
+        const gx = x + 40 + i * step + step / 2;
+        const len = length * (0.72 + ((seed * 7 + i * 13) % 5) * 0.07);
+        const colour = GARMENTS[(seed + i * 2) % GARMENTS.length];
         return (
           <g key={i}>
-            <rect
-              x={x + 4}
-              y={y}
-              width={doorW - 8}
-              height={drawerH}
-              rx={2}
-              fill="none"
-              stroke={lineColour}
-              strokeWidth={1.5}
-            />
-            <rect
-              x={x + doorW / 2 - 6}
-              y={y + drawerH / 2 - 1}
-              width={12}
-              height={2}
-              rx={1}
-              fill={dark ? "#e8e2d6" : "#0b1a2d"}
-              opacity={0.6}
-            />
+            <path d={`M ${gx} ${top} l -34 40 h 68 Z`} fill="none" stroke="#8b8f96" strokeWidth={5} />
+            <rect x={gx - 36} y={top + 38} width={72} height={len} rx={14} fill={colour} opacity={0.92} />
           </g>
         );
       })}
@@ -178,188 +134,351 @@ function InteriorDrawers({
   );
 }
 
-function InteriorCubbies({
-  x,
-  doorW,
-  h,
-  lineColour,
-}: {
-  x: number;
-  doorW: number;
-  h: number;
-  lineColour: string;
-}) {
-  const bandH = h * 0.4;
-  const cols = 2;
-  const rows = 2;
-  const cellW = (doorW - 8) / cols;
-  const cellH = bandH / rows;
+function Shelf({ x, w, y }: { x: number; w: number; y: number }) {
+  return <rect x={x} y={y} width={w} height={PANEL_MM} fill={OAK_DARK} stroke={OAK_EDGE} strokeWidth={2} />;
+}
+
+function Boxes({ x, w, y, seed }: { x: number; w: number; y: number; seed: number }) {
+  // Folded things resting on a shelf, purely to make the drawing read as a
+  // lived-in wardrobe rather than a technical grid.
+  if ((seed + Math.round(y)) % 3 === 0) {
+    return <rect x={x + w * 0.2} y={y - 110} width={w * 0.6} height={110} rx={8} fill="#d8cfc3" stroke="#bfb3a3" strokeWidth={3} />;
+  }
   return (
     <>
-      {Array.from({ length: cols * rows }).map((_, i) => {
-        const col = i % cols;
-        const row = Math.floor(i / cols);
-        return (
-          <rect
-            key={i}
-            x={x + 4 + col * cellW + 1.5}
-            y={row * cellH + 1.5}
-            width={cellW - 3}
-            height={cellH - 3}
-            rx={1.5}
-            fill="none"
-            stroke={lineColour}
-            strokeWidth={1.5}
-          />
-        );
-      })}
-      <InteriorShelves x={x} doorW={doorW} h={h - bandH} count={2} lineColour={lineColour} />
+      {[0, 1, 2].map((k) => (
+        <rect key={k} x={x + w * 0.22} y={y - 28 * (k + 1)} width={w * 0.56} height={26} rx={6} fill={GARMENTS[(seed + k) % GARMENTS.length]} opacity={0.75} />
+      ))}
     </>
   );
 }
 
-function WardrobeDiagram({
-  modules,
-  finishSwatch,
+function SectionInterior({ kind, x, w, seed }: { kind: SectionKind; x: number; w: number; seed: number }) {
+  const top = PANEL_MM;
+  const bottom = HEIGHT_MM - PLINTH_MM - PANEL_MM;
+  const topShelf = top + 300;
+  const rodY = HEIGHT_MM - ROD_HEIGHT_MM;
+  const drawersTop = bottom - DRAWER_HEIGHT_MM * 3;
+  const items: React.ReactNode[] = [];
+
+  if (kind === "shelves") {
+    const step = (bottom - top) / 7;
+    for (let k = 1; k <= 6; k++) {
+      const y = top + step * k;
+      items.push(<Shelf key={`s${k}`} x={x} w={w} y={y} />);
+      if (k % 2 === 1 || k === 6) items.push(<Boxes key={`b${k}`} x={x} w={w} y={y} seed={seed + k} />);
+    }
+    items.push(<Boxes key="bb" x={x} w={w} y={bottom} seed={seed} />);
+  }
+
+  if (kind === "hanging") {
+    items.push(<Shelf key="t" x={x} w={w} y={topShelf} />);
+    items.push(<Boxes key="tb" x={x} w={w} y={topShelf} seed={seed} />);
+    items.push(<Garments key="g" x={x} w={w} top={rodY + 12} length={1050} seed={seed} />);
+    items.push(<rect key="r" x={x + 10} y={rodY} width={w - 20} height={25} rx={12} fill="url(#chrome)" />);
+    items.push(<Shelf key="b" x={x} w={w} y={bottom - 400} />);
+    items.push(<Boxes key="bb" x={x} w={w} y={bottom - 400} seed={seed + 1} />);
+  }
+
+  if (kind === "combo") {
+    items.push(<Shelf key="t" x={x} w={w} y={topShelf} />);
+    items.push(<Garments key="g" x={x} w={w} top={rodY + 12} length={560} seed={seed} />);
+    items.push(<rect key="r" x={x + 10} y={rodY} width={w - 20} height={25} rx={12} fill="url(#chrome)" />);
+    [1320, 1720].forEach((y, k) => {
+      items.push(<Shelf key={`s${k}`} x={x} w={w} y={y} />);
+      items.push(<Boxes key={`b${k}`} x={x} w={w} y={y} seed={seed + k + 2} />);
+    });
+    items.push(<Boxes key="bb" x={x} w={w} y={bottom} seed={seed + 5} />);
+  }
+
+  if (kind === "drawers") {
+    const step = (drawersTop - top) / 5;
+    for (let k = 1; k <= 4; k++) {
+      const y = top + step * k;
+      items.push(<Shelf key={`s${k}`} x={x} w={w} y={y} />);
+      items.push(<Boxes key={`b${k}`} x={x} w={w} y={y} seed={seed + k} />);
+    }
+    for (let k = 0; k < 3; k++) {
+      const y = drawersTop + k * DRAWER_HEIGHT_MM;
+      items.push(
+        <g key={`d${k}`}>
+          <rect x={x + 6} y={y + 6} width={w - 12} height={DRAWER_HEIGHT_MM - 12} rx={6} fill="#e3d6c5" stroke={OAK_EDGE} strokeWidth={3} />
+          <rect x={x + w / 2 - 50} y={y + 40} width={100} height={16} rx={8} fill="#5b4a3a" opacity={0.55} />
+        </g>
+      );
+    }
+  }
+
+  return <>{items}</>;
+}
+
+function DimensionH({ x1, x2, y, label, size = 60 }: { x1: number; x2: number; y: number; label: string; size?: number }) {
+  return (
+    <g className="text-navy" stroke="currentColor" fill="currentColor">
+      <line x1={x1} y1={y} x2={x2} y2={y} strokeWidth={4} opacity={0.55} />
+      <line x1={x1} y1={y - 26} x2={x1} y2={y + 26} strokeWidth={4} opacity={0.55} />
+      <line x1={x2} y1={y - 26} x2={x2} y2={y + 26} strokeWidth={4} opacity={0.55} />
+      <text x={(x1 + x2) / 2} y={y - 20} textAnchor="middle" fontSize={size} stroke="none" fontWeight={600}>
+        {label}
+      </text>
+    </g>
+  );
+}
+
+function DimensionV({ x, y1, y2, label }: { x: number; y1: number; y2: number; label: string }) {
+  return (
+    <g className="text-navy" stroke="currentColor" fill="currentColor">
+      <line x1={x} y1={y1} x2={x} y2={y2} strokeWidth={4} opacity={0.55} />
+      <line x1={x - 26} y1={y1} x2={x + 26} y2={y1} strokeWidth={4} opacity={0.55} />
+      <line x1={x - 26} y1={y2} x2={x + 26} y2={y2} strokeWidth={4} opacity={0.55} />
+      <text
+        x={x - 24}
+        y={(y1 + y2) / 2}
+        textAnchor="middle"
+        fontSize={64}
+        stroke="none"
+        fontWeight={600}
+        transform={`rotate(-90 ${x - 24} ${(y1 + y2) / 2})`}
+      >
+        {label}
+      </text>
+    </g>
+  );
+}
+
+type View = "facade" | "interior" | "side";
+
+function WardrobeDrawing({
+  view,
+  layout,
+  finish,
   mirror,
   rails,
-  handleType,
-  filling,
-  view,
+  handle,
+  openDoors,
+  selected,
+  onDoor,
+  onSection,
 }: {
-  modules: number;
-  finishSwatch: string;
-  mirror: boolean;
+  view: View;
+  layout: SectionKind[];
+  finish: string;
+  mirror: MirrorId;
   rails: boolean;
-  handleType: string;
-  filling: FillingId;
-  view: "facade" | "interior";
+  handle: HandleId;
+  openDoors: Set<number>;
+  selected: number | null;
+  onDoor: (i: number) => void;
+  onSection: (i: number) => void;
 }) {
-  const doorW = 64;
-  const gap = 3;
-  const totalW = modules * doorW + (modules - 1) * gap;
-  const h = 220;
-  const dark = isDarkColour(finishSwatch);
-  const lineColour = dark ? "rgba(255,255,255,0.18)" : "rgba(11,26,45,0.12)";
-  const interiorLine = "rgba(11,26,45,0.35)";
+  const modules = layout.length;
+  const W = view === "side" ? DEPTH_MM : modules * MODULE_WIDTH_MM;
+  const padL = 170;
+  const padR = 60;
+  const padT = 60;
+  const padB = view === "side" ? 200 : 330;
+  const dark = isDarkColour(finish);
+  const mirrors = mirrorDoors(modules, mirror);
+  const facadeBottom = HEIGHT_MM - PLINTH_MM;
 
   return (
     <svg
-      viewBox={`0 0 ${totalW} ${h + 24}`}
-      width={totalW}
-      height={h + 24}
-      style={{ width: "100%", height: "auto" }}
-      className="mx-auto block max-w-md"
+      viewBox={`${-padL} ${-padT} ${W + padL + padR} ${HEIGHT_MM + padT + padB}`}
+      className="mx-auto block h-auto max-h-[560px] w-full select-none"
       role="img"
-      aria-label={`Схема шкафа из ${modules} модулей — ${
-        view === "facade" ? "фасад" : "наполнение"
+      aria-label={`Шкаф ${modules} × ${MODULE_WIDTH_MM} мм, вид: ${
+        view === "facade" ? "фасад" : view === "interior" ? "наполнение" : "сбоку"
       }`}
     >
-      <rect x={0} y={h + 4} width={totalW} height={6} rx={2} fill="#0b1a2d" opacity={0.15} />
-      {Array.from({ length: modules }).map((_, i) => {
-        const x = i * (doorW + gap);
-        const handleOnLeft = i % 2 === 0;
-
-        if (view === "interior") {
-          const kind = moduleInteriorKind(i, modules, filling);
-          return (
-            <g key={i}>
-              <rect
-                x={x}
-                y={0}
-                width={doorW}
-                height={h}
-                rx={3}
-                fill="#faf8f4"
-                stroke="rgba(11,26,45,0.25)"
-                strokeWidth={1}
-              />
-              {kind === "shelves" && (
-                <InteriorShelves
-                  x={x}
-                  doorW={doorW}
-                  h={h}
-                  count={filling === "system" ? 5 : 3}
-                  lineColour={interiorLine}
-                />
-              )}
-              {kind === "rod" && (
-                <InteriorRod
-                  x={x}
-                  doorW={doorW}
-                  h={h}
-                  lineColour={interiorLine}
-                  withShelfBelow={filling === "system"}
-                />
-              )}
-              {kind === "drawers" && (
-                <InteriorDrawers x={x} doorW={doorW} h={h} lineColour={interiorLine} dark={false} />
-              )}
-              {kind === "cubbies" && (
-                <InteriorCubbies x={x} doorW={doorW} h={h} lineColour={interiorLine} />
-              )}
-            </g>
-          );
-        }
-
-        return (
-          <g key={i}>
-            <rect
-              x={x}
-              y={0}
-              width={doorW}
-              height={h}
-              rx={3}
-              fill={finishSwatch}
-              stroke={dark ? "rgba(255,255,255,0.25)" : "rgba(11,26,45,0.2)"}
-              strokeWidth={1}
-            />
-            {mirror && (
-              <rect
-                x={x + 4}
-                y={4}
-                width={doorW - 8}
-                height={h - 8}
-                rx={2}
-                fill="url(#mirror-sheen)"
-              />
-            )}
-            {rails && (
-              <>
-                <rect x={x + 6} y={h * 0.28} width={doorW - 12} height={3} fill={lineColour} />
-                <rect x={x + 6} y={h * 0.72} width={doorW - 12} height={3} fill={lineColour} />
-              </>
-            )}
-            {handleType === "накладные" && (
-              <rect
-                x={handleOnLeft ? x + 5 : x + doorW - 8}
-                y={h * 0.42}
-                width={3}
-                height={h * 0.16}
-                rx={1.5}
-                fill={dark ? "#e8e2d6" : "#0b1a2d"}
-                opacity={0.8}
-              />
-            )}
-          </g>
-        );
-      })}
       <defs>
-        <linearGradient id="mirror-sheen" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity={0.35} />
-          <stop offset="45%" stopColor="#ffffff" stopOpacity={0.05} />
-          <stop offset="100%" stopColor="#ffffff" stopOpacity={0} />
+        <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#f4f5f7" />
+          <stop offset="50%" stopColor="#a9aeb6" />
+          <stop offset="100%" stopColor="#e1e3e7" />
+        </linearGradient>
+        <linearGradient id="mirror" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#dfe6ea" />
+          <stop offset="40%" stopColor="#aebbc3" />
+          <stop offset="60%" stopColor="#c8d3d9" />
+          <stop offset="100%" stopColor="#8e9ca5" />
+        </linearGradient>
+        <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#fff" stopOpacity={0.18} />
+          <stop offset="100%" stopColor="#000" stopOpacity={0.06} />
+        </linearGradient>
+        <linearGradient id="brass" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#d4ad6a" />
+          <stop offset="50%" stopColor="#a87a3c" />
+          <stop offset="100%" stopColor="#7b5629" />
         </linearGradient>
       </defs>
+
+      {/* floor */}
+      <ellipse cx={W / 2} cy={HEIGHT_MM + 10} rx={W * 0.55} ry={40} fill="#182b4c" opacity={0.08} />
+
+      {view === "side" ? (
+        <g className="animate-fade-in">
+          <rect x={0} y={0} width={DEPTH_MM} height={HEIGHT_MM - PLINTH_MM} fill={OAK} stroke={OAK_EDGE} strokeWidth={4} />
+          <rect x={20} y={HEIGHT_MM - PLINTH_MM} width={DEPTH_MM - 40} height={PLINTH_MM} fill={OAK_DARK} />
+          <rect x={DEPTH_MM - 18} y={0} width={18} height={HEIGHT_MM - PLINTH_MM} fill={finish} stroke={OAK_EDGE} strokeWidth={2} />
+          <DimensionV x={-90} y1={0} y2={HEIGHT_MM} label={`${HEIGHT_MM}`} />
+          <DimensionH x1={0} x2={DEPTH_MM} y={HEIGHT_MM + 120} label={`${DEPTH_MM}`} size={64} />
+        </g>
+      ) : (
+        <>
+          {/* carcass */}
+          <rect x={0} y={0} width={W} height={facadeBottom} fill={OAK} stroke={OAK_EDGE} strokeWidth={4} />
+          <rect x={16} y={facadeBottom} width={W - 32} height={PLINTH_MM} fill={OAK_DARK} />
+
+          {layout.map((kind, i) => {
+            const x = i * MODULE_WIDTH_MM;
+            const innerX = x + (i === 0 ? PANEL_MM : PANEL_MM / 2);
+            const innerW = MODULE_WIDTH_MM - PANEL_MM - (i === 0 || i === modules - 1 ? PANEL_MM / 2 : 0);
+            const doorX = x + GAP_MM / 2;
+            const doorW = MODULE_WIDTH_MM - GAP_MM;
+            const hingeLeft = i % 2 === 0;
+            const isOpen = view === "interior" || openDoors.has(i);
+            const isMirror = mirrors.has(i);
+            const handleX = hingeLeft ? doorX + doorW - 42 : doorX + 26;
+
+            return (
+              <g key={i} className="animate-fade-in">
+                {/* interior */}
+                <g
+                  onClick={view === "interior" ? () => onSection(i) : undefined}
+                  className={view === "interior" ? "group cursor-pointer" : ""}
+                >
+                  <rect x={innerX} y={PANEL_MM} width={innerW} height={facadeBottom - PANEL_MM * 2} fill="#f3ece2" />
+                  <SectionInterior kind={kind} x={innerX} w={innerW} seed={i * 3} />
+                  {i > 0 && <rect x={x - PANEL_MM / 2} y={0} width={PANEL_MM} height={facadeBottom} fill={OAK_DARK} />}
+                  {view === "interior" && (
+                    <rect
+                      x={innerX + 4}
+                      y={PANEL_MM + 4}
+                      width={innerW - 8}
+                      height={facadeBottom - PANEL_MM * 2 - 8}
+                      rx={10}
+                      fill={selected === i ? "rgba(199,125,82,0.10)" : "rgba(199,125,82,0)"}
+                      stroke="#c77d52"
+                      strokeWidth={selected === i ? 14 : 8}
+                      className={`transition-opacity duration-300 ${
+                        selected === i ? "opacity-100" : "opacity-0 group-hover:opacity-60"
+                      }`}
+                    />
+                  )}
+                  <title>{`Секция ${i + 1}: ${SECTIONS[kind].label}`}</title>
+                </g>
+
+                {/* door */}
+                {view === "facade" && (
+                  <g
+                    onClick={() => onDoor(i)}
+                    className="cursor-pointer"
+                    style={{
+                      transformBox: "fill-box",
+                      transformOrigin: hingeLeft ? "left center" : "right center",
+                      transform: isOpen ? "scaleX(0.12)" : "scaleX(1)",
+                      transition: "transform 700ms cubic-bezier(0.22, 1, 0.36, 1)",
+                    }}
+                  >
+                    <rect x={doorX} y={4} width={doorW} height={facadeBottom - 6} rx={4} fill={finish} stroke={dark ? "rgba(255,255,255,0.18)" : "rgba(24,43,76,0.18)"} strokeWidth={3} />
+                    <rect x={doorX} y={4} width={doorW} height={facadeBottom - 6} rx={4} fill="url(#sheen)" />
+                    {isMirror && (
+                      <g>
+                        <rect x={doorX + 36} y={40} width={doorW - 72} height={facadeBottom - 80} rx={6} fill="url(#mirror)" />
+                        <path d={`M ${doorX + 70} ${220} l 120 -140 M ${doorX + 70} ${420} l 200 -230`} stroke="#fff" strokeWidth={10} opacity={0.35} />
+                      </g>
+                    )}
+                    {rails && !isMirror &&
+                      [0, 1, 2].map((k) => {
+                        const rx = hingeLeft ? doorX + 48 + k * 32 : doorX + doorW - 68 - k * 32;
+                        return (
+                          <rect
+                            key={k}
+                            x={rx}
+                            y={4}
+                            width={20}
+                            height={facadeBottom - 6}
+                            fill={finish}
+                            stroke={dark ? "rgba(255,255,255,0.22)" : "rgba(24,43,76,0.2)"}
+                            strokeWidth={3}
+                          />
+                        );
+                      })}
+                    {handle === "накладные" && (
+                      <rect x={handleX} y={1080} width={16} height={820} rx={8} fill={dark ? "#d9d2c5" : "#1f2023"} />
+                    )}
+                    {handle === "врезные" && (
+                      <rect
+                        x={hingeLeft ? doorX + doorW - 22 : doorX}
+                        y={1000}
+                        width={22}
+                        height={720}
+                        rx={10}
+                        fill="url(#brass)"
+                      />
+                    )}
+                    {isOpen && <rect x={doorX} y={4} width={doorW} height={facadeBottom - 6} fill="#000" opacity={0.18} />}
+                    <title>{`Фасад ${i + 1} — нажмите, чтобы ${isOpen ? "закрыть" : "открыть"}`}</title>
+                  </g>
+                )}
+
+                <DimensionH x1={x} x2={x + MODULE_WIDTH_MM} y={HEIGHT_MM + 110} label={`${MODULE_WIDTH_MM}`} size={modules > 6 ? 52 : 60} />
+              </g>
+            );
+          })}
+
+          <DimensionH x1={0} x2={W} y={HEIGHT_MM + 250} label={`${W}`} size={70} />
+          <DimensionV x={-90} y1={0} y2={HEIGHT_MM} label={`${HEIGHT_MM}`} />
+        </>
+      )}
     </svg>
   );
 }
 
-function StepBadge({ n }: { n: number }) {
+/* ------------------------------------------------------------------ */
+
+function Step({ n, title, children, aside }: { n: number; title: string; children: React.ReactNode; aside?: React.ReactNode }) {
   return (
-    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-navy text-xs font-bold text-white">
-      {n}
-    </span>
+    <section className="border-b border-navy/10 py-6 first:pt-0 last:border-0 last:pb-0">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="flex items-center gap-3 font-heading text-base font-bold text-navy">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-navy text-xs font-bold text-cream">
+            {n}
+          </span>
+          {title}
+        </h3>
+        {aside}
+      </div>
+      <div className="mt-4">{children}</div>
+    </section>
+  );
+}
+
+function Choice({
+  active,
+  onClick,
+  children,
+  className = "",
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`rounded-2xl border px-4 py-3 text-left text-sm transition duration-300 ${
+        active
+          ? "border-navy bg-navy text-white shadow-lg shadow-navy/20"
+          : "border-navy/15 text-navy hover:border-navy/40 hover:bg-navy/[0.03]"
+      } ${className}`}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -376,51 +495,97 @@ export function WardrobeConfigurator({
 }) {
   const finishOptions = finishes.length > 0 ? finishes : DEFAULT_FINISHES;
 
-  const [modules, setModules] = useState(6);
-  const [filling, setFilling] = useState<(typeof FILLINGS)[number]["id"]>("classic");
+  const [layout, setLayout] = useState<SectionKind[]>(() => PRESETS[0].build(6));
+  const [preset, setPreset] = useState<string | null>("classic");
   const [finish, setFinish] = useState<string>(finishOptions[0].id);
-  const [view, setView] = useState<"facade" | "interior">("facade");
-  const [mirror, setMirror] = useState(false);
-  const [rails, setRails] = useState(false);
-  const [handleType, setHandleType] =
-    useState<(typeof HANDLE_TYPES)[number]["id"]>("накладные");
+  const [view, setView] = useState<View>("facade");
+  const [mirror, setMirror] = useState<MirrorId>("center");
+  const [rails, setRails] = useState(true);
+  const [handle, setHandle] = useState<HandleId>("накладные");
   const [hinge, setHinge] = useState<(typeof HINGES)[number]["id"]>("blum");
+  const [openDoors, setOpenDoors] = useState<Set<number>>(new Set());
+  const [selected, setSelected] = useState<number | null>(null);
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [comment, setComment] = useState("");
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
-  const [error, setError] = useState(
-    "Не удалось отправить заявку. Попробуйте ещё раз."
-  );
-  const [status, setStatus] = useState<"idle" | "submitting" | "submitted" | "error">(
-    "idle"
-  );
+  const [error, setError] = useState("Не удалось отправить заявку. Попробуйте ещё раз.");
+  const [status, setStatus] = useState<"idle" | "submitting" | "submitted" | "error">("idle");
 
+  const modules = layout.length;
   const widthMm = modules * MODULE_WIDTH_MM;
   const widthM = widthMm / 1000;
-
-  const fillingLabel = FILLINGS.find((f) => f.id === filling)!.label;
-  const finishOption =
-    finishOptions.find((f) => f.id === finish) ?? finishOptions[0];
-  const handleLabel = HANDLE_TYPES.find((h) => h.id === handleType)!.label;
+  const finishOption = finishOptions.find((f) => f.id === finish) ?? finishOptions[0];
+  const handleOption = HANDLES.find((h) => h.id === handle)!;
   const hingeLabel = HINGES.find((h) => h.id === hinge)!.label;
+  const mirrorCount = mirrorDoors(modules, mirror).size;
 
-  const specLines = useMemo(
-    () => [
-      `Ширина: ${modules} модуля × ${MODULE_WIDTH_MM} мм = ${widthMm} мм (${widthM.toFixed(2)} м)`,
-      `Высота: ${HEIGHT_MM} мм (стандарт)`,
-      `Глубина: ${DEPTH_MM} мм (стандарт)`,
-      `Количество фасадов: ${modules} шт.`,
-      `Наполнение: ${fillingLabel}`,
-      `Отделка фасада: ${finishOption.label}${finishOption.ral ? ` (${finishOption.ral})` : ""}`,
-      `Зеркало на фасадах: ${mirror ? "да" : "нет"}`,
-      `Декоративные рейки: ${rails ? "да" : "нет"}`,
-      `Ручки: ${handleLabel}`,
-      `Петли: ${hingeLabel}`,
-    ],
-    [modules, widthMm, widthM, fillingLabel, finishOption, mirror, rails, handleLabel, hingeLabel]
-  );
+  const counts = useMemo(() => {
+    const drawers = layout.filter((k) => k === "drawers").length * 3;
+    const rods = layout.filter((k) => k === "hanging" || k === "combo").length;
+    const shelves = layout.reduce((sum, k) => sum + SHELVES_IN[k], 0);
+    return { drawers, rods, shelves, hinges: modules * HINGES_PER_DOOR };
+  }, [layout, modules]);
+
+  function setModuleCount(next: number) {
+    const n = Math.max(MIN_MODULES, Math.min(MAX_MODULES, next));
+    if (n === modules) return;
+    const base = PRESETS.find((p) => p.id === preset)?.build(n);
+    setLayout(base ?? Array.from({ length: n }, (_, i) => layout[i] ?? (i % 2 ? "hanging" : "shelves")));
+    setOpenDoors(new Set());
+    setSelected(null);
+  }
+
+  function applyPreset(id: string) {
+    const p = PRESETS.find((x) => x.id === id);
+    if (!p) return;
+    setPreset(id);
+    setLayout(p.build(modules));
+  }
+
+  function setSection(i: number, kind: SectionKind) {
+    setLayout((l) => l.map((k, j) => (j === i ? kind : k)));
+    setPreset(null);
+  }
+
+  function toggleDoor(i: number) {
+    setOpenDoors((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i);
+      else next.add(i);
+      return next;
+    });
+  }
+
+  const allOpen = openDoors.size === modules;
+
+  const specRows: [string, string][] = [
+    ["Общая ширина", `${widthMm} мм`],
+    ["Общая высота", `${HEIGHT_MM} мм`],
+    ["Глубина", `${DEPTH_MM} мм`],
+    ["Фасады", `${modules} шт. × ${MODULE_WIDTH_MM} мм`],
+    ["Петли", `${hingeLabel}, ${counts.hinges} шт. (${HINGES_PER_DOOR} на фасад)`],
+    ["Полки", `${counts.shelves} шт., ЛДСП 16 мм`],
+    ["Ящики", counts.drawers ? `${counts.drawers} шт. × ${DRAWER_HEIGHT_MM} мм` : "нет"],
+    ["Штанги", counts.rods ? `${counts.rods} шт., хром Ø25 мм` : "нет"],
+    ["Отделка фасада", `${finishOption.label}${finishOption.ral ? ` · ${finishOption.ral}` : ""}`],
+    ["Зеркало", mirrorCount ? `4 мм, на ${mirrorCount} фасад${mirrorCount === 1 ? "е" : "ах"}` : "нет"],
+    ["Декоративные рейки", rails ? "МДФ 8 мм, крашеные" : "нет"],
+    ["Ручки", `${handleOption.label} (${handleOption.note.toLowerCase()})`],
+  ];
+
+  const specLines = [
+    `Ширина: ${modules} модулей × ${MODULE_WIDTH_MM} мм = ${widthMm} мм (${widthM.toFixed(2)} м)`,
+    `Высота: ${HEIGHT_MM} мм`,
+    `Глубина: ${DEPTH_MM} мм`,
+    `Секции: ${layout.map((k, i) => `${i + 1} — ${SECTIONS[k].label.toLowerCase()}`).join(", ")}`,
+    `Отделка фасада: ${finishOption.label}${finishOption.ral ? ` (${finishOption.ral})` : ""}`,
+    `Зеркало: ${mirrorCount ? `на ${mirrorCount} фасад.` : "нет"}`,
+    `Декоративные рейки: ${rails ? "да" : "нет"}`,
+    `Ручки: ${handleOption.label}`,
+    `Петли: ${hingeLabel}`,
+  ];
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -453,32 +618,26 @@ export function WardrobeConfigurator({
   if (status === "submitted") {
     return (
       <div className="mx-auto max-w-xl px-6 py-20 text-center">
-        <h1 className="font-heading text-2xl font-bold text-navy">
-          Заявка отправлена
-        </h1>
+        <span className="mx-auto flex h-20 w-20 animate-fade-up items-center justify-center rounded-full bg-sage-light text-sage">
+          <svg viewBox="0 0 24 24" fill="none" className="h-10 w-10" aria-hidden>
+            <path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <h1 className="mt-6 font-heading text-3xl font-bold tracking-tight text-navy">Заявка отправлена</h1>
         {orderNumber && (
           <p className="mt-2 text-sm font-medium text-navy/50">
             Номер заявки: <span className="text-navy">{orderNumber}</span>
           </p>
         )}
         <p className="mt-3 text-sm text-navy/70">
-          Спасибо{name ? `, ${name}` : ""}! Мы получили конфигурацию шкафа и
-          свяжемся с вами по телефону {phone}, чтобы уточнить детали, стоимость
-          и записать на замер.
+          Спасибо{name ? `, ${name}` : ""}! Мы получили конфигурацию шкафа и свяжемся с вами по
+          телефону {phone}, чтобы уточнить детали, стоимость и записать на замер.
         </p>
         <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-          <a
-            href={buildStatusDeepLink(phone)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block rounded-full bg-[#2AABEE] px-6 py-3 text-sm font-semibold text-white hover:bg-[#2AABEE]/90"
-          >
+          <a href={buildStatusDeepLink(phone)} target="_blank" rel="noopener noreferrer" className="btn bg-[#2AABEE] text-white">
             Статус заявки в Telegram
           </a>
-          <Link
-            href="/"
-            className="inline-block rounded-full border border-navy/15 px-6 py-3 text-sm font-semibold text-navy hover:bg-navy/5"
-          >
+          <Link href="/" className="btn btn-outline">
             На главную
           </Link>
         </div>
@@ -486,324 +645,324 @@ export function WardrobeConfigurator({
     );
   }
 
+  const selectedKind = selected !== null ? layout[selected] : null;
+
   return (
-    <div className="bg-navy/[0.02]">
-      <div className="border-b border-navy/10 bg-gradient-to-br from-navy via-navy to-[#16324f] text-white">
-        <div className="mx-auto max-w-5xl px-6 py-10">
-          <nav className="text-xs text-white/60">
-            <Link href="/" className="hover:underline">
-              Главная
-            </Link>{" "}
-            /{" "}
-            <Link href="/catalog/garderoby" className="hover:underline">
-              Гардеробы
-            </Link>{" "}
-            / <span className="text-white">Конфигуратор шкафа</span>
+    <div className="pb-16">
+      {/* Title */}
+      <section className="mx-auto max-w-7xl px-4 pt-6 sm:px-6">
+        <div className="relative isolate overflow-hidden rounded-[2rem] bg-navy px-6 py-10 text-white sm:px-12">
+          <div aria-hidden className="absolute -right-20 -top-24 -z-10 h-72 w-72 rounded-full bg-clay/30 blur-3xl" />
+          <div aria-hidden className="absolute -bottom-32 left-1/3 -z-10 h-72 w-72 rounded-full bg-sage/25 blur-3xl" />
+          <nav className="flex items-center gap-1.5 text-xs text-white/60">
+            <Link href="/" className="transition hover:text-white">Главная</Link>
+            <span aria-hidden>/</span>
+            <Link href="/catalog/garderoby" className="transition hover:text-white">Гардеробы</Link>
+            <span aria-hidden>/</span>
+            <span className="text-white">Конфигуратор</span>
           </nav>
-
-          <span className="mt-4 inline-block rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent">
-            Онлайн-конфигуратор · модульная система {MODULE_WIDTH_MM} мм
-          </span>
-          <h1 className="mt-4 font-heading text-2xl font-bold md:text-3xl">
-            Конфигуратор шкафа
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm text-white/70">
-            Соберите шкаф из модулей шириной {MODULE_WIDTH_MM} мм, выберите
-            наполнение, отделку фасада и фурнитуру. Справа — живая схема
-            вашей конфигурации. В конце оставьте контакты — мы посчитаем
-            точную стоимость и запишем вас на замер.
-          </p>
+          <div className="mt-5 flex flex-wrap items-end justify-between gap-6">
+            <div className="max-w-2xl">
+              <span className="eyebrow text-cream">Онлайн-конфигуратор</span>
+              <h1 className="mt-3 font-heading text-3xl font-bold tracking-tight sm:text-5xl">Соберите свой шкаф</h1>
+              <p className="mt-3 text-white/70">
+                Модули по {MODULE_WIDTH_MM} мм, наполнение каждой секции, цвет, зеркало и фурнитура —
+                схема меняется сразу. Готовую конфигурацию отправьте нам, и мы посчитаем точную цену.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              {[
+                [`${widthMm}`, "мм ширина"],
+                [`${modules}`, "фасадов"],
+                [`${counts.hinges}`, "петель"],
+              ].map(([v, l]) => (
+                <div key={l} className="rounded-2xl bg-white/10 px-4 py-3 text-center backdrop-blur">
+                  <span key={v} className="block animate-fade-in font-heading text-2xl font-bold">{v}</span>
+                  <span className="text-xs text-white/60">{l}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div className="mx-auto max-w-5xl px-6 py-10">
-      <div className="mt-0 grid gap-10 lg:grid-cols-[1.2fr_1fr]">
-        {/* Configurator fields */}
-        <div className="flex flex-col gap-6 rounded-xl border border-navy/10 bg-white p-5 shadow-sm">
-          <div>
-            <div className="flex items-center justify-between gap-3">
-              <h3 className="flex items-center gap-2 text-sm font-semibold text-navy">
-                <StepBadge n={1} />
-                Количество модулей ({MODULE_WIDTH_MM} мм каждый)
-              </h3>
-              <div className="flex items-center gap-3">
+      <div className="mx-auto mt-8 grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[1.35fr_1fr]">
+        {/* Stage */}
+        <div className="lg:sticky lg:top-24 lg:self-start">
+          <div className="rounded-[2rem] bg-cream-light p-4 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="inline-flex rounded-full bg-white p-1 shadow-sm">
+                {(
+                  [
+                    ["facade", "Фасад"],
+                    ["interior", "Наполнение"],
+                    ["side", "Сбоку"],
+                  ] as const
+                ).map(([v, label]) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => {
+                      setView(v);
+                      setSelected(null);
+                    }}
+                    aria-pressed={view === v}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                      view === v ? "bg-navy text-white shadow" : "text-navy/60 hover:text-navy"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {view === "facade" && (
                 <button
                   type="button"
-                  onClick={() => setModules((m) => Math.max(MIN_MODULES, m - 1))}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-navy/15 text-navy hover:bg-navy/5"
+                  onClick={() => setOpenDoors(allOpen ? new Set() : new Set(layout.map((_, i) => i)))}
+                  className="btn btn-outline bg-white px-4 py-2"
+                >
+                  {allOpen ? "Закрыть двери" : "Открыть двери"}
+                </button>
+              )}
+            </div>
+
+            <div className="mt-4 rounded-3xl bg-white/70 p-3 sm:p-5">
+              <WardrobeDrawing
+                view={view}
+                layout={layout}
+                finish={finishOption.hex}
+                mirror={mirror}
+                rails={rails}
+                handle={handle}
+                openDoors={openDoors}
+                selected={selected}
+                onDoor={toggleDoor}
+                onSection={(i) => setSelected(i === selected ? null : i)}
+              />
+            </div>
+
+            {view === "interior" && selectedKind && selected !== null ? (
+              <div key={selected} className="mt-4 animate-fade-up rounded-3xl bg-white p-4 shadow-lg shadow-navy/5">
+                <p className="text-sm font-semibold text-navy">
+                  Секция {selected + 1} <span className="font-normal text-navy/50">· {SECTIONS[selectedKind].hint}</span>
+                </p>
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {SECTION_ORDER.map((k) => (
+                    <Choice key={k} active={selectedKind === k} onClick={() => setSection(selected, k)} className="px-3 py-2.5 text-center text-xs font-semibold">
+                      {SECTIONS[k].label}
+                    </Choice>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="mt-4 text-center text-xs text-navy/50">
+                {view === "facade"
+                  ? "Нажмите на фасад, чтобы открыть его и заглянуть внутрь"
+                  : view === "interior"
+                    ? "Нажмите на секцию, чтобы выбрать её наполнение"
+                    : `Глубина ${DEPTH_MM} мм, цоколь ${PLINTH_MM} мм`}
+              </p>
+            )}
+          </div>
+
+          {/* Spec table */}
+          <div className="mt-6 overflow-hidden rounded-[2rem] border border-navy/10 bg-white">
+            <div className="flex items-center justify-between border-b border-navy/10 px-6 py-4">
+              <h2 className="font-heading text-lg font-bold text-navy">Основные размеры</h2>
+              <span className="text-xs text-navy/45">обновляется вместе со схемой</span>
+            </div>
+            <dl className="grid sm:grid-cols-2">
+              {specRows.map(([k, v]) => (
+                <div key={k} className="flex justify-between gap-4 border-b border-navy/5 px-6 py-3 text-sm sm:odd:border-r">
+                  <dt className="text-navy/55">{k}</dt>
+                  <dd key={v} className="animate-fade-in text-right font-semibold text-navy">{v}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div className="flex flex-col gap-6">
+          <div className="rounded-[2rem] border border-navy/10 bg-white p-6 shadow-xl shadow-navy/[0.04]">
+            <Step
+              n={1}
+              title="Ширина"
+              aside={<span className="font-heading text-lg font-bold text-navy">{widthMm} мм</span>}
+            >
+              <div className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => setModuleCount(modules - 1)}
+                  disabled={modules <= MIN_MODULES}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-navy/15 text-lg text-navy transition hover:bg-navy hover:text-white disabled:opacity-30"
                   aria-label="Меньше модулей"
                 >
                   −
                 </button>
-                <span className="w-6 text-center text-sm font-semibold text-navy">
-                  {modules}
-                </span>
+                <input
+                  type="range"
+                  min={MIN_MODULES}
+                  max={MAX_MODULES}
+                  step={1}
+                  value={modules}
+                  onChange={(e) => setModuleCount(Number(e.target.value))}
+                  aria-label="Количество модулей"
+                  className="flex-1"
+                />
                 <button
                   type="button"
-                  onClick={() => setModules((m) => Math.min(MAX_MODULES, m + 1))}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-navy/15 text-navy hover:bg-navy/5"
+                  onClick={() => setModuleCount(modules + 1)}
+                  disabled={modules >= MAX_MODULES}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-navy/15 text-lg text-navy transition hover:bg-navy hover:text-white disabled:opacity-30"
                   aria-label="Больше модулей"
                 >
                   +
                 </button>
               </div>
-            </div>
-            <p className="mt-2 text-xs text-navy/50">
-              Общая ширина: {widthMm} мм ({widthM.toFixed(2)} м) · высота{" "}
-              {HEIGHT_MM} мм · глубина {DEPTH_MM} мм
-            </p>
-          </div>
+              <p className="mt-3 text-xs text-navy/55">
+                {modules} модул{modules < 5 ? "я" : "ей"} по {MODULE_WIDTH_MM} мм · высота {HEIGHT_MM} мм · глубина{" "}
+                {DEPTH_MM} мм. Нужен другой размер — подгоним на замере.
+              </p>
+            </Step>
 
-          <div>
-            <h3 className="flex items-center gap-2 text-sm font-semibold text-navy">
-              <StepBadge n={2} />
-              Наполнение
-            </h3>
-            <div className="mt-2 grid gap-2 sm:grid-cols-2">
-              {FILLINGS.map((f) => (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={() => setFilling(f.id)}
-                  className={`rounded-lg border p-3 text-left transition ${
-                    filling === f.id
-                      ? "border-accent-dark bg-accent/10"
-                      : "border-navy/15 hover:bg-navy/5"
-                  }`}
-                >
-                  <span className="block text-sm font-medium text-navy">
-                    {f.label}
-                  </span>
-                  <span className="mt-0.5 block text-xs text-navy/50">
-                    {f.description}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
+            <Step n={2} title="Наполнение">
+              <div className="grid grid-cols-3 gap-2">
+                {PRESETS.map((p) => (
+                  <Choice key={p.id} active={preset === p.id} onClick={() => applyPreset(p.id)} className="px-3 text-center text-xs font-semibold">
+                    {p.label}
+                  </Choice>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setView("interior");
+                  setSelected(0);
+                }}
+                className="mt-3 text-sm font-medium text-clay underline-offset-4 hover:underline"
+              >
+                Настроить каждую секцию на схеме →
+              </button>
+            </Step>
 
-          <div>
-            <h3 className="flex items-center gap-2 text-sm font-semibold text-navy">
-              <StepBadge n={3} />
-              Отделка фасада
-            </h3>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {finishOptions.map((f) => (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={() => setFinish(f.id)}
-                  title={f.ral ? `${f.label} (${f.ral})` : f.label}
-                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition ${
-                    finish === f.id
-                      ? "border-accent-dark bg-accent/10 font-medium text-navy"
-                      : "border-navy/15 text-navy/70 hover:bg-navy/5"
-                  }`}
-                >
-                  <span
-                    className="h-5 w-5 shrink-0 rounded-full border border-navy/10"
-                    style={{ backgroundColor: f.hex }}
-                  />
-                  {f.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h3 className="flex items-center gap-2 text-sm font-semibold text-navy">
-              <StepBadge n={4} />
-              Дополнительно
-            </h3>
-            <div className="mt-2 grid gap-4 sm:grid-cols-2">
-            <label className="flex items-center gap-2 text-sm text-navy">
-              <input
-                type="checkbox"
-                checked={mirror}
-                onChange={(e) => setMirror(e.target.checked)}
-                className="h-4 w-4 accent-accent-dark"
-              />
-              Зеркало на фасадах
-            </label>
-            <label className="flex items-center gap-2 text-sm text-navy">
-              <input
-                type="checkbox"
-                checked={rails}
-                onChange={(e) => setRails(e.target.checked)}
-                className="h-4 w-4 accent-accent-dark"
-              />
-              Декоративные рейки (МДФ)
-            </label>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="flex items-center gap-2 text-sm font-semibold text-navy">
-              <StepBadge n={5} />
-              Ручки
-            </h3>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {HANDLE_TYPES.map((h) => (
-                <button
-                  key={h.id}
-                  type="button"
-                  onClick={() => setHandleType(h.id)}
-                  className={`rounded-lg border px-4 py-2 text-sm transition ${
-                    handleType === h.id
-                      ? "border-accent-dark bg-accent/10 font-medium text-navy"
-                      : "border-navy/15 text-navy/70 hover:bg-navy/5"
-                  }`}
-                >
-                  {h.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h3 className="flex items-center gap-2 text-sm font-semibold text-navy">
-              <StepBadge n={6} />
-              Петли
-            </h3>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {HINGES.map((h) => {
-                const badge = getHardwareBrandBadge(h.id, h.label);
-                return (
+            <Step
+              n={3}
+              title="Цвет фасада"
+              aside={<span className="text-xs text-navy/50">{finishOption.ral}</span>}
+            >
+              <div className="flex flex-wrap gap-3">
+                {finishOptions.map((f) => (
                   <button
-                    key={h.id}
+                    key={f.id}
                     type="button"
-                    onClick={() => setHinge(h.id)}
-                    className={`flex items-center gap-2 rounded-lg border px-4 py-2 text-sm transition ${
-                      hinge === h.id
-                        ? "border-accent-dark bg-accent/20 font-medium text-navy"
-                        : "border-navy/15 text-navy/70 hover:bg-navy/5"
-                    }`}
+                    onClick={() => setFinish(f.id)}
+                    title={f.ral ? `${f.label} (${f.ral})` : f.label}
+                    aria-pressed={finish === f.id}
+                    className="group flex flex-col items-center gap-1.5"
                   >
                     <span
-                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[8px] font-bold"
-                      style={{ backgroundColor: badge.bg, color: badge.fg }}
-                    >
-                      {badge.letter}
-                    </span>
-                    {h.label}
+                      className={`h-12 w-12 rounded-full shadow-inner transition duration-300 ${
+                        finish === f.id ? "ring-2 ring-navy ring-offset-2" : "ring-1 ring-navy/15 group-hover:scale-110"
+                      }`}
+                      style={{ backgroundColor: f.hex }}
+                    />
+                    <span className={`text-[11px] ${finish === f.id ? "font-semibold text-navy" : "text-navy/55"}`}>{f.label}</span>
                   </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Result + contact form */}
-        <div className="flex flex-col gap-6 lg:sticky lg:top-6 lg:self-start">
-          <div className="overflow-hidden rounded-xl border border-navy/10 bg-white shadow-sm">
-            <div className="border-b border-navy/10 bg-navy/[0.03] p-5 pb-6">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-xs uppercase tracking-wide text-navy/50">
-                  Схема шкафа
-                </p>
-                <div className="flex rounded-full border border-navy/15 bg-white p-0.5 text-xs font-medium">
-                  <button
-                    type="button"
-                    onClick={() => setView("facade")}
-                    className={`rounded-full px-3 py-1 transition ${
-                      view === "facade" ? "bg-navy text-white" : "text-navy/60 hover:text-navy"
-                    }`}
-                  >
-                    Фасад
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setView("interior")}
-                    className={`rounded-full px-3 py-1 transition ${
-                      view === "interior" ? "bg-navy text-white" : "text-navy/60 hover:text-navy"
-                    }`}
-                  >
-                    Внутри
-                  </button>
-                </div>
-              </div>
-              <div className="mt-3">
-                <WardrobeDiagram
-                  modules={modules}
-                  finishSwatch={finishOption.hex}
-                  mirror={mirror}
-                  rails={rails}
-                  handleType={handleType}
-                  filling={filling}
-                  view={view}
-                />
-              </div>
-              <p className="mt-2 text-center text-xs text-navy/40">
-                {view === "facade"
-                  ? "Схематичный вид фасада — реальные пропорции уточняются на замере"
-                  : "Схематичное наполнение по выбранному типу — точную раскладку секций подтвердит замерщик"}
-              </p>
-            </div>
-            <div className="p-5">
-              <p className="text-xs uppercase tracking-wide text-navy/50">
-                Ваша конфигурация
-              </p>
-              <ul className="mt-3 flex flex-col gap-1.5 text-sm text-navy/80">
-                {specLines.map((line) => (
-                  <li key={line} className="flex gap-2">
-                    <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-accent-dark" />
-                    {line}
-                  </li>
                 ))}
-              </ul>
-              <p className="mt-4 text-xs text-navy/50">
-                Точная цена рассчитывается менеджером по вашей конфигурации —
-                оставьте контакты ниже, и мы свяжемся с вами.
-              </p>
-            </div>
+              </div>
+            </Step>
+
+            <Step n={4} title="Зеркало">
+              <div className="grid grid-cols-3 gap-2">
+                {MIRRORS.map((m) => (
+                  <Choice key={m.id} active={mirror === m.id} onClick={() => setMirror(m.id)} className="px-3 text-center text-xs font-semibold">
+                    {m.label}
+                  </Choice>
+                ))}
+              </div>
+            </Step>
+
+            <Step
+              n={5}
+              title="Декоративные рейки"
+              aside={
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={rails}
+                  onClick={() => setRails((v) => !v)}
+                  className={`relative h-7 w-12 rounded-full transition ${rails ? "bg-clay" : "bg-navy/15"}`}
+                >
+                  <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${rails ? "left-6" : "left-1"}`} />
+                </button>
+              }
+            >
+              <p className="text-xs text-navy/55">Три вертикальные рейки из МДФ 8 мм в цвет фасада — на всех фасадах без зеркала.</p>
+            </Step>
+
+            <Step n={6} title="Ручки">
+              <div className="grid grid-cols-3 gap-2">
+                {HANDLES.map((h) => (
+                  <Choice key={h.id} active={handle === h.id} onClick={() => setHandle(h.id)} className="px-3">
+                    <span className="block text-xs font-semibold">{h.label}</span>
+                    <span className={`mt-0.5 block text-[11px] ${handle === h.id ? "text-white/65" : "text-navy/50"}`}>{h.note}</span>
+                  </Choice>
+                ))}
+              </div>
+            </Step>
+
+            <Step n={7} title="Петли" aside={<span className="text-xs text-navy/50">{HINGES_PER_DOOR} на фасад</span>}>
+              <div className="grid grid-cols-2 gap-2">
+                {HINGES.map((h) => {
+                  const badge = getHardwareBrandBadge(h.id, h.label);
+                  return (
+                    <Choice key={h.id} active={hinge === h.id} onClick={() => setHinge(h.id)} className="flex items-center gap-3">
+                      <span
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
+                        style={{ backgroundColor: badge.bg, color: badge.fg }}
+                      >
+                        {badge.letter}
+                      </span>
+                      <span className="font-semibold">{h.label}</span>
+                    </Choice>
+                  );
+                })}
+              </div>
+            </Step>
           </div>
 
-          <form
-            onSubmit={handleSubmit}
-            className="flex flex-col gap-4 rounded-xl border border-navy/10 bg-white p-5 shadow-sm"
-          >
-            <h3 className="text-sm font-semibold text-navy">Оставить заявку</h3>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4 rounded-[2rem] bg-navy p-6 text-white sm:p-7">
             <div>
-              <label className="text-sm font-medium text-navy">Имя</label>
-              <input
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="mt-1 w-full rounded-md border border-navy/15 px-3 py-2 text-sm"
-                placeholder="Как к вам обращаться"
-              />
+              <h3 className="font-heading text-xl font-bold">Отправить конфигурацию</h3>
+              <p className="mt-1 text-sm text-white/60">
+                Менеджер посчитает стоимость и согласует бесплатный замер.
+              </p>
             </div>
-            <div>
-              <label className="text-sm font-medium text-navy">Телефон</label>
-              <PhoneInput required value={phone} onChange={setPhone} className="mt-1" />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-navy">
-                Комментарий (необязательно)
-              </label>
-              <textarea
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                rows={2}
-                className="mt-1 w-full rounded-md border border-navy/15 px-3 py-2 text-sm"
-                placeholder="Адрес, удобное время для звонка и т.д."
-              />
-            </div>
-
-            {status === "error" && (
-              <p className="text-sm font-medium text-red-600">{error}</p>
-            )}
-
-            <button
-              type="submit"
-              disabled={status === "submitting"}
-              className="rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white hover:bg-navy/90 disabled:opacity-60"
-            >
+            <input
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="input rounded-xl py-3"
+              placeholder="Ваше имя"
+              aria-label="Имя"
+            />
+            <PhoneInput required value={phone} onChange={setPhone} />
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              rows={2}
+              className="input rounded-xl py-3"
+              placeholder="Комментарий: адрес, удобное время звонка"
+              aria-label="Комментарий"
+            />
+            {status === "error" && <p className="text-sm font-medium text-red-300">{error}</p>}
+            <button type="submit" disabled={status === "submitting"} className="btn btn-light py-3.5 disabled:opacity-60">
               {status === "submitting" ? "Отправляем…" : "Отправить заявку"}
             </button>
-            <p className="-mt-2 text-xs text-navy/40">
+            <p className="-mt-1 text-xs text-white/45">
               Отправляя заявку, вы соглашаетесь с{" "}
-              <Link href="/privacy" className="underline hover:text-navy">
+              <Link href="/privacy" className="underline hover:text-white">
                 политикой конфиденциальности
               </Link>
               .
@@ -811,7 +970,80 @@ export function WardrobeConfigurator({
           </form>
         </div>
       </div>
-      </div>
+
+      {/* Technical details from the production drawings */}
+      <section className="mx-auto mt-16 max-w-7xl px-4 sm:px-6">
+        <span className="eyebrow">Как устроен шкаф</span>
+        <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight text-navy">Технические узлы</h2>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-3xl border border-navy/10 bg-white p-6">
+            <svg viewBox="0 0 120 240" className="mx-auto h-40" aria-hidden>
+              <rect x={30} y={10} width={60} height={220} rx={4} fill="#eadfce" stroke="#c4b098" strokeWidth={2} />
+              {[20, 83, 147, 210].map((y) => (
+                <g key={y}>
+                  <rect x={24} y={y - 5} width={18} height={10} rx={3} fill="#a9aeb6" />
+                  <circle cx={36} cy={y} r={5} fill="#7d838c" />
+                </g>
+              ))}
+              <text x={100} y={52} fontSize={10} fill="#56617a">700</text>
+              <text x={100} y={118} fontSize={10} fill="#56617a">700</text>
+              <text x={100} y={182} fontSize={10} fill="#56617a">700</text>
+            </svg>
+            <h3 className="mt-4 font-heading text-base font-bold text-navy">4 петли на фасад</h3>
+            <p className="mt-1 text-sm text-navy/60">
+              100 мм от края и шаг 700 мм — фасад высотой 2,2 м не проседает. Blum или Higold на выбор.
+            </p>
+          </div>
+          <div className="rounded-3xl border border-navy/10 bg-white p-6">
+            <div className="flex h-40 items-center justify-center gap-1">
+              {[0, 1, 2].map((k) => (
+                <div key={k} className="h-32 w-14 rounded-md bg-cream shadow-inner ring-1 ring-navy/10" />
+              ))}
+            </div>
+            <h3 className="mt-4 font-heading text-base font-bold text-navy">Зазоры 2 мм</h3>
+            <p className="mt-1 text-sm text-navy/60">
+              Ровные технологические зазоры между фасадами и цоколь 100 мм снизу.
+            </p>
+          </div>
+          <div className="rounded-3xl border border-navy/10 bg-white p-6">
+            <div className="flex h-40 flex-col justify-center gap-2 px-4">
+              {[
+                ["Корпус", "ЛДСП 16 мм"],
+                ["Фасады", "МДФ 18 мм, крашеные"],
+                ["Задняя стенка", "ХДФ 3 мм, в паз"],
+                ["Рейки", "МДФ 8 мм"],
+              ].map(([k, v]) => (
+                <div key={k} className="flex justify-between gap-2 rounded-xl bg-cream-light px-3 py-1.5 text-xs">
+                  <span className="text-navy/55">{k}</span>
+                  <span className="font-semibold text-navy">{v}</span>
+                </div>
+              ))}
+            </div>
+            <h3 className="mt-4 font-heading text-base font-bold text-navy">Материалы</h3>
+            <p className="mt-1 text-sm text-navy/60">Крашеный МДФ на фасадах и влагостойкий корпус.</p>
+          </div>
+          <div className="rounded-3xl border border-navy/10 bg-white p-6">
+            <svg viewBox="0 0 160 160" className="mx-auto h-40" aria-hidden>
+              <rect x={20} y={30} width={120} height={8} rx={4} fill="url(#chrome-mini)" />
+              <defs>
+                <linearGradient id="chrome-mini" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f4f5f7" />
+                  <stop offset="50%" stopColor="#a9aeb6" />
+                  <stop offset="100%" stopColor="#e1e3e7" />
+                </linearGradient>
+              </defs>
+              {[0, 1, 2].map((k) => (
+                <rect key={k} x={24} y={96 + k * 20} width={112} height={16} rx={3} fill="#e3d6c5" stroke="#c4b098" />
+              ))}
+              <text x={80} y={62} fontSize={11} textAnchor="middle" fill="#56617a">1700 мм от пола</text>
+            </svg>
+            <h3 className="mt-4 font-heading text-base font-bold text-navy">Штанги и ящики</h3>
+            <p className="mt-1 text-sm text-navy/60">
+              Хромированная штанга Ø25 мм, ящики по 200 мм на направляющих полного выдвижения.
+            </p>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
