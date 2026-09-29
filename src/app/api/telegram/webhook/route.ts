@@ -8,11 +8,16 @@ import {
   answerCallbackQuery,
   parseCallbackData,
   getStaffChatId,
-  REQUEST_CONTACT_KEYBOARD,
   CLIENT_LINKS_KEYBOARD,
   WELCOME_KEYBOARD,
-  MANAGER_MENU_KEYBOARD,
+  CLIENT_BUTTONS,
+  CLIENT_REPLY_KEYBOARD,
+  MANAGER_BUTTONS,
+  MANAGER_REPLY_KEYBOARD,
+  escapeHtml,
 } from "@/lib/telegram";
+import { getContactInfo } from "@/lib/data";
+import { SITE_URL } from "@/lib/site";
 import {
   handleOrderAction,
   startAmountPrompt,
@@ -143,8 +148,8 @@ async function handleCallbackQuery(cq: TelegramCallbackQuery) {
       await clearPendingRegistration(chatId);
       await sendTelegramMessage(
         chatId,
-        "Поделитесь номером телефона кнопкой ниже — я найду вашу заявку и покажу статус.",
-        { replyMarkup: REQUEST_CONTACT_KEYBOARD }
+        `Нажмите «${CLIENT_BUTTONS.status}» внизу — бот попросит номер телефона и покажет статус вашей заявки.`,
+        { replyMarkup: CLIENT_REPLY_KEYBOARD }
       );
     } else {
       await sendTelegramMessage(
@@ -337,6 +342,18 @@ async function handleMessage(message: TelegramMessage) {
       await sendTelegramMessage(chatId, "✅ Отправлено клиенту.");
       return;
     }
+    if (result.kind === "new_order_invalid") {
+      await sendTelegramMessage(chatId, `⚠️ ${result.reason}`, {
+        replyToMessageId: message.message_id,
+      });
+      return;
+    }
+    if (result.kind === "new_order_ok") {
+      await sendTelegramMessage(chatId, "✅ Заказ создан — карточка отправлена в группу и сотрудникам.");
+      revalidatePath("/admin/requests");
+      revalidatePath("/admin");
+      return;
+    }
   }
 
   if (message.contact) {
@@ -364,20 +381,23 @@ async function handleMessage(message: TelegramMessage) {
     if (await isApprovedEmployee(String(chatId))) {
       await sendTelegramMessage(
         chatId,
-        "👋 С возвращением! Вы подтверждённый сотрудник Molly Home.\n\nЧтобы ответить клиенту, ответьте на его сообщение через «Reply».",
-        { replyMarkup: MANAGER_MENU_KEYBOARD }
+        "👋 С возвращением! Вы подтверждённый сотрудник Molly Home.\n\nМеню — на кнопках внизу. Чтобы ответить клиенту, нажмите «Ответить» на его сообщении.",
+        { replyMarkup: MANAGER_REPLY_KEYBOARD }
       );
       return;
     }
 
-    // One message, not a welcome followed by "who are you?": nearly everyone
-    // here is a customer, so they get their options straight away and staff
-    // sign-up waits quietly at the bottom of the same menu.
+    // The welcome carries the bottom keyboard, so every customer action is
+    // always one tap away; the follow-up offers the catalog and, quietly at
+    // the end, staff sign-up.
     await sendTelegramMessage(
       chatId,
-      "👋 Добро пожаловать в Molly Home — мебельную фабрику в Ташкенте.\n\nНапишите сюда любой вопрос — его сразу получит менеджер, а ответ придёт в этот чат. Или выберите:",
-      { replyMarkup: WELCOME_KEYBOARD }
+      "👋 Добро пожаловать в Molly Home — мебельную фабрику в Ташкенте.\n\nНапишите сюда любой вопрос — его сразу получит менеджер, а ответ придёт в этот чат. Меню — на кнопках внизу 👇",
+      { replyMarkup: CLIENT_REPLY_KEYBOARD }
     );
+    await sendTelegramMessage(chatId, "Или начните с каталога:", {
+      replyMarkup: WELCOME_KEYBOARD,
+    });
     return;
   }
 
@@ -390,12 +410,12 @@ async function handleMessage(message: TelegramMessage) {
 
   if (message.text && /^\/menu(@\w+)?\s*$/i.test(message.text.trim())) {
     if (await isApprovedEmployee(String(chatId))) {
-      await sendTelegramMessage(chatId, "Меню сотрудника:", {
-        replyMarkup: MANAGER_MENU_KEYBOARD,
+      await sendTelegramMessage(chatId, "Меню сотрудника — на кнопках внизу 👇", {
+        replyMarkup: MANAGER_REPLY_KEYBOARD,
       });
     } else {
-      await sendTelegramMessage(chatId, "Чем помочь?", {
-        replyMarkup: CLIENT_LINKS_KEYBOARD,
+      await sendTelegramMessage(chatId, "Меню — на кнопках внизу 👇", {
+        replyMarkup: CLIENT_REPLY_KEYBOARD,
       });
     }
     return;
@@ -404,6 +424,9 @@ async function handleMessage(message: TelegramMessage) {
   if (!message.text || !message.from) return;
   const text = message.text;
   const from = message.from;
+
+  // 0. A tap on one of the bottom-keyboard buttons.
+  if (await handleMenuButton(chatId, text.trim(), from)) return;
 
   // 1. A question about a specific product the person just chose to ask.
   const question = await consumeProductQuestion(chatId);
@@ -433,8 +456,8 @@ async function handleMessage(message: TelegramMessage) {
   if (await isApprovedEmployee(String(chatId))) {
     await sendTelegramMessage(
       chatId,
-      "Чтобы ответить клиенту, ответьте на его сообщение через «Reply». Или выберите действие:",
-      { replyMarkup: MANAGER_MENU_KEYBOARD }
+      "Чтобы ответить клиенту, нажмите «Ответить» на его сообщении. Остальное — на кнопках внизу 👇",
+      { replyMarkup: MANAGER_REPLY_KEYBOARD }
     );
     return;
   }
@@ -450,6 +473,79 @@ async function handleMessage(message: TelegramMessage) {
       ? "✅ Передал ваше сообщение менеджеру. Ответ придёт в этот чат — обычно в течение рабочего дня."
       : "✅ Передал менеджеру."
   );
+}
+
+const MANAGER_HELP =
+  "<b>Как работать с ботом</b>\n\n" +
+  "• Новые заявки приходят в группу и вам в личку — меняйте статус кнопками под карточкой.\n" +
+  "• Чтобы ответить клиенту, нажмите «Ответить» на его сообщении и напишите текст — бот перешлёт его клиенту. Отвечать можно несколько раз.\n" +
+  `• «${MANAGER_BUTTONS.requests}» — заявки в работе, «${MANAGER_BUTTONS.dialogs}» — открытые переписки с клиентами.\n` +
+  `• «${MANAGER_BUTTONS.newOrder}» — создать заказ вручную: бот пришлёт шаблон, ответьте на него данными клиента.`;
+
+// Bottom-keyboard buttons send their label as text. Returns true when the
+// text was one of them, so it isn't also relayed to a manager.
+async function handleMenuButton(chatId: number, text: string, from: TelegramFrom): Promise<boolean> {
+  const staffButtons = Object.values(MANAGER_BUTTONS) as string[];
+  if (staffButtons.includes(text) && (await isApprovedEmployee(String(chatId)))) {
+    if (text === MANAGER_BUTTONS.requests) await sendRequestsOverview(chatId);
+    else if (text === MANAGER_BUTTONS.dialogs) await sendOpenConversationsList(chatId);
+    else if (text === MANAGER_BUTTONS.newOrder)
+      await startNewOrderPrompt({ telegramId: String(from.id), name: displayName(from) }, chatId);
+    else if (text === MANAGER_BUTTONS.catalog) await sendCategoryList(chatId);
+    else await sendTelegramMessage(chatId, MANAGER_HELP, { replyMarkup: MANAGER_REPLY_KEYBOARD });
+    return true;
+  }
+
+  switch (text) {
+    case CLIENT_BUTTONS.catalog:
+      await sendCategoryList(chatId);
+      return true;
+    case CLIENT_BUTTONS.manager:
+      await startConversation(chatId, displayName(from));
+      return true;
+    case CLIENT_BUTTONS.status:
+      // Normally this button shares the contact; typed by hand it can't.
+      await sendTelegramMessage(
+        chatId,
+        `Нажмите кнопку «${CLIENT_BUTTONS.status}» внизу и подтвердите отправку номера — я найду вашу заявку.`,
+        { replyMarkup: CLIENT_REPLY_KEYBOARD }
+      );
+      return true;
+    case CLIENT_BUTTONS.measure:
+      await sendTelegramMessage(
+        chatId,
+        "📝 <b>Бесплатный замер</b>\n\nОставьте заявку на сайте или просто напишите сюда адрес и удобное время — менеджер перезвонит и согласует выезд.",
+        {
+          replyMarkup: {
+            inline_keyboard: [
+              [{ text: "📝 Оставить заявку на сайте", url: `${SITE_URL}/request` }],
+              [{ text: "🧩 Собрать шкаф в конфигураторе", url: `${SITE_URL}/configurator/shkaf` }],
+            ],
+          },
+        }
+      );
+      return true;
+    case CLIENT_BUTTONS.contacts: {
+      const c = await getContactInfo();
+      const lines = [
+        "📞 <b>Контакты Molly Home</b>",
+        "",
+        `Телефон: ${escapeHtml(c.phone)}`,
+        c.hours ? `Часы работы: ${escapeHtml(c.hours)}` : "",
+        c.address ? `Адрес: ${escapeHtml(c.address)}` : "",
+        c.addressNote ? escapeHtml(c.addressNote) : "",
+        c.instagram ? `Instagram: @${escapeHtml(c.instagram)}` : "",
+      ].filter(Boolean);
+      const buttons = [
+        [{ text: "🗺 Открыть на карте", url: `https://yandex.uz/maps/?pt=${c.mapLng},${c.mapLat}&z=16&l=map` }],
+        [{ text: "🌐 Сайт molly.uz", url: SITE_URL }],
+      ];
+      if (c.instagram) buttons.push([{ text: "📸 Instagram", url: `https://www.instagram.com/${c.instagram}` }]);
+      await sendTelegramMessage(chatId, lines.join("\n"), { replyMarkup: { inline_keyboard: buttons } });
+      return true;
+    }
+  }
+  return false;
 }
 
 async function handleCustomerContact(chatId: number, contact: TelegramContact) {

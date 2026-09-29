@@ -132,11 +132,45 @@ export async function editTelegramMessage(
   });
 }
 
-export const REQUEST_CONTACT_KEYBOARD = {
+// Bottom keyboards stay under the message field, so the main actions are
+// always one tap away instead of buried in an old message. Their buttons
+// send their own label as text — the webhook matches on these exact strings.
+export const CLIENT_BUTTONS = {
+  catalog: "🛋 Каталог",
+  status: "📦 Статус заказа",
+  manager: "💬 Написать менеджеру",
+  measure: "📝 Заявка на замер",
+  contacts: "📞 Контакты",
+} as const;
+
+export const CLIENT_REPLY_KEYBOARD = {
   keyboard: [
-    [{ text: "📱 Поделиться номером — проверить статус", request_contact: true }],
+    [{ text: CLIENT_BUTTONS.catalog }, { text: CLIENT_BUTTONS.status, request_contact: true }],
+    [{ text: CLIENT_BUTTONS.manager }, { text: CLIENT_BUTTONS.measure }],
+    [{ text: CLIENT_BUTTONS.contacts }],
   ],
   resize_keyboard: true,
+  is_persistent: true,
+  input_field_placeholder: "Напишите вопрос — ответит менеджер",
+};
+
+export const MANAGER_BUTTONS = {
+  requests: "📋 Все заявки",
+  dialogs: "💬 Диалоги",
+  newOrder: "➕ Новый заказ",
+  catalog: "🛋 Каталог",
+  help: "❓ Как работать",
+} as const;
+
+export const MANAGER_REPLY_KEYBOARD = {
+  keyboard: [
+    [{ text: MANAGER_BUTTONS.requests }, { text: MANAGER_BUTTONS.dialogs }],
+    [{ text: MANAGER_BUTTONS.newOrder }, { text: MANAGER_BUTTONS.catalog }],
+    [{ text: MANAGER_BUTTONS.help }],
+  ],
+  resize_keyboard: true,
+  is_persistent: true,
+  input_field_placeholder: "Ответить клиенту — через «Ответить» на его сообщение",
 };
 
 export const CLIENT_LINKS_KEYBOARD = {
@@ -156,15 +190,9 @@ export const CLIENT_LINKS_KEYBOARD = {
 // single quiet row at the end rather than a question put to everybody.
 export const WELCOME_KEYBOARD = {
   inline_keyboard: [
-    ...CLIENT_LINKS_KEYBOARD.inline_keyboard,
+    [{ text: "🛋 Каталог мебели", callback_data: "cat:root" }],
+    [{ text: "📝 Заявка на замер", url: `${SITE_URL}/request` }],
     [{ text: "👔 Я сотрудник Molly Home", callback_data: "role:manager" }],
-  ],
-};
-
-export const MANAGER_MENU_KEYBOARD = {
-  inline_keyboard: [
-    [{ text: "📋 Все заявки", callback_data: "req:list:0" }],
-    [{ text: "💬 Диалоги", callback_data: "req:dialogs" }],
   ],
 };
 
@@ -189,8 +217,15 @@ export async function setBotProfile(): Promise<void> {
     description:
       "Molly Home — мебельная фабрика в Ташкенте.\n\nЧерез этого бота вы можете:\n✅ Проверить статус своего заказа в любое время\n🔔 Получать уведомления, когда статус меняется\n🛋 Открыть каталог и оставить заявку на замер\n\nНажмите «Запустить», чтобы начать.",
   });
+  await setBotCommands();
+}
+
+export async function setBotCommands(): Promise<void> {
   await callTelegramApi("setMyCommands", {
-    commands: [{ command: "start", description: "Начать / проверить статус заказа" }],
+    commands: [
+      { command: "start", description: "Начать заново" },
+      { command: "menu", description: "Показать кнопки меню" },
+    ],
   });
 }
 
