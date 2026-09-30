@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation";
+import { desc, eq } from "drizzle-orm";
+import { db } from "@/db";
+import { pageRevisions } from "@/db/schema";
 import { getPageBySlug } from "@/lib/data";
-import { updatePage } from "@/lib/admin-actions";
+import { restorePageRevision, updatePage } from "@/lib/admin-actions";
+import { RestoreRevisionButton } from "@/components/admin/restore-revision-button";
 import { PageHeader } from "@/components/admin/page-header";
 import { FormSection } from "@/components/admin/form-section";
 import { PageBlocksEditor } from "@/components/admin/page-blocks-editor";
@@ -11,11 +15,27 @@ export const dynamic = "force-dynamic";
 
 export default async function EditPagePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ restored?: string }>;
 }) {
-  const { slug } = await params;
-  const page = await getPageBySlug(slug);
+  const [{ slug }, { restored }] = await Promise.all([params, searchParams]);
+  const [page, revisions] = await Promise.all([
+    getPageBySlug(slug),
+    db
+      .select({
+        id: pageRevisions.id,
+        title: pageRevisions.title,
+        blocks: pageRevisions.blocks,
+        savedBy: pageRevisions.savedBy,
+        createdAt: pageRevisions.createdAt,
+      })
+      .from(pageRevisions)
+      .where(eq(pageRevisions.pageSlug, slug))
+      .orderBy(desc(pageRevisions.createdAt))
+      .limit(15),
+  ]);
   if (!page) notFound();
 
   const updateWithSlug = updatePage.bind(null, slug);
@@ -28,6 +48,12 @@ export default async function EditPagePage({
         description={liveUrl}
         back={{ href: "/admin/pages", label: "Страницы" }}
       />
+
+      {restored && (
+        <p className="mt-6 max-w-2xl rounded-2xl bg-sage-light px-5 py-3 text-sm font-medium text-sage">
+          Версия восстановлена — страница на сайте уже обновилась.
+        </p>
+      )}
 
       <form action={updateWithSlug} className="mt-6 flex max-w-2xl flex-col gap-6">
         <FormSection title="Название страницы">
@@ -93,6 +119,39 @@ export default async function EditPagePage({
           </a>
         </div>
       </form>
+
+      <section className="mt-10 max-w-2xl rounded-[1.5rem] border border-navy/[0.07] bg-white p-6">
+        <h2 className="font-heading text-lg font-bold text-navy">История изменений</h2>
+        <p className="mt-1 text-sm text-navy/50">
+          Перед каждым сохранением прошлая версия страницы попадает сюда — её можно вернуть в один клик.
+        </p>
+        {revisions.length === 0 ? (
+          <p className="mt-5 text-sm text-navy/40">Сохранённых версий пока нет.</p>
+        ) : (
+          <ul className="mt-5 divide-y divide-navy/5">
+            {revisions.map((r) => (
+              <li key={r.id} className="flex items-center justify-between gap-4 py-3">
+                <span className="min-w-0 text-sm">
+                  <span className="block font-semibold text-navy">
+                    {r.createdAt.toLocaleString("ru-RU", {
+                      timeZone: "Asia/Tashkent",
+                      day: "numeric",
+                      month: "long",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                  <span className="block truncate text-xs text-navy/45">
+                    {r.savedBy ? `${r.savedBy} · ` : ""}
+                    {r.title} · блоков: {r.blocks.length}
+                  </span>
+                </span>
+                <RestoreRevisionButton action={restorePageRevision.bind(null, r.id)} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }

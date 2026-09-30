@@ -20,6 +20,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   invalid: "Заполните имя, телефон и пароль (минимум 6 символов).",
   phone_taken: "Этот номер телефона уже зарегистрирован. Войдите в аккаунт.",
   invalid_login: "Неверный телефон или пароль.",
+  locked: "Слишком много попыток входа. Попробуйте снова через 15 минут.",
 };
 
 export default async function AccountPage({
@@ -97,7 +98,7 @@ export default async function AccountPage({
           </ul>
         )}
 
-        <h2 className="font-heading mt-10 text-lg font-bold text-navy">
+        <h2 id="favourites" className="font-heading mt-10 scroll-mt-28 text-lg font-bold text-navy">
           Избранное
         </h2>
         {favourites.length === 0 ? (

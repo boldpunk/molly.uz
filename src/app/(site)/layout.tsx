@@ -5,6 +5,7 @@ import { RequestListProvider } from "@/lib/request-list-context";
 import { getCategories, getContactInfo } from "@/lib/data";
 import { getBrandAssets } from "@/lib/brand";
 import { SITE_URL } from "@/lib/site";
+import { YandexMetrika } from "@/components/yandex-metrika";
 
 // Header/footer nav reads categories from the (admin-editable) database on
 // every request, so the storefront renders dynamically rather than baking
@@ -69,6 +70,7 @@ export default async function SiteLayout({
         phone={contact.phone}
         telegramBot={contact.telegram || "mollyhomeuzbot"}
       />
+      <YandexMetrika />
     </RequestListProvider>
   );
 }

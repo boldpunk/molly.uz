@@ -47,6 +47,8 @@ export interface Product {
   isSample: boolean;
   isFeatured?: boolean;
   isPublished?: boolean;
+  /** ISO date the product was added — for "newest first" sorting. */
+  createdAt?: string;
   imageUrl?: string;
   galleryUrls: string[];
   metaTitle?: string;

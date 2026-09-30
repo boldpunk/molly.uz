@@ -22,6 +22,7 @@ const BLOCK_LABELS: Record<AddableBlockType, string> = {
   cta: "Кнопка (CTA)",
   brand_list: "Список брендов",
   reviews: "Отзывы",
+  faq: "Вопросы и ответы",
 };
 
 function emptyBlock(type: AddableBlockType): EditableBlock {
@@ -40,6 +41,8 @@ function emptyBlock(type: AddableBlockType): EditableBlock {
       return { type, items: [] };
     case "reviews":
       return { type, items: [] };
+    case "faq":
+      return { type, items: [{ question: "", answer: "" }] };
   }
 }
 
@@ -72,6 +75,19 @@ export function PageBlocksEditor({
       return next;
     });
   }
+  // Drag a block by its card header to drop it at another position.
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+  function drop(target: number) {
+    if (dragIndex === null || dragIndex === target) return;
+    setBlocks((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(dragIndex, 1);
+      next.splice(target, 0, moved);
+      return next;
+    });
+  }
+
   function addBlock(type: AddableBlockType) {
     setBlocks((prev) => [...prev, emptyBlock(type)]);
   }
@@ -87,14 +103,40 @@ export function PageBlocksEditor({
       ) : (
         <div className="flex flex-col gap-3">
           {blocks.map((block, i) => (
-            <BlockCard
+            <div
               key={i}
+              draggable
+              onDragStart={(e) => {
+                setDragIndex(i);
+                e.dataTransfer.effectAllowed = "move";
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setOverIndex(i);
+              }}
+              onDragLeave={() => setOverIndex((o) => (o === i ? null : o))}
+              onDrop={(e) => {
+                e.preventDefault();
+                drop(i);
+                setDragIndex(null);
+                setOverIndex(null);
+              }}
+              onDragEnd={() => {
+                setDragIndex(null);
+                setOverIndex(null);
+              }}
+              className={`rounded-lg transition ${dragIndex === i ? "opacity-40" : ""} ${
+                overIndex === i && dragIndex !== i ? "ring-2 ring-clay ring-offset-2" : ""
+              }`}
+            >
+            <BlockCard
               block={block}
               onChange={(next) => update(i, next)}
               onRemove={() => remove(i)}
               onMoveUp={i > 0 ? () => move(i, -1) : undefined}
               onMoveDown={i < blocks.length - 1 ? () => move(i, 1) : undefined}
             />
+            </div>
           ))}
         </div>
       )}
@@ -156,7 +198,8 @@ function BlockCard({
   return (
     <div className="rounded-lg border border-navy/10 bg-white p-3">
       <div className="flex items-center justify-between border-b border-navy/5 pb-2">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-navy/40">
+        <span className="flex cursor-grab items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-navy/40 active:cursor-grabbing" title="Перетащите, чтобы переставить">
+          <span aria-hidden className="text-sm leading-none text-navy/30">⠿</span>
           {BLOCK_LABELS[block.type]}
         </span>
         <div className="flex items-center gap-0.5">
@@ -236,6 +279,8 @@ function BlockFields({
           onChange={(b) => onChange(b as EditableBlock)}
         />
       );
+    case "faq":
+      return <FaqFields block={block} onChange={(b) => onChange(b as EditableBlock)} />;
     case "brand_list":
       return (
         <BrandListFields
@@ -575,6 +620,55 @@ export function ReviewsFields({
       >
         <PlusIcon className="h-3 w-3" />
         Добавить отзыв
+      </button>
+    </div>
+  );
+}
+
+function FaqFields({
+  block,
+  onChange,
+}: {
+  block: Extract<PageBlock, { type: "faq" }>;
+  onChange: (b: PageBlock) => void;
+}) {
+  function updateItem(i: number, key: "question" | "answer", value: string) {
+    onChange({ ...block, items: block.items.map((item, idx) => (idx === i ? { ...item, [key]: value } : item)) });
+  }
+  return (
+    <div className="flex flex-col gap-3">
+      {block.items.map((item, i) => (
+        <div key={i} className="rounded-md border border-navy/10 p-2.5">
+          <div className="flex items-center gap-2">
+            <input
+              value={item.question}
+              onChange={(e) => updateItem(i, "question", e.target.value)}
+              placeholder="Вопрос, например: Сколько стоит замер?"
+              className="input flex-1"
+            />
+            <IconButton
+              onClick={() => onChange({ ...block, items: block.items.filter((_, idx) => idx !== i) })}
+              label="Удалить вопрос"
+            >
+              <TrashIcon className="h-3.5 w-3.5" />
+            </IconButton>
+          </div>
+          <textarea
+            value={item.answer}
+            onChange={(e) => updateItem(i, "answer", e.target.value)}
+            placeholder="Ответ"
+            rows={2}
+            className="input mt-2"
+          />
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => onChange({ ...block, items: [...block.items, { question: "", answer: "" }] })}
+        className="inline-flex w-fit items-center gap-1 rounded-full bg-navy/5 px-2.5 py-1 text-xs font-medium text-navy/60 transition hover:bg-navy/10"
+      >
+        <PlusIcon className="h-3 w-3" />
+        Добавить вопрос
       </button>
     </div>
   );

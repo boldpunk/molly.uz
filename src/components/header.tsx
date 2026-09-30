@@ -30,6 +30,8 @@ function Icon({ d, className = "h-5 w-5" }: { d: string; className?: string }) {
 const ICONS = {
   search: "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14Zm10 3-4-4",
   user: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-8 8c1.5-4 5-6 8-6s6.5 2 8 6",
+  heart:
+    "M12 20.5s-7.5-4.6-10-9.2C.6 8 2 4.5 5.4 3.7c2-.5 4 .3 5.2 2 1.2-1.7 3.2-2.5 5.2-2 3.4.8 4.8 4.3 3.4 7.6-2.5 4.6-10 9.2-10 9.2Z",
   bag: "M6 7h12l-1 13H7L6 7Zm3 0a3 3 0 1 1 6 0",
   phone:
     "M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1l-2.3 2.2Z",
@@ -220,6 +222,13 @@ export function Header({
               <Icon d={ICONS.search} />
             </Link>
             <Link
+              href="/account#favourites"
+              className="hidden rounded-full p-2.5 text-navy transition hover:bg-navy/5 sm:inline-flex"
+              aria-label="Избранное"
+            >
+              <Icon d={ICONS.heart} />
+            </Link>
+            <Link
               href="/account"
               className="hidden rounded-full p-2.5 text-navy transition hover:bg-navy/5 sm:inline-flex"
               aria-label="Аккаунт"
@@ -296,7 +305,12 @@ export function Header({
               </nav>
 
               <nav className="mt-6 flex flex-col border-t border-navy/10 pt-4">
-                {[{ href: "/catalog", label: "Все товары" }, ...PAGES, { href: "/account", label: "Аккаунт" }].map((p) => (
+                {[
+                  { href: "/catalog", label: "Все товары" },
+                  ...PAGES,
+                  { href: "/account#favourites", label: "Избранное" },
+                  { href: "/account", label: "Аккаунт" },
+                ].map((p) => (
                   <Link
                     key={p.href}
                     href={p.href}

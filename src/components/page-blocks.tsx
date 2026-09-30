@@ -110,6 +110,30 @@ function PageBlockView({ block }: { block: PageBlock }) {
           <BrandSlider items={block.items} />
         </div>
       );
+    case "faq":
+      return (
+        <div className="mt-8 flex flex-col gap-3 first:mt-0">
+          {block.items
+            .filter((item) => item.question.trim())
+            .map((item, i) => (
+              <details
+                key={i}
+                className="group rounded-2xl border border-navy/10 bg-white px-5 py-4 transition open:shadow-lg open:shadow-navy/5"
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold text-navy [&::-webkit-details-marker]:hidden">
+                  {item.question}
+                  <span
+                    aria-hidden
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cream-light text-lg text-navy transition group-open:rotate-45 group-open:bg-navy group-open:text-white"
+                  >
+                    +
+                  </span>
+                </summary>
+                <p className="mt-3 whitespace-pre-line text-base leading-relaxed text-navy/70">{item.answer}</p>
+              </details>
+            ))}
+        </div>
+      );
     case "reviews":
       return (
         <div className="mt-8 first:mt-0">

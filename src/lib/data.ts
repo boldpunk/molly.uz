@@ -90,6 +90,7 @@ function toProduct(
     isSample: row.isSample,
     isFeatured: row.isFeatured,
     isPublished: row.isPublished,
+    createdAt: row.createdAt.toISOString(),
     imageUrl: row.imageUrl ?? undefined,
     galleryUrls: row.galleryUrls,
     metaTitle: row.metaTitle ?? undefined,
