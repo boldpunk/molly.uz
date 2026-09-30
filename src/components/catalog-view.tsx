@@ -8,7 +8,7 @@ import { ProductCard } from "@/components/product-card";
 import { getCategoryIcon, FurnitureIcon } from "@/components/icons/categories";
 import { getHardwareBrandBadge } from "@/lib/hardware-brands";
 import { getDisplayPrice } from "@/lib/pricing";
-import { CATEGORY_IMAGES } from "@/lib/category-images";
+import { categoryImage } from "@/lib/category-images";
 
 function pluralModels(n: number) {
   const mod10 = n % 10;
@@ -49,7 +49,7 @@ export function CatalogView({
   }, [category?.id]);
 
   const bannerImage = category
-    ? CATEGORY_IMAGES[category.slug]
+    ? categoryImage(category)
     : "/images/hero.jpg";
 
   const colourOptions = useMemo(() => {

@@ -53,6 +53,9 @@ export const categories = pgTable("categories", {
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   isPlaceholder: boolean("is_placeholder").notNull().default(false),
+  // Cover photo for the catalog tiles and banner; the bundled photo per
+  // slug is used when none has been uploaded.
+  imageUrl: text("image_url"),
   sortOrder: integer("sort_order").notNull().default(0),
   filterKind: text("filter_kind", {
     enum: ["kitchen", "collection", "none"],
@@ -106,6 +109,8 @@ export const products = pgTable("products", {
   attributes: jsonb("attributes").$type<ProductAttribute[]>().notNull().default([]),
   isSample: boolean("is_sample").notNull().default(false),
   isFeatured: boolean("is_featured").notNull().default(false),
+  // Hidden products stay in the admin but disappear from the site and bot.
+  isPublished: boolean("is_published").notNull().default(true),
   metaTitle: text("meta_title"),
   metaDescription: text("meta_description"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -158,6 +163,14 @@ export const customers = pgTable("customers", {
   telegramId: text("telegram_id").unique(),
   telegramNotifyOptIn: boolean("telegram_notify_opt_in").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Manager notes about a customer, keyed by phone digits — so a person who
+// only ever left a request by phone, without an account, can have notes too.
+export const customerNotes = pgTable("customer_notes", {
+  phoneDigits: text("phone_digits").primaryKey(),
+  notes: text("notes").notNull().default(""),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const favourites = pgTable(

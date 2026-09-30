@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/admin/page-header";
 import { getAllProducts } from "@/lib/data";
 
 export default async function NewRequestPage() {
-  const products = await getAllProducts();
+  const products = await getAllProducts(true);
 
   return (
     <div>

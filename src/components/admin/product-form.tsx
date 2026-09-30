@@ -25,6 +25,10 @@ export function ProductForm({
       <FormSection title="Основное">
         <Field label="Фото товара">
           <ImageUploadField name="imageUrl" initialUrl={product?.imageUrl} />
+          <p className="mt-1.5 text-xs text-navy/50">
+            Лучше всего — горизонтальное фото 3:2 от 1500 px по ширине (JPG, PNG или WebP). Сжимать заранее не
+            нужно: сайт сам уменьшит и оптимизирует его для каждого экрана.
+          </p>
         </Field>
 
         <Field label="Дополнительные фото (галерея)">
@@ -151,6 +155,15 @@ export function ProductForm({
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:gap-6">
+          <label className="flex items-center gap-2 text-sm text-navy">
+            <input
+              type="checkbox"
+              name="isPublished"
+              defaultChecked={product?.isPublished ?? true}
+              className="h-4 w-4 accent-accent-dark"
+            />
+            Показывать на сайте и в боте
+          </label>
           <label className="flex items-center gap-2 text-sm text-navy">
             <input
               type="checkbox"

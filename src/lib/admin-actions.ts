@@ -49,6 +49,7 @@ export async function createCategory(formData: FormData) {
     name: String(formData.get("name")),
     slug: String(formData.get("slug")),
     isPlaceholder: formData.get("isPlaceholder") === "on",
+    imageUrl: String(formData.get("imageUrl") ?? "") || null,
     sortOrder: Number(formData.get("sortOrder")) || 0,
     filterKind: String(formData.get("filterKind")) as
       | "kitchen"
@@ -67,6 +68,7 @@ export async function updateCategory(id: string, formData: FormData) {
       name: String(formData.get("name")),
       slug: String(formData.get("slug")),
       isPlaceholder: formData.get("isPlaceholder") === "on",
+      imageUrl: String(formData.get("imageUrl") ?? "") || null,
       sortOrder: Number(formData.get("sortOrder")) || 0,
       filterKind: String(formData.get("filterKind")) as
         | "kitchen"
@@ -123,6 +125,7 @@ function productValuesFromFormData(formData: FormData) {
     attributes,
     isSample: formData.get("isSample") === "on",
     isFeatured: formData.get("isFeatured") === "on",
+    isPublished: formData.get("isPublished") === "on",
     imageUrl: String(formData.get("imageUrl") ?? "") || null,
     galleryUrls,
     metaTitle: String(formData.get("metaTitle") ?? "") || null,
@@ -178,6 +181,29 @@ export async function updateProduct(id: string, formData: FormData) {
   revalidatePath("/admin/products");
   revalidatePath("/", "layout");
   redirect("/admin/products");
+}
+
+// Several products at once from the list: show or hide them on the site,
+// mark them popular, or move them to another category.
+export async function bulkUpdateProducts(formData: FormData) {
+  const ids = formData.getAll("ids").map(String).filter(Boolean);
+  const op = String(formData.get("op") ?? "");
+  if (ids.length === 0) return;
+
+  const set: Partial<typeof products.$inferInsert> = { updatedAt: new Date() };
+  if (op === "publish") set.isPublished = true;
+  else if (op === "hide") set.isPublished = false;
+  else if (op === "feature") set.isFeatured = true;
+  else if (op === "unfeature") set.isFeatured = false;
+  else if (op === "move") {
+    const categoryId = String(formData.get("categoryId") ?? "");
+    if (!categoryId) return;
+    set.categoryId = categoryId;
+  } else return;
+
+  await db.update(products).set(set).where(inArray(products.id, ids));
+  revalidatePath("/admin/products");
+  revalidatePath("/", "layout");
 }
 
 export async function duplicateProduct(id: string) {
