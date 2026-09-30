@@ -1,0 +1,67 @@
+name: Uptime monitor
+
+# Pings the site every 10 minutes and tells the staff Telegram chat when it
+# goes down and when it comes back. Only the first failed check alerts — the
+# run's own red/green status carries the state between runs, so a long outage
+# doesn't flood the chat.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Previous result
+        id: prev
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          prev=$(gh run list -R "$GITHUB_REPOSITORY" --workflow uptime.yml --status completed --limit 1 --json conclusion -q '.[0].conclusion' || true)
+          echo "conclusion=${prev:-success}" >> "$GITHUB_OUTPUT"
+
+      - name: Check molly.uz
+        id: check
+        run: |
+          check() {
+            for url in https://molly.uz/ https://molly.uz/catalog; do
+              code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$url" || echo 000)
+              if [ "$code" != "200" ]; then echo "$url → $code"; return 1; fi
+            done
+          }
+          # One retry so a single slow response doesn't raise an alarm.
+          if out=$(check) || { sleep 45; out=$(check); }; then
+            echo "up=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "up=false" >> "$GITHUB_OUTPUT"
+            echo "detail=$out" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Notify
+        env:
+          TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT: ${{ secrets.TELEGRAM_STAFF_CHAT_ID }}
+          UP: ${{ steps.check.outputs.up }}
+          PREV: ${{ steps.prev.outputs.conclusion }}
+          DETAIL: ${{ steps.check.outputs.detail }}
+        run: |
+          send() {
+            [ -n "$TOKEN" ] && [ -n "$CHAT" ] || return 0
+            curl -s -o /dev/null --max-time 20 "https://api.telegram.org/bot$TOKEN/sendMessage" \
+              --data-urlencode "chat_id=$CHAT" --data-urlencode "text=$1"
+          }
+          if [ "$UP" = "true" ]; then
+            if [ "$PREV" = "failure" ]; then send "✅ molly.uz снова работает"; fi
+          else
+            if [ "$PREV" != "failure" ]; then send "🔴 molly.uz не отвечает: $DETAIL"; fi
+            exit 1
+          fi
