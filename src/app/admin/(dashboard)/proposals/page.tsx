@@ -105,7 +105,7 @@ function ProposalTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-navy/10 bg-white">
+    <div className="overflow-hidden rounded-[1.5rem] border border-navy/[0.07] bg-white">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[56rem] text-sm">
           <thead>

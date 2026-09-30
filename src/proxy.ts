@@ -15,6 +15,7 @@ function isAllowed(role: string, pathname: string): boolean {
   }
   if (
     pathname.startsWith("/admin/requests") ||
+    pathname.startsWith("/admin/customers") ||
     pathname.startsWith("/admin/proposals")
   ) {
     return role === "sales_manager";

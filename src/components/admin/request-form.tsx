@@ -13,7 +13,7 @@ export function RequestForm({
   return (
     <form
       action={action}
-      className="max-w-2xl rounded-xl border border-navy/10 bg-white p-6 shadow-sm"
+      className="max-w-2xl rounded-[1.5rem] border border-navy/[0.07] bg-white p-6"
     >
       <div className="grid gap-5 sm:grid-cols-2">
         <label className="flex flex-col gap-1.5 text-sm">
