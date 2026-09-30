@@ -38,6 +38,7 @@ export default async function EditProductPage({
     hardwareOptions: row.hardwareOptions ?? undefined,
     colourOptions: row.colourOptions ?? undefined,
     collection: row.collection ?? undefined,
+    isPublished: row.isPublished,
     attributes: row.attributes,
     isSample: row.isSample,
     isFeatured: row.isFeatured,

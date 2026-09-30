@@ -1,4 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
+import { categoryImage } from "@/lib/category-images";
 import { getCategories } from "@/lib/data";
 import { PageHeader } from "@/components/admin/page-header";
 import { ArrowRightIcon, CategoriesIcon } from "@/components/admin/icons";
@@ -19,7 +21,7 @@ export default async function AdminCategoriesPage() {
         action={{ href: "/admin/categories/new", label: "Добавить категорию" }}
       />
 
-      <div className="mt-6 overflow-hidden rounded-xl border border-navy/10 bg-white shadow-sm">
+      <div className="mt-6 overflow-hidden rounded-[1.5rem] border border-navy/[0.07] bg-white">
         {categories.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-16 text-center">
             <CategoriesIcon className="h-8 w-8 text-navy/20" />
@@ -39,6 +41,7 @@ export default async function AdminCategoriesPage() {
             <tbody>
               {categories.map((c) => {
                 const Icon = getCategoryIcon(c.slug);
+                const cover = categoryImage(c);
                 return (
                 <tr
                   key={c.id}
@@ -46,8 +49,12 @@ export default async function AdminCategoriesPage() {
                 >
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-navy/[0.06] text-navy/50">
-                        <Icon className="h-[18px] w-[18px]" />
+                      <span className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-cream-light text-navy/50">
+                        {cover ? (
+                          <Image src={cover} alt="" fill sizes="96px" className="object-cover" />
+                        ) : (
+                          <Icon className="h-[18px] w-[18px]" />
+                        )}
                       </span>
                       <span className="font-medium text-navy">{c.name}</span>
                     </div>

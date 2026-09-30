@@ -25,6 +25,7 @@ export default async function EditCategoryPage({
     name: row.name,
     slug: row.slug,
     isPlaceholder: row.isPlaceholder,
+    imageUrl: row.imageUrl ?? undefined,
     sortOrder: row.sortOrder,
     filterKind: row.filterKind as "kitchen" | "collection" | "none",
   };

@@ -62,6 +62,7 @@ function toCategory(row: typeof categoriesTable.$inferSelect): Category {
     name: row.name,
     slug: row.slug,
     isPlaceholder: row.isPlaceholder,
+    imageUrl: row.imageUrl ?? undefined,
     sortOrder: row.sortOrder,
     filterKind: row.filterKind as Category["filterKind"],
   };
@@ -88,6 +89,7 @@ function toProduct(
     attributes: row.attributes,
     isSample: row.isSample,
     isFeatured: row.isFeatured,
+    isPublished: row.isPublished,
     imageUrl: row.imageUrl ?? undefined,
     galleryUrls: row.galleryUrls,
     metaTitle: row.metaTitle ?? undefined,
@@ -164,7 +166,7 @@ async function loadProductsByCategory(
   const rows = await db
     .select()
     .from(productsTable)
-    .where(eq(productsTable.categoryId, categoryId))
+    .where(and(eq(productsTable.categoryId, categoryId), eq(productsTable.isPublished, true)))
     .orderBy(asc(productsTable.name));
   return rows.map((r) => toProduct(r, categorySlug));
 }
@@ -181,7 +183,8 @@ async function loadProduct(
     .where(
       and(
         eq(productsTable.categoryId, category.id),
-        eq(productsTable.slug, productSlug)
+        eq(productsTable.slug, productSlug),
+        eq(productsTable.isPublished, true)
       )
     )
     .limit(1);
@@ -209,11 +212,12 @@ async function loadFeaturedProducts(): Promise<Product[]> {
       categoriesTable,
       eq(productsTable.categoryId, categoriesTable.id)
     )
-    .where(eq(productsTable.isFeatured, true));
+    .where(and(eq(productsTable.isFeatured, true), eq(productsTable.isPublished, true)));
   return rows.map((r) => toProduct(r.product, r.categorySlug));
 }
 
-async function loadAllProducts(): Promise<Product[]> {
+/** Published products for the site; the admin passes true to see all. */
+async function loadAllProducts(includeHidden = false): Promise<Product[]> {
   const rows = await db
     .select({
       product: productsTable,
@@ -224,6 +228,7 @@ async function loadAllProducts(): Promise<Product[]> {
       categoriesTable,
       eq(productsTable.categoryId, categoriesTable.id)
     )
+    .where(includeHidden ? undefined : eq(productsTable.isPublished, true))
     .orderBy(asc(categoriesTable.sortOrder), asc(productsTable.name));
   return rows.map((r) => toProduct(r.product, r.categorySlug));
 }
@@ -243,12 +248,15 @@ export async function searchProducts(query: string): Promise<Product[]> {
       eq(productsTable.categoryId, categoriesTable.id)
     )
     .where(
-      or(
+      and(
+        eq(productsTable.isPublished, true),
+        or(
         ilike(productsTable.name, pattern),
         ilike(productsTable.specLine, pattern),
         ilike(productsTable.description, pattern),
         ilike(productsTable.collection, pattern),
         ilike(categoriesTable.name, pattern)
+        )
       )
     )
     .orderBy(asc(productsTable.name));
@@ -262,7 +270,8 @@ async function loadRelatedProducts(product: Product): Promise<Product[]> {
     .where(
       and(
         eq(productsTable.categoryId, product.categoryId),
-        ne(productsTable.id, product.id)
+        ne(productsTable.id, product.id),
+        eq(productsTable.isPublished, true)
       )
     )
     .orderBy(asc(productsTable.name));

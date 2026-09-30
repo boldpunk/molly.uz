@@ -10,7 +10,7 @@ import { useRequestList } from "@/lib/request-list-context";
 import { Logo } from "@/components/logo";
 import { getCategoryIcon } from "@/components/icons/categories";
 import { LocationPicker } from "@/components/location-picker";
-import { CATEGORY_IMAGES } from "@/lib/category-images";
+import { categoryImage } from "@/lib/category-images";
 
 const PAGES = [
   { href: "/configurator/shkaf", label: "Конфигуратор" },
@@ -150,7 +150,7 @@ export function Header({
                     <div className="grid grid-cols-[repeat(5,minmax(0,1fr))_14rem] gap-4">
                       {categories.map((cat) => {
                         const CatIcon = getCategoryIcon(cat.slug);
-                        const image = CATEGORY_IMAGES[cat.slug];
+                        const image = categoryImage(cat);
                         return (
                           <Link key={cat.id} href={`/catalog/${cat.slug}`} className="group flex flex-col gap-2.5">
                             <div className="relative flex aspect-[4/5] items-center justify-center overflow-hidden rounded-2xl bg-cream-light">
@@ -277,7 +277,7 @@ export function Header({
               <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-clay">Каталог</p>
               <nav className="mt-3 grid grid-cols-2 gap-2.5">
                 {categories.map((cat) => {
-                  const image = CATEGORY_IMAGES[cat.slug];
+                  const image = categoryImage(cat);
                   return (
                     <Link
                       key={cat.id}

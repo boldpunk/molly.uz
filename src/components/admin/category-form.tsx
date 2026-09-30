@@ -1,6 +1,8 @@
 "use client";
 
 import { Category } from "@/lib/types";
+import { ImageUploadField } from "./image-upload-field";
+import { CATEGORY_IMAGES } from "@/lib/category-images";
 
 export function CategoryForm({
   action,
@@ -12,7 +14,7 @@ export function CategoryForm({
   return (
     <form
       action={action}
-      className="max-w-2xl rounded-xl border border-navy/10 bg-white p-6 shadow-sm"
+      className="max-w-2xl rounded-[1.5rem] border border-navy/[0.07] bg-white p-6"
     >
       <div className="grid gap-5 sm:grid-cols-2">
         <label className="flex flex-col gap-1.5 text-sm sm:col-span-2">
@@ -38,6 +40,18 @@ export function CategoryForm({
             placeholder="kuhonnaya-mebel"
           />
         </label>
+
+        <div className="flex flex-col gap-1.5 text-sm sm:col-span-2">
+          <span className="font-medium text-navy">Обложка категории</span>
+          <ImageUploadField name="imageUrl" initialUrl={category?.imageUrl} />
+          <span className="text-xs text-navy/50">
+            Показывается в плитках каталога, меню и баннере раздела. Лучше квадратное или горизонтальное фото
+            от 1200 px.
+            {category && !category.imageUrl && CATEGORY_IMAGES[category.slug]
+              ? " Сейчас используется стандартное фото раздела."
+              : ""}
+          </span>
+        </div>
 
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-navy">

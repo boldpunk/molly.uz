@@ -24,6 +24,7 @@ export interface Category {
   name: string;
   slug: string;
   isPlaceholder: boolean;
+  imageUrl?: string;
   sortOrder: number;
   filterKind: "kitchen" | "collection" | "none";
 }
@@ -45,6 +46,7 @@ export interface Product {
   attributes: ProductAttribute[];
   isSample: boolean;
   isFeatured?: boolean;
+  isPublished?: boolean;
   imageUrl?: string;
   galleryUrls: string[];
   metaTitle?: string;

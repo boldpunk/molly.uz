@@ -20,7 +20,7 @@ import { ReviewsGrid } from "@/components/reviews-grid";
 import { HeroSlider, type HeroSlide } from "@/components/hero-slider";
 import { FeaturedProducts } from "@/components/home/featured-products";
 import { pageMetadata } from "@/lib/seo";
-import { CATEGORY_IMAGES } from "@/lib/category-images";
+import { categoryImage } from "@/lib/category-images";
 import type { PageBlock } from "@/db/schema";
 
 export const dynamic = "force-dynamic";
@@ -209,7 +209,7 @@ export default async function HomePage() {
     },
     ...liveCategories.flatMap((c, i) => {
       const product = slideProducts[i];
-      const image = product?.imageUrl ?? CATEGORY_IMAGES[c.slug];
+      const image = product?.imageUrl ?? categoryImage(c);
       if (!image) return [];
       return [
         {
@@ -245,7 +245,7 @@ export default async function HomePage() {
         <div className="mt-10 grid auto-rows-[180px] grid-cols-2 gap-4 sm:auto-rows-[220px] md:grid-cols-4">
           {categories.map((cat, i) => {
             const Icon = getCategoryIcon(cat.slug);
-            const image = CATEGORY_IMAGES[cat.slug];
+            const image = categoryImage(cat);
             const big = i === 0;
             return (
               <Reveal
