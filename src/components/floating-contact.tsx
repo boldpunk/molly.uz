@@ -55,8 +55,11 @@ export function FloatingContact({
 
   return (
     <div
-      className={`fixed bottom-5 right-5 z-40 flex flex-col items-end gap-3 transition duration-500 sm:bottom-8 sm:right-8 ${
-        visible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-6 opacity-0"
+      // The wrapper never takes clicks itself — only the round button and,
+      // while open, the menu items do — so the closed menu can't sit
+      // invisibly over whatever is underneath in that corner of the page.
+      className={`pointer-events-none fixed bottom-5 right-5 z-40 flex flex-col items-end gap-3 transition duration-500 sm:bottom-8 sm:right-8 ${
+        visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
       }`}
     >
       <ul className="flex flex-col items-end gap-2.5">
@@ -64,7 +67,7 @@ export function FloatingContact({
           <li
             key={a.label}
             className={`transition duration-300 ${
-              open ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-3 opacity-0"
+              open ? "pointer-events-auto translate-y-0 opacity-100" : "translate-y-3 opacity-0"
             }`}
             style={{ transitionDelay: open ? `${(actions.length - i) * 50}ms` : "0ms" }}
           >
@@ -91,7 +94,9 @@ export function FloatingContact({
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-label={open ? "Закрыть" : "Связаться с нами"}
-        className="relative flex h-14 w-14 items-center justify-center rounded-full bg-navy text-white shadow-xl shadow-navy/30 transition hover:bg-clay"
+        className={`relative flex h-14 w-14 items-center justify-center rounded-full bg-navy text-white shadow-xl shadow-navy/30 transition hover:bg-clay ${
+          visible ? "pointer-events-auto" : ""
+        }`}
       >
         {!open && (
           <span aria-hidden className="absolute inset-0 rounded-full bg-navy animate-pulse-ring" />
