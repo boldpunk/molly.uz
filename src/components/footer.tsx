@@ -87,9 +87,9 @@ export function Footer({
           </ul>
         </div>
       </div>
-      <div className="relative mx-auto flex max-w-7xl flex-col items-center gap-2 border-t border-cream/10 px-6 py-5 text-xs text-cream/45 sm:flex-row sm:justify-between">
-        <span>© {new Date().getFullYear()} Molly Home</span>
-        <div className="flex items-center gap-4">
+      <div className="relative mx-auto flex max-w-7xl flex-col items-center gap-4 border-t border-cream/10 px-6 pb-24 pt-5 text-xs text-cream/45 md:flex-row md:justify-between md:pb-5">
+        <span className="text-[13px] text-cream/55">© {new Date().getFullYear()} Molly Home</span>
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 whitespace-nowrap">
           <Link href="/privacy" className="transition hover:text-white">
             Политика конфиденциальности
           </Link>
@@ -97,7 +97,24 @@ export function Footer({
             Условия использования
           </Link>
         </div>
-        <span>Сделано с ❤️ от @boldpunk</span>
+        <a
+          href="https://boldstudio.uz"
+          target="_blank"
+          rel="noopener"
+          className="group inline-flex items-center gap-2.5 whitespace-nowrap rounded-full border border-cream/15 bg-white/[0.03] py-2 pl-4 pr-3 text-[13px] text-cream/85 transition hover:border-cream/35 hover:bg-white/[0.06]"
+        >
+          <span>Дизайн и разработка —</span>
+          <span className="font-semibold text-[#c8f135]">@boldpunk</span>
+          <span className="hidden font-mono text-[12px] text-cream/45 sm:inline">boldstudio.uz</span>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden
+            className="h-3.5 w-3.5 text-cream/70 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white"
+          >
+            <path d="M7 17 17 7M9 7h8v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </a>
       </div>
     </footer>
   );
