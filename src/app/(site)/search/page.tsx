@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { searchProducts } from "@/lib/data";
+import { getCategories, searchProducts } from "@/lib/data";
 import { ProductCard } from "@/components/product-card";
 import { PageHero } from "@/components/page-hero";
 
@@ -16,7 +16,10 @@ export default async function SearchPage({
 }) {
   const { q = "" } = await searchParams;
   const query = q.trim();
-  const results = query ? await searchProducts(query) : [];
+  const [results, categories] = await Promise.all([
+    query ? searchProducts(query) : Promise.resolve([]),
+    getCategories(),
+  ]);
 
   return (
     <>
@@ -61,14 +64,26 @@ export default async function SearchPage({
         </div>
       )}
 
-      {query && results.length === 0 && (
-        <p className="mt-2 text-sm text-navy/40">
-          Попробуйте другой запрос или посмотрите{" "}
-          <Link href="/catalog" className="text-navy underline">
-            весь каталог
-          </Link>
-          .
-        </p>
+      {results.length === 0 && (
+        <div className="mt-4">
+          <p className="text-sm text-navy/55">
+            {query ? "Попробуйте другой запрос или загляните в разделы каталога:" : "Или выберите раздел каталога:"}
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {categories.map((c) => (
+              <Link
+                key={c.id}
+                href={`/catalog/${c.slug}`}
+                className="rounded-full bg-white px-4 py-2 text-sm font-medium text-navy ring-1 ring-navy/15 transition hover:bg-navy hover:text-white"
+              >
+                {c.name}
+              </Link>
+            ))}
+            <Link href="/catalog" className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white">
+              Весь каталог
+            </Link>
+          </div>
+        </div>
       )}
     </div>
     </>

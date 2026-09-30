@@ -131,6 +131,7 @@ export type PageBlock =
       type: "reviews";
       items: { name: string; role?: string; rating: number; text: string }[];
     }
+  | { type: "faq"; items: { question: string; answer: string }[] }
   | { type: "instagram_strip"; urls: string[] }
   | {
       type: "contact_info";
@@ -154,6 +155,19 @@ export const pages = pgTable("pages", {
   metaDescription: text("meta_description"),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+// A snapshot of a page taken just before each save, so an editor can see
+// what changed and put an earlier version back without a developer.
+export const pageRevisions = pgTable("page_revisions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  pageSlug: text("page_slug").notNull(),
+  title: text("title").notNull(),
+  blocks: jsonb("blocks").$type<PageBlock[]>().notNull(),
+  metaTitle: text("meta_title"),
+  metaDescription: text("meta_description"),
+  savedBy: text("saved_by"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [index("page_revisions_slug_created_idx").on(table.pageSlug, table.createdAt)]);
 
 export const customers = pgTable("customers", {
   id: uuid("id").primaryKey().defaultRandom(),

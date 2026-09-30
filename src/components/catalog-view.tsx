@@ -18,7 +18,7 @@ function pluralModels(n: number) {
   return "моделей";
 }
 
-type SortKey = "default" | "price-asc" | "price-desc" | "name";
+type SortKey = "default" | "newest" | "price-asc" | "price-desc" | "name";
 
 function priceOf(p: Product) {
   return getDisplayPrice(p)?.amount ?? null;
@@ -81,7 +81,9 @@ export function CatalogView({
       );
     }
     const sorted = [...list];
-    if (sort === "name") {
+    if (sort === "newest") {
+      sorted.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+    } else if (sort === "name") {
       sorted.sort((a, b) => a.name.localeCompare(b.name, "ru"));
     } else if (sort === "price-asc" || sort === "price-desc") {
       sorted.sort((a, b) => {
@@ -232,6 +234,7 @@ export function CatalogView({
                 className="rounded-md border border-navy/15 bg-white px-3 py-1.5 text-sm text-navy"
               >
                 <option value="default">По умолчанию</option>
+                <option value="newest">Сначала новые</option>
                 <option value="name">По названию</option>
                 <option value="price-asc">Сначала дешевле</option>
                 <option value="price-desc">Сначала дороже</option>

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { formatSum } from "@/lib/format";
 import { useRequestList } from "@/lib/request-list-context";
 import { submitRequest } from "@/lib/actions";
+import { reachGoal } from "@/components/yandex-metrika";
 import { PhoneInput } from "@/components/phone-input";
 import { buildStatusDeepLink } from "@/lib/telegram-links";
 import { PageHero } from "@/components/page-hero";
@@ -50,6 +51,7 @@ export function RequestForm({
       }
       setOrderNumber(result.orderNumber);
       setStatus("submitted");
+      reachGoal("request_submit", { source: "request_form" });
       clear();
     } catch {
       setError("Не удалось отправить заявку. Попробуйте ещё раз.");

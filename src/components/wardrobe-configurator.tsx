@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { submitRequest } from "@/lib/actions";
+import { reachGoal } from "@/components/yandex-metrika";
 import { getHardwareBrandBadge } from "@/lib/hardware-brands";
 import { PhoneInput } from "@/components/phone-input";
 import { buildStatusDeepLink } from "@/lib/telegram-links";
@@ -609,6 +610,7 @@ export function WardrobeConfigurator({
       }
       setOrderNumber(result.orderNumber);
       setStatus("submitted");
+      reachGoal("request_submit", { source: "configurator" });
     } catch {
       setError("Не удалось отправить заявку. Попробуйте ещё раз.");
       setStatus("error");

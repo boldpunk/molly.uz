@@ -10,6 +10,7 @@ import {
   CUSTOMER_SESSION_COOKIE,
 } from "./customer-session";
 import { normalizePhone, getCustomerByPhone } from "./customers";
+import { clearFailures, isLocked, loginKeys, recordFailure } from "./login-throttle";
 
 async function setSessionCookie(customerId: string) {
   const token = await createCustomerSessionToken(customerId);
@@ -51,14 +52,21 @@ export async function loginCustomer(formData: FormData) {
   const phone = normalizePhone(String(formData.get("phone") ?? ""));
   const password = String(formData.get("password") ?? "");
 
+  const keys = await loginKeys("customer", phone);
+  if (isLocked(keys)) {
+    redirect("/account?error=locked&mode=login");
+  }
+
   const customer = await getCustomerByPhone(phone);
   const valid = customer
     ? await bcrypt.compare(password, customer.passwordHash)
     : false;
 
   if (!customer || !valid) {
+    recordFailure(keys);
     redirect("/account?error=invalid_login&mode=login");
   }
+  clearFailures(keys);
 
   await setSessionCookie(customer.id);
   redirect("/account");

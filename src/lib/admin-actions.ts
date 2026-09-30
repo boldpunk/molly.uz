@@ -10,6 +10,7 @@ import {
   requests,
   requestItems,
   pages,
+  pageRevisions,
   wardrobeFinishes,
   employees,
   employeeApplications,
@@ -378,21 +379,65 @@ export async function deleteRequest(id: string) {
 
 // --- Pages (content blocks) -----------------------------------------------
 
+/** Keeps the page's current content as a revision before it is overwritten. */
+async function snapshotPage(slug: string) {
+  const [current] = await db.select().from(pages).where(eq(pages.slug, slug));
+  if (!current) return;
+  const admin = await getCurrentAdmin();
+  await db.insert(pageRevisions).values({
+    pageSlug: slug,
+    title: current.title,
+    blocks: current.blocks,
+    metaTitle: current.metaTitle,
+    metaDescription: current.metaDescription,
+    savedBy: admin?.name ?? null,
+  });
+}
+
+function revalidatePageRoutes(slug: string) {
+  revalidatePath("/admin/pages");
+  revalidatePath(`/admin/pages/${slug}`);
+  revalidatePath(slug === "home" ? "/" : `/${slug}`);
+}
+
 export async function updatePage(slug: string, formData: FormData) {
   const title = String(formData.get("title") ?? "");
   const blocks = parseJsonArray<PageBlock>(formData.get("blocksJson"));
   const metaTitle = String(formData.get("metaTitle") ?? "") || null;
   const metaDescription = String(formData.get("metaDescription") ?? "") || null;
 
+  await snapshotPage(slug);
   await db
     .update(pages)
     .set({ title, blocks, metaTitle, metaDescription, updatedAt: new Date() })
     .where(eq(pages.slug, slug));
 
-  revalidatePath("/admin/pages");
-  revalidatePath(`/admin/pages/${slug}`);
-  revalidatePath(slug === "home" ? "/" : `/${slug}`);
+  revalidatePageRoutes(slug);
   redirect("/admin/pages");
+}
+
+/** Rolls a page back to a saved revision — the current state is kept too. */
+export async function restorePageRevision(revisionId: string) {
+  const [revision] = await db
+    .select()
+    .from(pageRevisions)
+    .where(eq(pageRevisions.id, revisionId));
+  if (!revision) return;
+
+  await snapshotPage(revision.pageSlug);
+  await db
+    .update(pages)
+    .set({
+      title: revision.title,
+      blocks: revision.blocks,
+      metaTitle: revision.metaTitle,
+      metaDescription: revision.metaDescription,
+      updatedAt: new Date(),
+    })
+    .where(eq(pages.slug, revision.pageSlug));
+
+  revalidatePageRoutes(revision.pageSlug);
+  redirect(`/admin/pages/${revision.pageSlug}?restored=1`);
 }
 
 // --- Wardrobe configurator -------------------------------------------------
