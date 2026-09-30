@@ -19,137 +19,108 @@ import {
   EmployeesIcon,
   ProposalsIcon,
   BrandIcon,
+  CustomersIcon,
+  ExternalIcon,
 } from "./icons";
 
-function BackIcon({ className = "h-[18px] w-[18px]" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className}>
-      <path
-        d="M19 12H5m0 0 6-6m-6 6 6 6"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+type Role = string;
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  roles: Role[];
+  exact?: boolean;
+  badge?: "newRequests";
 }
 
-const NAV_ITEMS = [
+const SALES: Role[] = ["administrator", "sales_manager"];
+const CATALOG: Role[] = ["administrator", "catalog_manager"];
+
+const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
   {
-    href: "/admin",
-    label: "Дашборд",
-    icon: DashboardIcon,
-    exact: true,
-    roles: ["administrator", "sales_manager"],
+    title: "Продажи",
+    items: [
+      { href: "/admin", label: "Дашборд", icon: DashboardIcon, exact: true, roles: SALES },
+      { href: "/admin/requests", label: "Заявки", icon: RequestsIcon, roles: SALES, badge: "newRequests" },
+      { href: "/admin/customers", label: "Клиенты", icon: CustomersIcon, roles: SALES },
+      { href: "/admin/proposals", label: "КП", icon: ProposalsIcon, roles: SALES },
+    ],
   },
   {
-    href: "/admin/requests",
-    label: "Заявки",
-    icon: RequestsIcon,
-    roles: ["administrator", "sales_manager"],
+    title: "Каталог",
+    items: [
+      { href: "/admin/products", label: "Товары", icon: ProductsIcon, roles: CATALOG },
+      { href: "/admin/categories", label: "Категории", icon: CategoriesIcon, roles: CATALOG },
+      { href: "/admin/configurator", label: "Конфигуратор", icon: ConfiguratorIcon, roles: CATALOG },
+    ],
   },
   {
-    href: "/admin/proposals",
-    label: "КП",
-    icon: ProposalsIcon,
-    roles: ["administrator", "sales_manager"],
+    title: "Сайт",
+    items: [
+      { href: "/admin/pages", label: "Страницы", icon: PageIcon, roles: ["administrator", "content_editor"] },
+      { href: "/admin/brand", label: "Бренд", icon: BrandIcon, roles: ["administrator"] },
+    ],
   },
   {
-    href: "/admin/products",
-    label: "Товары",
-    icon: ProductsIcon,
-    roles: ["administrator", "catalog_manager"],
-  },
-  {
-    href: "/admin/categories",
-    label: "Категории",
-    icon: CategoriesIcon,
-    roles: ["administrator", "catalog_manager"],
-  },
-  {
-    href: "/admin/pages",
-    label: "Страницы",
-    icon: PageIcon,
-    roles: ["administrator", "content_editor"],
-  },
-  {
-    href: "/admin/configurator",
-    label: "Конфигуратор",
-    icon: ConfiguratorIcon,
-    roles: ["administrator", "catalog_manager"],
-  },
-  {
-    href: "/admin/brand",
-    label: "Бренд",
-    icon: BrandIcon,
-    roles: ["administrator"],
-  },
-  {
-    href: "/admin/employees",
-    label: "Сотрудники",
-    icon: EmployeesIcon,
-    roles: ["administrator"],
-  },
-  {
-    href: "/admin/users",
-    label: "Пользователи",
-    icon: UsersIcon,
-    roles: ["administrator"],
+    title: "Команда",
+    items: [
+      { href: "/admin/employees", label: "Сотрудники", icon: EmployeesIcon, roles: ["administrator"] },
+      { href: "/admin/users", label: "Пользователи", icon: UsersIcon, roles: ["administrator"] },
+    ],
   },
 ];
 
-function SidebarLogo({
-  logoSrc,
-  logoScale,
-}: {
-  logoSrc?: string | null;
-  logoScale?: number;
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      <Logo width={168} src={logoSrc} scale={logoScale} />
-      <p className="text-[11px] leading-tight text-navy/40">
-        Панель управления
-      </p>
-    </div>
-  );
-}
-
 function NavLinks({
   role,
+  newRequests,
   onNavigate,
 }: {
   role: string;
+  newRequests: number;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
-  const items = NAV_ITEMS.filter((item) => item.roles.includes(role));
   return (
-    <nav className="flex flex-1 flex-col gap-1 px-4">
-      {items.map((item) => {
-        const active = item.exact
-          ? pathname === item.href
-          : pathname === item.href || pathname.startsWith(`${item.href}/`);
-        const Icon = item.icon;
+    <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-3 pb-4">
+      {NAV_GROUPS.map((group) => {
+        const items = group.items.filter((item) => item.roles.includes(role));
+        if (items.length === 0) return null;
         return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onNavigate}
-            className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-              active
-                ? "bg-navy text-white shadow-sm"
-                : "text-navy/60 hover:bg-navy/5 hover:text-navy"
-            }`}
-          >
-            <Icon
-              className={`h-[18px] w-[18px] shrink-0 transition ${
-                active ? "text-white" : "text-navy/40 group-hover:text-navy/70"
-              }`}
-            />
-            {item.label}
-          </Link>
+          <div key={group.title}>
+            <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-cream/35">
+              {group.title}
+            </p>
+            <div className="flex flex-col gap-0.5">
+              {items.map((item) => {
+                const active = item.exact
+                  ? pathname === item.href
+                  : pathname === item.href || pathname.startsWith(`${item.href}/`);
+                const Icon = item.icon;
+                const count = item.badge === "newRequests" ? newRequests : 0;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={onNavigate}
+                    className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+                      active ? "bg-white/10 text-white" : "text-cream/65 hover:bg-white/[0.06] hover:text-white"
+                    }`}
+                  >
+                    {active && <span className="absolute -left-3 top-2 bottom-2 w-1 rounded-r-full bg-clay" />}
+                    <Icon
+                      className={`h-[18px] w-[18px] shrink-0 transition ${
+                        active ? "text-clay" : "text-cream/40 group-hover:text-cream/80"
+                      }`}
+                    />
+                    <span className="flex-1">{item.label}</span>
+                    {count > 0 && (
+                      <span className="rounded-full bg-clay px-2 py-0.5 text-[11px] font-bold text-white">{count}</span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
         );
       })}
     </nav>
@@ -160,34 +131,34 @@ function AccountFooter({ admin }: { admin: CurrentAdmin }) {
   const initial = admin.name.trim().charAt(0).toUpperCase() || "A";
   const roleLabel = ADMIN_ROLE_LABELS[admin.role] ?? admin.role;
   return (
-    <div className="border-t border-navy/10 px-4 py-4">
-      <div className="mb-2 flex items-center gap-2.5 rounded-lg px-3 py-2">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/20 text-xs font-semibold text-accent-dark">
+    <div className="border-t border-white/10 p-3">
+      <div className="flex items-center gap-3 rounded-xl bg-white/[0.06] px-3 py-2.5">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cream text-sm font-bold text-navy">
           {initial}
         </span>
-        <div className="min-w-0">
-          <p className="truncate text-xs font-semibold text-navy">
-            {admin.name}
-          </p>
-          <p className="truncate text-[11px] text-navy/40">{roleLabel}</p>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-white">{admin.name}</p>
+          <p className="truncate text-[11px] text-cream/50">{roleLabel}</p>
         </div>
+        <form action={logout}>
+          <button
+            type="submit"
+            title="Выйти"
+            aria-label="Выйти"
+            className="rounded-lg p-2 text-cream/50 transition hover:bg-white/10 hover:text-white"
+          >
+            <LogoutIcon className="h-[18px] w-[18px]" />
+          </button>
+        </form>
       </div>
       <Link
         href="/"
-        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-navy/50 transition hover:bg-navy/5 hover:text-navy"
+        target="_blank"
+        className="mt-2 flex items-center justify-between rounded-xl px-3 py-2 text-sm text-cream/55 transition hover:bg-white/[0.06] hover:text-white"
       >
-        <BackIcon />
-        Вернуться на сайт
+        Открыть сайт
+        <ExternalIcon className="h-4 w-4" />
       </Link>
-      <form action={logout}>
-        <button
-          type="submit"
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-navy/50 transition hover:bg-navy/5 hover:text-navy"
-        >
-          <LogoutIcon className="h-[18px] w-[18px]" />
-          Выйти
-        </button>
-      </form>
     </div>
   );
 }
@@ -196,32 +167,37 @@ export function AdminSidebar({
   admin,
   logoSrc,
   logoScale,
+  newRequests = 0,
 }: {
   admin: CurrentAdmin;
+  /** The reversed (cream) logo — the sidebar is navy. */
   logoSrc?: string | null;
   logoScale?: number;
+  newRequests?: number;
 }) {
   const [open, setOpen] = useState(false);
+  const logo = (
+    <Link href="/admin" className="flex flex-col gap-1.5" onClick={() => setOpen(false)}>
+      <Logo width={150} tone="cream" src={logoSrc} scale={logoScale} />
+      <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cream/40">Панель управления</span>
+    </Link>
+  );
 
   return (
     <>
       {/* Mobile top bar */}
-      <div className="flex items-center justify-between border-b border-navy/10 bg-white px-4 py-3 md:hidden">
-        <SidebarLogo logoSrc={logoSrc} logoScale={logoScale} />
+      <div className="sticky top-0 z-40 flex items-center justify-between bg-navy px-4 py-3 md:hidden">
+        {logo}
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="rounded-md p-2 text-navy hover:bg-navy/5"
+          className="relative rounded-lg p-2 text-cream hover:bg-white/10"
           aria-label="Открыть меню"
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M3 6h18M3 12h18M3 18h18"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
+            <path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
+          {newRequests > 0 && <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-clay" />}
         </button>
       </div>
 
@@ -230,41 +206,35 @@ export function AdminSidebar({
         <div className="fixed inset-0 z-50 md:hidden">
           <button
             type="button"
-            className="absolute inset-0 bg-navy/40"
+            className="absolute inset-0 animate-fade-in bg-ink/50 backdrop-blur-sm"
             aria-label="Закрыть меню"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute left-0 top-0 flex h-full w-72 max-w-[85%] flex-col bg-white shadow-xl">
+          <div className="absolute left-0 top-0 flex h-full w-72 max-w-[85%] animate-drawer flex-col bg-navy shadow-xl">
             <div className="flex items-center justify-between px-6 py-6">
-              <SidebarLogo logoSrc={logoSrc} logoScale={logoScale} />
+              {logo}
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded-md p-2 text-navy hover:bg-navy/5"
+                className="rounded-lg p-2 text-cream hover:bg-white/10"
                 aria-label="Закрыть"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M6 6l12 12M18 6L6 18"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
+                  <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 </svg>
               </button>
             </div>
-            <NavLinks role={admin.role} onNavigate={() => setOpen(false)} />
+            <NavLinks role={admin.role} newRequests={newRequests} onNavigate={() => setOpen(false)} />
             <AccountFooter admin={admin} />
           </div>
         </div>
       )}
 
       {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-navy/10 bg-white md:sticky md:top-0 md:flex md:h-screen md:overflow-y-auto">
-        <div className="px-6 py-6">
-          <SidebarLogo logoSrc={logoSrc} logoScale={logoScale} />
-        </div>
-        <NavLinks role={admin.role} />
+      <aside className="relative hidden w-64 shrink-0 flex-col overflow-hidden bg-navy md:sticky md:top-0 md:flex md:h-screen">
+        <div aria-hidden className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-clay/15 blur-3xl" />
+        <div className="relative px-6 pb-6 pt-7">{logo}</div>
+        <NavLinks role={admin.role} newRequests={newRequests} />
         <AccountFooter admin={admin} />
       </aside>
     </>

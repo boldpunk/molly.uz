@@ -8,7 +8,7 @@ export function FormSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-navy/10 bg-white p-6 shadow-sm">
+    <div className="rounded-[1.5rem] border border-navy/[0.07] bg-white p-6">
       <div className="mb-5">
         <h2 className="text-sm font-semibold text-navy">{title}</h2>
         {description && (

@@ -38,7 +38,7 @@ export default async function AdminUsersPage({
         </p>
       )}
 
-      <div className="mt-6 overflow-hidden rounded-xl border border-navy/10 bg-white shadow-sm">
+      <div className="mt-6 overflow-hidden rounded-[1.5rem] border border-navy/[0.07] bg-white">
         {users.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-16 text-center">
             <UsersIcon className="h-8 w-8 text-navy/20" />
