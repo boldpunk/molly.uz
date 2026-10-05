@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PageHero } from "@/components/page-hero";
 import { SITE_URL } from "@/lib/site";
 
@@ -97,9 +98,9 @@ export default function PrivacyPage() {
         <p>
           Вы можете запросить удаление или исправление своих данных,
           написав нам через{" "}
-          <a href="/contacts" className="text-navy underline">
+          <Link href="/contacts" className="text-navy underline">
             контакты
-          </a>{" "}
+          </Link>{" "}
           или в Telegram{" "}
           <a
             href="https://t.me/mollyhomeuzbot"

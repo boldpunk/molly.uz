@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PageHero } from "@/components/page-hero";
 import { SITE_URL } from "@/lib/site";
 
@@ -61,9 +62,9 @@ export default function TermsPage() {
           Регистрируя аккаунт, вы несёте ответственность за сохранность
           пароля. Если вы подозреваете, что доступ к аккаунту получил кто‑то
           посторонний, свяжитесь с нами через{" "}
-          <a href="/contacts" className="text-navy underline">
+          <Link href="/contacts" className="text-navy underline">
             контакты
-          </a>
+          </Link>
           .
         </p>
       </Section>
@@ -73,9 +74,9 @@ export default function TermsPage() {
           Сроки изготовления и доставки, варианты оплаты и гарантийные
           условия уточняются менеджером индивидуально по каждому заказу —
           подробнее на странице{" "}
-          <a href="/delivery" className="text-navy underline">
+          <Link href="/delivery" className="text-navy underline">
             «Доставка и оплата»
-          </a>
+          </Link>
           .
         </p>
       </Section>
@@ -90,9 +91,9 @@ export default function TermsPage() {
       <Section title="7. Обработка персональных данных">
         <p>
           Правила сбора и использования персональных данных описаны в{" "}
-          <a href="/privacy" className="text-navy underline">
+          <Link href="/privacy" className="text-navy underline">
             Политике конфиденциальности
-          </a>
+          </Link>
           .
         </p>
       </Section>

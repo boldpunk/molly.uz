@@ -12,10 +12,13 @@ import { getCategoryIcon } from "@/components/icons/categories";
 import { LocationPicker } from "@/components/location-picker";
 import { categoryImage } from "@/lib/category-images";
 
+// `wide` links only fit the top bar from xl up; below that they stay in the
+// mobile drawer and the footer.
 const PAGES = [
+  { href: "/podbor", label: "Подбор" },
   { href: "/configurator/shkaf", label: "Конфигуратор" },
-  { href: "/about", label: "О бренде" },
-  { href: "/delivery", label: "Доставка" },
+  { href: "/about", label: "О бренде", wide: true },
+  { href: "/delivery", label: "Доставка", wide: true },
   { href: "/contacts", label: "Контакты" },
 ];
 
@@ -105,7 +108,7 @@ export function Header({
 
   const catalogActive = pathname.startsWith("/catalog");
   const navLink = (active: boolean) =>
-    `relative whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-medium transition-colors duration-200 ${
+    `relative whitespace-nowrap rounded-full px-3 py-2 text-sm xl:px-3.5 font-medium transition-colors duration-200 ${
       active ? "bg-navy text-white" : "text-navy/75 hover:bg-navy/[0.06] hover:text-navy"
     }`;
 
@@ -135,7 +138,7 @@ export function Header({
           </Link>
 
           {/* Desktop nav */}
-          <nav className="ml-4 hidden flex-1 items-center gap-0.5 lg:flex xl:ml-6" aria-label="Основное меню">
+          <nav className="ml-2 hidden flex-1 items-center gap-0 lg:flex xl:ml-6 xl:gap-0.5" aria-label="Основное меню">
             <div className="relative" onMouseEnter={openMenu} onMouseLeave={scheduleCloseMenu}>
               <Link
                 href="/catalog"
@@ -203,7 +206,11 @@ export function Header({
               )}
             </div>
             {PAGES.map((p) => (
-              <Link key={p.href} href={p.href} className={navLink(pathname === p.href)}>
+              <Link
+                key={p.href}
+                href={p.href}
+                className={`${navLink(pathname === p.href)} ${p.wide ? "hidden xl:inline-flex" : ""}`}
+              >
                 {p.label}
               </Link>
             ))}
@@ -247,7 +254,7 @@ export function Header({
                 </span>
               )}
             </Link>
-            <Link href="/request" className="btn btn-primary ml-2 hidden whitespace-nowrap px-5 py-2.5 md:inline-flex">
+            <Link href="/request" className="btn btn-primary ml-1 hidden whitespace-nowrap px-4 py-2.5 md:inline-flex xl:ml-2 xl:px-5">
               Бесплатный замер
             </Link>
           </div>
