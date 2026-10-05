@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
+  getAllProducts,
   getCategories,
   getFeaturedProducts,
   getPageBySlug,
@@ -19,6 +20,9 @@ import { BrandSlider } from "@/components/brand-slider";
 import { ReviewsGrid } from "@/components/reviews-grid";
 import { HeroSlider, type HeroSlide } from "@/components/hero-slider";
 import { FeaturedProducts } from "@/components/home/featured-products";
+import { QuizTeaser } from "@/components/home/quiz-teaser";
+import { KitchenHotspots } from "@/components/home/kitchen-hotspots";
+import { RecentlyViewed } from "@/components/recently-viewed";
 import { pageMetadata } from "@/lib/seo";
 import { categoryImage } from "@/lib/category-images";
 import type { PageBlock } from "@/db/schema";
@@ -142,11 +146,13 @@ function ArrowIcon({ className = "" }: { className?: string }) {
 }
 
 export default async function HomePage() {
-  const [categories, featured, home] = await Promise.all([
+  const [categories, featured, home, allProducts] = await Promise.all([
     getCategories(),
     getFeaturedProducts(),
     getPageBySlug("home"),
+    getAllProducts(),
   ]);
+  const fiona = allProducts.find((p) => p.slug === "fiona" && p.imageUrl);
 
   const blocks = home?.blocks ?? [];
   const heroHeading =
@@ -298,6 +304,8 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <QuizTeaser />
+
       {/* Featured products */}
       {featured.length > 0 && (
         <section className="bg-cream-light/70 py-20">
@@ -375,6 +383,10 @@ export default async function HomePage() {
           </Link>
         </Reveal>
       </section>
+
+      {fiona?.imageUrl && (
+        <KitchenHotspots imageUrl={fiona.imageUrl} href={`/catalog/${fiona.categorySlug}/${fiona.slug}`} />
+      )}
 
       {/* Process */}
       <section className="relative overflow-hidden bg-ink py-20 text-white">
@@ -558,6 +570,8 @@ export default async function HomePage() {
           </Reveal>
         </section>
       )}
+
+      <RecentlyViewed title="Продолжить просмотр" className="pb-16" />
 
       {/* Closing CTA */}
       <section className="px-4 pb-4 sm:px-6">

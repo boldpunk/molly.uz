@@ -18,6 +18,7 @@ import { ImageLightbox } from "@/components/image-lightbox";
 import { PageBlocks } from "@/components/page-blocks";
 import type { PageBlock } from "@/db/schema";
 import { UspIcon } from "@/components/usp-icons";
+import { RecentlyViewed, TrackProductView } from "@/components/recently-viewed";
 
 const MIN_WIDTH = 2;
 const MAX_WIDTH = 15;
@@ -622,6 +623,25 @@ export function ProductDetail({
           </div>
         </div>
       )}
+
+      <TrackProductView
+        product={{
+          slug: product.slug,
+          categorySlug: product.categorySlug,
+          name: product.name,
+          imageUrl: product.imageUrl,
+          priceLabel: recentPriceLabel(product),
+        }}
+      />
+      <RecentlyViewed excludeSlug={product.slug} contained className="mt-14 border-t border-navy/10 pt-14" />
     </div>
   );
+}
+
+function recentPriceLabel(product: Product): string {
+  const price = getDisplayPrice(product);
+  if (!price) return "Цена по запросу";
+  return `${product.pricingMode === "per_metre" ? "от " : ""}${formatSum(price.amount)}${
+    product.pricingMode === "per_metre" ? " / пог.м" : ""
+  }`;
 }

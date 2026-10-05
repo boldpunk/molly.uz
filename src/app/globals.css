@@ -53,6 +53,7 @@
   --animate-shimmer: shimmer 2.2s linear infinite;
   --animate-drawer: drawer 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-fade-in: fade-in 0.3s ease-out both;
+  --animate-door-peek: door-peek 3.2s ease-in-out 1s infinite;
 
   @keyframes float {
     0%, 100% { transform: translateY(0); }
@@ -77,6 +78,11 @@
   @keyframes drawer {
     from { transform: translateX(-100%); }
     to { transform: translateX(0); }
+  }
+  @keyframes door-peek {
+    0%, 60%, 100% { transform: rotateY(0deg); }
+    72% { transform: rotateY(-24deg); }
+    84% { transform: rotateY(-6deg); }
   }
   @keyframes fade-in {
     from { opacity: 0; }

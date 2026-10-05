@@ -1,11 +1,4 @@
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
-import { FloatingContact } from "@/components/floating-contact";
-import { RequestListProvider } from "@/lib/request-list-context";
-import { getCategories, getContactInfo } from "@/lib/data";
-import { getBrandAssets } from "@/lib/brand";
-import { SITE_URL } from "@/lib/site";
-import { YandexMetrika } from "@/components/yandex-metrika";
+import { SiteChrome } from "@/components/site-chrome";
 
 // Header/footer nav reads categories from the (admin-editable) database on
 // every request, so the storefront renders dynamically rather than baking
@@ -17,60 +10,5 @@ export default async function SiteLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [categories, contact, brand] = await Promise.all([
-    getCategories(),
-    getContactInfo(),
-    getBrandAssets(),
-  ]);
-
-  const organizationJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "FurnitureStore",
-    name: brand.companyName,
-    url: SITE_URL,
-    telephone: contact.phone,
-    email: contact.email,
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: contact.address,
-      addressLocality: "Tashkent",
-      addressCountry: "UZ",
-    },
-    geo: {
-      "@type": "GeoCoordinates",
-      latitude: contact.mapLat,
-      longitude: contact.mapLng,
-    },
-    sameAs: [
-      `https://www.instagram.com/${contact.instagram}`,
-      `https://t.me/${contact.telegram}`,
-    ],
-  };
-
-  return (
-    <RequestListProvider>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
-      />
-      <Header
-        categories={categories}
-        phone={contact.phone}
-        logoSrc={brand.primary}
-        logoScale={brand.scale}
-      />
-      <main className="flex-1">{children}</main>
-      <Footer
-        categories={categories}
-        phone={contact.phone}
-        logoSrc={brand.reversed}
-        logoScale={brand.scale}
-      />
-      <FloatingContact
-        phone={contact.phone}
-        telegramBot={contact.telegram || "mollyhomeuzbot"}
-      />
-      <YandexMetrika />
-    </RequestListProvider>
-  );
+  return <SiteChrome>{children}</SiteChrome>;
 }
