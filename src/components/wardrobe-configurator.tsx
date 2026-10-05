@@ -1,13 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { submitRequest } from "@/lib/actions";
 import { reachGoal } from "@/components/yandex-metrika";
 import { getHardwareBrandBadge } from "@/lib/hardware-brands";
 import { PhoneInput } from "@/components/phone-input";
 import { buildStatusDeepLink } from "@/lib/telegram-links";
 import type { WardrobeFinish } from "@/lib/data";
+import {
+  encodeProject,
+  fitNiche,
+  MAX_MODULES,
+  MIN_MODULES,
+  type HandleId,
+  type MirrorId,
+  type SectionKind,
+  type WardrobeProject,
+} from "@/lib/wardrobe-project";
 
 // All measurements follow the production drawings: 366 mm modules, a
 // 2300 mm carcass on a 100 mm plinth, 600 mm deep, 2 mm gaps between
@@ -21,8 +31,6 @@ const GAP_MM = 2;
 const HINGES_PER_DOOR = 4;
 const ROD_HEIGHT_MM = 1700;
 const DRAWER_HEIGHT_MM = 200;
-const MIN_MODULES = 2;
-const MAX_MODULES = 8;
 
 // Used only if the admin hasn't configured any finishes yet (see
 // /admin/configurator) — keeps the page from ever showing an empty state.
@@ -32,8 +40,6 @@ const DEFAULT_FINISHES: WardrobeFinish[] = [
   { id: "default-beige", label: "Бежевый", ral: "RAL 1019", hex: "#a99578" },
   { id: "default-black", label: "Чёрный матовый", ral: "RAL 9005", hex: "#1c1c1c" },
 ];
-
-type SectionKind = "shelves" | "hanging" | "drawers" | "combo";
 
 const SECTIONS: Record<SectionKind, { label: string; hint: string }> = {
   shelves: { label: "Полки", hint: "6 полок по всей высоте" },
@@ -78,14 +84,12 @@ const MIRRORS = [
   { id: "center", label: "2 центральных" },
   { id: "all", label: "Все фасады" },
 ] as const;
-type MirrorId = (typeof MIRRORS)[number]["id"];
 
 const HANDLES = [
   { id: "накладные", label: "Накладные", note: "Чёрная планка" },
   { id: "врезные", label: "Врезной профиль", note: "Латунь, в торце" },
   { id: "push", label: "Без ручек", note: "Push-to-open" },
 ] as const;
-type HandleId = (typeof HANDLES)[number]["id"];
 
 const HINGES = [
   { id: "blum", label: "Blum" },
@@ -488,22 +492,29 @@ export function WardrobeConfigurator({
   productSlug,
   categorySlug,
   finishes,
+  initial,
 }: {
   productId?: string;
   productSlug: string;
   categorySlug: string;
   finishes: WardrobeFinish[];
+  /** A project opened from a shared link. */
+  initial?: Partial<WardrobeProject>;
 }) {
   const finishOptions = finishes.length > 0 ? finishes : DEFAULT_FINISHES;
 
-  const [layout, setLayout] = useState<SectionKind[]>(() => PRESETS[0].build(6));
-  const [preset, setPreset] = useState<string | null>("classic");
-  const [finish, setFinish] = useState<string>(finishOptions[0].id);
+  const [layout, setLayout] = useState<SectionKind[]>(() => initial?.layout ?? PRESETS[0].build(6));
+  const [preset, setPreset] = useState<string | null>(initial?.layout ? null : "classic");
+  const [finish, setFinish] = useState<string>(
+    finishOptions.find((f) => f.id === initial?.finish)?.id ?? finishOptions[0].id
+  );
   const [view, setView] = useState<View>("facade");
-  const [mirror, setMirror] = useState<MirrorId>("center");
-  const [rails, setRails] = useState(true);
-  const [handle, setHandle] = useState<HandleId>("накладные");
-  const [hinge, setHinge] = useState<(typeof HINGES)[number]["id"]>("blum");
+  const [mirror, setMirror] = useState<MirrorId>(initial?.mirror ?? "center");
+  const [rails, setRails] = useState(initial?.rails ?? true);
+  const [handle, setHandle] = useState<HandleId>(initial?.handle ?? "накладные");
+  const [hinge, setHinge] = useState<(typeof HINGES)[number]["id"]>(initial?.hinge ?? "blum");
+  const [niche, setNiche] = useState("");
+  const [copied, setCopied] = useState(false);
   const [openDoors, setOpenDoors] = useState<Set<number>>(new Set());
   const [selected, setSelected] = useState<number | null>(null);
 
@@ -561,6 +572,37 @@ export function WardrobeConfigurator({
 
   const allOpen = openDoors.size === modules;
 
+  const projectQuery = encodeProject({ layout, finish, mirror, rails, handle, hinge });
+
+  // Keeps the address bar on the current project, so a reload or a copied
+  // link brings back exactly this wardrobe.
+  useEffect(() => {
+    const url = `${window.location.pathname}?${projectQuery}`;
+    window.history.replaceState(window.history.state, "", url);
+  }, [projectQuery]);
+
+  function projectUrl() {
+    return `${window.location.origin}${window.location.pathname}?${projectQuery}`;
+  }
+
+  async function shareProject() {
+    const url = projectUrl();
+    try {
+      if (navigator.share && window.matchMedia("(pointer: coarse)").matches) {
+        await navigator.share({ title: "Мой шкаф — Molly Home", url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      // The share sheet was dismissed or the clipboard is blocked — nothing to do.
+    }
+  }
+
+  const nicheMm = Number(niche.replace(/\D/g, ""));
+  const nicheFit = nicheMm >= 300 ? fitNiche(nicheMm, MODULE_WIDTH_MM) : null;
+
   const specRows: [string, string][] = [
     ["Общая ширина", `${widthMm} мм`],
     ["Общая высота", `${HEIGHT_MM} мм`],
@@ -592,7 +634,8 @@ export function WardrobeConfigurator({
     e.preventDefault();
     setStatus("submitting");
     try {
-      const result = await submitRequest(name, phone, comment, [
+      const projectNote = `Проект в конфигураторе: ${projectUrl()}`;
+      const result = await submitRequest(name, phone, comment ? `${comment}\n\n${projectNote}` : projectNote, [
         {
           productId,
           productName: "Шкаф — по конфигуратору",
@@ -651,8 +694,15 @@ export function WardrobeConfigurator({
 
   return (
     <div className="pb-16">
+      <div className="hidden px-4 print:block">
+        <p className="font-heading text-2xl font-bold text-navy">Molly Home — шкаф по вашей конфигурации</p>
+        <p className="mt-1 text-sm text-navy/60">
+          {widthMm} × {HEIGHT_MM} × {DEPTH_MM} мм · molly.uz/configurator/shkaf
+        </p>
+      </div>
+
       {/* Title */}
-      <section className="mx-auto max-w-7xl px-4 pt-6 sm:px-6">
+      <section className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 print:hidden">
         <div className="relative isolate overflow-hidden rounded-[2rem] bg-navy px-6 py-10 text-white sm:px-12">
           <div aria-hidden className="absolute -right-20 -top-24 -z-10 h-72 w-72 rounded-full bg-clay/30 blur-3xl" />
           <div aria-hidden className="absolute -bottom-32 left-1/3 -z-10 h-72 w-72 rounded-full bg-sage/25 blur-3xl" />
@@ -692,7 +742,7 @@ export function WardrobeConfigurator({
         {/* Stage */}
         <div className="lg:sticky lg:top-24 lg:self-start">
           <div className="rounded-[2rem] bg-cream-light p-4 sm:p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
               <div className="inline-flex rounded-full bg-white p-1 shadow-sm">
                 {(
                   [
@@ -757,7 +807,7 @@ export function WardrobeConfigurator({
                 </div>
               </div>
             ) : (
-              <p className="mt-4 text-center text-xs text-navy/50">
+              <p className="mt-4 text-center text-xs text-navy/50 print:hidden">
                 {view === "facade"
                   ? "Нажмите на фасад, чтобы открыть его и заглянуть внутрь"
                   : view === "interior"
@@ -771,7 +821,22 @@ export function WardrobeConfigurator({
           <div className="mt-6 overflow-hidden rounded-[2rem] border border-navy/10 bg-white">
             <div className="flex items-center justify-between border-b border-navy/10 px-6 py-4">
               <h2 className="font-heading text-lg font-bold text-navy">Основные размеры</h2>
-              <span className="text-xs text-navy/45">обновляется вместе со схемой</span>
+              <div className="flex items-center gap-2 print:hidden">
+                <button
+                  type="button"
+                  onClick={shareProject}
+                  className="rounded-full px-3.5 py-1.5 text-xs font-semibold text-navy ring-1 ring-navy/15 transition hover:bg-navy hover:text-white hover:ring-navy"
+                >
+                  {copied ? "Ссылка скопирована ✓" : "Ссылка на проект"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="rounded-full px-3.5 py-1.5 text-xs font-semibold text-navy ring-1 ring-navy/15 transition hover:bg-navy hover:text-white hover:ring-navy"
+                >
+                  Скачать PDF
+                </button>
+              </div>
             </div>
             <dl className="grid sm:grid-cols-2">
               {specRows.map(([k, v]) => (
@@ -785,7 +850,7 @@ export function WardrobeConfigurator({
         </div>
 
         {/* Controls */}
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 print:hidden">
           <div className="rounded-[2rem] border border-navy/10 bg-white p-6 shadow-xl shadow-navy/[0.04]">
             <Step
               n={1}
@@ -826,6 +891,42 @@ export function WardrobeConfigurator({
                 {modules} модул{modules < 5 ? "я" : "ей"} по {MODULE_WIDTH_MM} мм · высота {HEIGHT_MM} мм · глубина{" "}
                 {DEPTH_MM} мм. Нужен другой размер — подгоним на замере.
               </p>
+              <div className="mt-4 rounded-2xl bg-cream-light p-4">
+                <label className="flex items-center justify-between gap-3 text-sm font-medium text-navy">
+                  Подобрать по ширине ниши
+                  <span className="flex items-center gap-2">
+                    <input
+                      inputMode="numeric"
+                      value={niche}
+                      onChange={(e) => setNiche(e.target.value.replace(/\D/g, "").slice(0, 5))}
+                      placeholder="2400"
+                      aria-label="Ширина ниши в миллиметрах"
+                      className="input w-24 rounded-xl py-2 text-right"
+                    />
+                    <span className="text-xs text-navy/50">мм</span>
+                  </span>
+                </label>
+                {nicheFit && (
+                  <div key={nicheMm} className="mt-3 flex animate-fade-in flex-wrap items-center justify-between gap-3 text-xs text-navy/65">
+                    <span>
+                      {nicheFit.fits
+                        ? `Поместится ${nicheFit.modules} модул${nicheFit.modules < 5 ? "я" : "ей"} — ${nicheFit.modules * MODULE_WIDTH_MM} мм${
+                            nicheFit.leftoverMm > 0 ? `, остаток ${nicheFit.leftoverMm} мм закроем доборной планкой` : ""
+                          }.`
+                        : "Ниша уже двух модулей — подберём решение на замере."}
+                    </span>
+                    {nicheFit.fits && nicheFit.modules !== modules && (
+                      <button
+                        type="button"
+                        onClick={() => setModuleCount(nicheFit.modules)}
+                        className="rounded-full bg-navy px-3.5 py-1.5 font-semibold text-white transition hover:bg-navy-light"
+                      >
+                        Применить
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </Step>
 
             <Step n={2} title="Наполнение">
@@ -974,7 +1075,7 @@ export function WardrobeConfigurator({
       </div>
 
       {/* Technical details from the production drawings */}
-      <section className="mx-auto mt-16 max-w-7xl px-4 sm:px-6">
+      <section className="mx-auto mt-16 max-w-7xl px-4 sm:px-6 print:hidden">
         <span className="eyebrow">Как устроен шкаф</span>
         <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight text-navy">Технические узлы</h2>
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

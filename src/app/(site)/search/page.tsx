@@ -57,7 +57,7 @@ export default async function SearchPage({
       {results.length > 0 && (
         <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 lg:grid-cols-4">
           {results.map((p, i) => (
-            <div key={p.id} className="animate-fade-up" style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}>
+            <div key={p.id} className="h-full animate-fade-up" style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}>
               <ProductCard product={p} />
             </div>
           ))}

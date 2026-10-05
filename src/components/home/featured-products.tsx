@@ -52,7 +52,7 @@ export function FeaturedProducts({
         {visible.map((p, i) => (
           <div
             key={`${active}-${p.id}`}
-            className="animate-fade-up"
+            className="h-full animate-fade-up"
             style={{ animationDelay: `${Math.min(i, 7) * 60}ms` }}
           >
             {cards[p.id]}

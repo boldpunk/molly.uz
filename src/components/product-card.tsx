@@ -25,7 +25,7 @@ export function ProductCard({
   return (
     <Link
       href={href}
-      className="group relative flex flex-col rounded-2xl bg-white transition duration-500 hover:-translate-y-1"
+      className="group relative flex h-full flex-col rounded-2xl bg-white transition duration-500 hover:-translate-y-1"
     >
       <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-cream-light ring-1 ring-navy/5 transition duration-500 group-hover:shadow-2xl group-hover:shadow-navy/15">
         {product.imageUrl ? (
@@ -35,7 +35,7 @@ export function ProductCard({
               alt={product.name}
               fill
               sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
-              className={`object-cover transition duration-700 ease-out group-hover:scale-[1.06] ${
+              className={`object-cover mix-blend-multiply transition duration-700 ease-out group-hover:scale-[1.06] ${
                 altImage ? "group-hover:opacity-0" : ""
               }`}
             />
@@ -46,7 +46,7 @@ export function ProductCard({
                 aria-hidden
                 fill
                 sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
-                className="scale-[1.06] object-cover opacity-0 transition duration-700 ease-out group-hover:scale-100 group-hover:opacity-100"
+                className="scale-[1.06] object-cover opacity-0 mix-blend-multiply transition duration-700 ease-out group-hover:scale-100 group-hover:opacity-100"
               />
             )}
           </>
@@ -83,18 +83,16 @@ export function ProductCard({
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col px-1 pb-1 pt-4">
-        {product.collection && (
-          <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-clay">
-            {product.collection}
-          </span>
-        )}
-        <h3 className="mt-1 font-heading text-base font-semibold text-navy transition group-hover:text-clay sm:text-lg">
+      <div className="flex flex-1 flex-col px-3 pb-4 pt-4 sm:px-4">
+        {/* The eyebrow and spec rows always take their space, so names and
+            prices line up across a row whatever each product has filled in. */}
+        <span className="truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-clay">
+          {product.collection ?? (product.pricingMode === "per_metre" ? "Под ваш размер" : "Готовая модель")}
+        </span>
+        <h3 className="mt-1 line-clamp-1 font-heading text-base font-semibold text-navy transition group-hover:text-clay sm:text-lg">
           {product.name}
         </h3>
-        {product.specLine && (
-          <p className="mt-1 line-clamp-2 text-xs text-navy/55">{product.specLine}</p>
-        )}
+        <p className="mt-1 line-clamp-2 min-h-8 text-xs text-navy/55">{product.specLine}</p>
 
         <div className="mt-auto flex flex-wrap items-end justify-between gap-2 pt-3">
           {price ? (

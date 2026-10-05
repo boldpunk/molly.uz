@@ -15,7 +15,7 @@ export function Footer({
   logoScale?: number;
 }) {
   return (
-    <footer className="relative mt-16 overflow-hidden bg-navy text-cream">
+    <footer className="relative mt-16 print:hidden overflow-hidden bg-navy text-cream">
       <div aria-hidden className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-clay/15 blur-3xl" />
       <div className="relative mx-auto grid max-w-7xl grid-cols-2 gap-8 px-6 py-14 md:grid-cols-4">
         <div>
