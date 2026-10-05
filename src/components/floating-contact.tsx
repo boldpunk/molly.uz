@@ -58,7 +58,7 @@ export function FloatingContact({
       // The wrapper never takes clicks itself — only the round button and,
       // while open, the menu items do — so the closed menu can't sit
       // invisibly over whatever is underneath in that corner of the page.
-      className={`pointer-events-none fixed bottom-5 right-5 z-40 flex flex-col items-end gap-3 transition duration-500 sm:bottom-8 sm:right-8 ${
+      className={`pointer-events-none fixed bottom-5 right-5 z-40 print:hidden flex flex-col items-end gap-3 transition duration-500 sm:bottom-8 sm:right-8 ${
         visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
       }`}
     >

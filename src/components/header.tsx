@@ -112,7 +112,7 @@ export function Header({
   return (
     <>
       <header
-        className={`sticky top-0 z-50 bg-white/90 backdrop-blur-xl transition-shadow duration-300 ${
+        className={`sticky top-0 z-50 bg-white/90 print:hidden backdrop-blur-xl transition-shadow duration-300 ${
           scrolled ? "shadow-lg shadow-navy/[0.06]" : "shadow-[0_1px_0_rgba(24,43,76,0.08)]"
         }`}
       >

@@ -1,8 +1,8 @@
 "use client";
 
 import Script from "next/script";
-import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
 
 export const YM_ID = Number(process.env.NEXT_PUBLIC_YM_ID ?? 113227850);
 
@@ -20,10 +20,11 @@ export function reachGoal(goal: string, params?: Record<string, unknown>) {
 }
 
 // The App Router swaps pages client-side, so Metrika only sees the first
-// load on its own — report every later navigation as a hit.
+// load on its own — report every later navigation as a hit. Only a change of
+// page counts: filters and the configurator rewrite the query string as the
+// visitor clicks, and those aren't new page views.
 function RouteHits() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const previous = useRef<string | null>(null);
 
   useEffect(() => {
@@ -32,7 +33,7 @@ function RouteHits() {
       ym("hit", url, { referer: previous.current, title: document.title });
     }
     previous.current = url;
-  }, [pathname, searchParams]);
+  }, [pathname]);
 
   return null;
 }
@@ -61,9 +62,7 @@ export function YandexMetrika() {
           />
         </div>
       </noscript>
-      <Suspense fallback={null}>
-        <RouteHits />
-      </Suspense>
+      <RouteHits />
     </>
   );
 }

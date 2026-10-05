@@ -251,7 +251,7 @@ export function CatalogView({
                   // entrance and the grid visibly responds.
                   <div
                     key={`${colour}-${hardware}-${sort}-${p.id}`}
-                    className="animate-fade-up"
+                    className="h-full animate-fade-up"
                     style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}
                   >
                     <ProductCard product={p} />

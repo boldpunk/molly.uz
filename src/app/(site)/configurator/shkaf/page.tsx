@@ -5,6 +5,7 @@ import {
   getWardrobeFinishes,
 } from "@/lib/data";
 import { WardrobeConfigurator } from "@/components/wardrobe-configurator";
+import { decodeProject } from "@/lib/wardrobe-project";
 
 export const dynamic = "force-dynamic";
 
@@ -14,10 +15,15 @@ export const metadata: Metadata = {
     "Соберите шкаф под ваше помещение: количество модулей, наполнение, отделка фасада и фурнитура — оставьте заявку, и мы посчитаем точную стоимость.",
 };
 
-export default async function WardrobeConfiguratorPage() {
-  const [category, finishes] = await Promise.all([
+export default async function WardrobeConfiguratorPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [category, finishes, params] = await Promise.all([
     getCategoryBySlug("garderoby"),
     getWardrobeFinishes(),
+    searchParams,
   ]);
   const products = category
     ? await getProductsByCategory(category.id, category.slug)
@@ -34,6 +40,7 @@ export default async function WardrobeConfiguratorPage() {
       productSlug={linkedProduct?.slug ?? "shkaf"}
       categorySlug="garderoby"
       finishes={finishes}
+      initial={decodeProject(params)}
     />
   );
 }

@@ -15,7 +15,6 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "X-Frame-Options", value: "SAMEORIGIN" },
           {
             key: "Referrer-Policy",
             value: "strict-origin-when-cross-origin",
@@ -30,7 +29,10 @@ const nextConfig: NextConfig = {
               // Stops the site being framed for clickjacking, blocks Flash-era
               // plugin embeds, and prevents an injected <base> from
               // re-pointing every relative URL on the page.
-              "frame-ancestors 'self'",
+              // Webvisor and the Metrika click map replay pages inside their
+              // own frames, so those origins (approved by the owner) may
+              // embed the site too.
+              "frame-ancestors 'self' blob: https://webvisor.com https://*.webvisor.com https://metrika.yandex.ru https://*.metrika.yandex.ru",
               "object-src 'none'",
               "base-uri 'self'",
             ].join("; "),
