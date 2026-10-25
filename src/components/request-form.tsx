@@ -10,6 +10,8 @@ import { PhoneInput } from "@/components/phone-input";
 import { buildStatusDeepLink } from "@/lib/telegram-links";
 import { PageHero } from "@/components/page-hero";
 
+const ROOM_CHOICES = ["Кухня", "Шкаф или гардероб", "Спальня", "Гостиная", "Другое"];
+
 export function RequestForm({
   initialName = "",
   initialPhone = "",
@@ -23,6 +25,7 @@ export function RequestForm({
   const [name, setName] = useState(initialName);
   const [phone, setPhone] = useState(initialPhone);
   const [notes, setNotes] = useState("");
+  const [rooms, setRooms] = useState<string[]>([]);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [trap, setTrap] = useState("");
   const [error, setError] = useState(
@@ -36,10 +39,11 @@ export function RequestForm({
     e.preventDefault();
     setStatus("submitting");
     try {
+      const roomNote = rooms.length ? `Замер: ${rooms.join(", ")}` : "";
       const result = await submitRequest(
         name,
         phone,
-        notes,
+        [roomNote, notes].filter(Boolean).join("\n\n"),
         items,
         customerId,
         trap
@@ -104,23 +108,48 @@ export function RequestForm({
     <PageHero
       eyebrow="Бесплатно"
       title="Заявка на замер"
-      text="Добавьте один или несколько товаров с сайта и укажите контакты — менеджер перезвонит, согласует замер и рассчитает точную цену."
+      text="Оставьте контакты — менеджер перезвонит, согласует удобное время замера и рассчитает точную цену. Модели из каталога можно добавить к заявке, но это не обязательно."
     />
     <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 lg:grid-cols-[1.5fr_1fr]">
     <div>
 
-      {items.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-navy/20 bg-cream-light/60 px-6 py-14 text-center">
-          <p className="font-heading text-lg font-bold text-navy">Список заявки пуст</p>
-          <p className="mt-2 text-sm text-navy/60">
-            Выберите модель в каталоге и нажмите «Оставить заявку» — она появится здесь.
-          </p>
-          <Link href="/catalog" className="btn btn-primary mt-6">
-            Перейти в каталог
-          </Link>
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+          {items.length === 0 ? (
+            <div className="rounded-3xl border border-navy/10 bg-cream-light/60 p-6">
+              <h2 className="font-heading text-lg font-bold text-navy">Что нужно замерить?</h2>
+              <p className="mt-1 text-sm text-navy/55">Можно выбрать несколько — или пропустить и рассказать менеджеру по телефону.</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {ROOM_CHOICES.map((room) => {
+                  const on = rooms.includes(room);
+                  return (
+                    <button
+                      key={room}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => setRooms((r) => (on ? r.filter((x) => x !== room) : [...r, room]))}
+                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                        on ? "bg-navy text-white shadow-md shadow-navy/20" : "bg-white text-navy ring-1 ring-navy/15 hover:ring-navy/40"
+                      }`}
+                    >
+                      {on ? "✓ " : ""}
+                      {room}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-4 text-xs text-navy/50">
+                Уже присмотрели модель?{" "}
+                <Link href="/catalog" className="font-semibold text-navy underline-offset-4 hover:underline">
+                  Добавьте её из каталога
+                </Link>{" "}
+                или{" "}
+                <Link href="/podbor" className="font-semibold text-navy underline-offset-4 hover:underline">
+                  подберите за минуту
+                </Link>
+                .
+              </p>
+            </div>
+          ) : (
           <ul className="flex flex-col gap-3">
             {items.map((item, i) => (
               <li
@@ -159,6 +188,7 @@ export function RequestForm({
               </li>
             ))}
           </ul>
+          )}
 
           <div className="flex flex-col gap-5 rounded-3xl border border-navy/10 bg-white p-6 shadow-xl shadow-navy/[0.04]">
             <h2 className="font-heading text-lg font-bold text-navy">Ваши контакты</h2>
@@ -226,7 +256,6 @@ export function RequestForm({
             .
           </p>
         </form>
-      )}
     </div>
 
     <aside className="flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start">

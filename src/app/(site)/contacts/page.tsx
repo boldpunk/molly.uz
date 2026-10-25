@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getPageBySlug, getContactInfo } from "@/lib/data";
 import { pageMetadata } from "@/lib/seo";
 import { PageHero } from "@/components/page-hero";
+import { MapEmbed } from "@/components/map-embed";
 import type { PageBlock } from "@/db/schema";
 
 export const dynamic = "force-dynamic";
@@ -143,12 +144,7 @@ export default async function ContactsPage() {
             </a>
           </div>
           <div className="overflow-hidden rounded-3xl border border-navy/10">
-            <iframe
-              title="Molly Home на карте"
-              src={mapSrc(contact.mapLat, contact.mapLng)}
-              className="h-full min-h-[380px] w-full"
-              loading="lazy"
-            />
+            <MapEmbed title="Molly Home на карте" src={mapSrc(contact.mapLat, contact.mapLng)} />
           </div>
         </div>
       </section>

@@ -45,6 +45,16 @@ export function Footer({
           </h3>
           <ul className="mt-4 flex flex-col gap-2.5 text-sm text-cream/75">
             <li>
+              <Link href="/podbor" className="transition hover:text-white">
+                Подбор за минуту
+              </Link>
+            </li>
+            <li>
+              <Link href="/configurator/shkaf" className="transition hover:text-white">
+                Конфигуратор шкафа
+              </Link>
+            </li>
+            <li>
               <Link href="/about" className="transition hover:text-white">
                 О бренде
               </Link>
