@@ -227,3 +227,16 @@ input[type="range"]::-moz-range-thumb {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* The product page's sticky price bar takes the bottom edge on phones —
+   lift the contact button above it. */
+@media (max-width: 1023px) {
+  body[data-sticky-cta] .floating-contact {
+    bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
+}
+@media (max-width: 1023px) {
+  body[data-sticky-cta] {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
+}

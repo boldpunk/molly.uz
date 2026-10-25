@@ -110,9 +110,26 @@ function PageBlockView({ block }: { block: PageBlock }) {
           <BrandSlider items={block.items} />
         </div>
       );
-    case "faq":
+    case "faq": {
+      const answered = block.items.filter((item) => item.question.trim() && item.answer.trim());
+      // Lets search engines show the questions as rich results.
+      const faqJsonLd = {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: answered.map((item) => ({
+          "@type": "Question",
+          name: item.question.trim(),
+          acceptedAnswer: { "@type": "Answer", text: item.answer.trim() },
+        })),
+      };
       return (
         <div className="mt-8 flex flex-col gap-3 first:mt-0">
+          {answered.length > 0 && (
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd).replace(/</g, "\\u003c") }}
+            />
+          )}
           {block.items
             .filter((item) => item.question.trim())
             .map((item, i) => (
@@ -134,6 +151,7 @@ function PageBlockView({ block }: { block: PageBlock }) {
             ))}
         </div>
       );
+    }
     case "reviews":
       return (
         <div className="mt-8 first:mt-0">

@@ -102,11 +102,15 @@ export function ProductCard({
                   {formatSum(price.originalAmount)}
                 </span>
               )}
-              <span className="text-sm font-bold text-navy sm:text-base">
+              <span className="whitespace-nowrap text-sm font-bold text-navy sm:text-base">
                 {product.pricingMode === "per_metre" ? "от " : ""}
                 {formatSum(price.amount)}
                 {product.pricingMode === "per_metre" && (
-                  <span className="text-xs font-medium text-navy/50"> / пог.м</span>
+                  <>
+                    {/* Too narrow for one line on phones — the unit drops below */}
+                    <span className="block text-xs font-medium text-navy/50 sm:hidden">за пог.м</span>
+                    <span className="hidden text-xs font-medium text-navy/50 sm:inline"> / пог.м</span>
+                  </>
                 )}
               </span>
             </div>
