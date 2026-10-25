@@ -2,6 +2,9 @@ import type { MetadataRoute } from "next";
 import { getCategories, getAllProducts } from "@/lib/data";
 import { SITE_URL } from "@/lib/site";
 
+// Built per request so products added in the admin show up straight away.
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [categories, products] = await Promise.all([
     getCategories(),

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Category, Product } from "@/lib/types";
 import { formatSum } from "@/lib/format";
@@ -104,6 +104,24 @@ export function ProductDetail({
     if (!isConfigurable || !hardware || !product.discountPercent) return null;
     return Math.round(hardware.pricePerMetre * width);
   }, [isConfigurable, hardware, width, product.discountPercent]);
+
+  // On phones the price card scrolls away long before the page ends, so a
+  // slim bar with the price and the main button takes over once it has.
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const [showStickyCta, setShowStickyCta] = useState(false);
+  useEffect(() => {
+    const el = ctaRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      setShowStickyCta(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  useEffect(() => {
+    document.body.toggleAttribute("data-sticky-cta", showStickyCta);
+    return () => document.body.removeAttribute("data-sticky-cta");
+  }, [showStickyCta]);
 
   function handleAddToRequest() {
     addItem({
@@ -508,7 +526,7 @@ export function ProductDetail({
               </p>
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row">
+            <div ref={ctaRef} className="flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
                 onClick={handleAddToRequest}
@@ -623,6 +641,36 @@ export function ProductDetail({
           </div>
         </div>
       )}
+
+      <div
+        aria-hidden={!showStickyCta}
+        className={`fixed inset-x-0 bottom-0 z-40 border-t border-navy/10 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_rgba(24,43,76,0.08)] backdrop-blur transition-transform duration-300 lg:hidden ${
+          showStickyCta ? "translate-y-0" : "pointer-events-none translate-y-full"
+        }`}
+      >
+        <div className="mx-auto flex max-w-xl items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs text-navy/55">{product.name}</p>
+            <p className="truncate font-heading text-base font-bold text-navy">
+              {isConfigurable
+                ? estimate !== null
+                  ? `≈ ${formatSum(estimate)}`
+                  : "Цена после замера"
+                : isFixedPrice && displayPrice
+                  ? formatSum(displayPrice.amount)
+                  : "Цена по запросу"}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleAddToRequest}
+            tabIndex={showStickyCta ? 0 : -1}
+            className="btn btn-primary shrink-0 px-5 py-3 text-sm"
+          >
+            {submitted ? "Добавлено ✓" : isConfigurable ? "Заявка на замер" : primaryLabel}
+          </button>
+        </div>
+      </div>
 
       <TrackProductView
         product={{
