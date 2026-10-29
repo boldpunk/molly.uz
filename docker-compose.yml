@@ -14,7 +14,12 @@ services:
       # redirects straight to a page showing it) would get that cached
       # not-found response for up to 5 minutes even once the file exists.
       - ./uploads:/app/public/uploads
+      # Resized WebP copies made by /api/img — kept across redeploys.
+      - img-cache:/app/.img-cache
     # Bound to localhost only — the host's own reverse proxy (nginx/caddy)
     # is what terminates TLS and faces the internet on 80/443.
     ports:
       - "127.0.0.1:3010:3000"
+
+volumes:
+  img-cache:
