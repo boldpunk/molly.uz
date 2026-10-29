@@ -22,10 +22,28 @@ const CACHE_DIR = process.env.IMG_CACHE_DIR || path.join(os.tmpdir(), "molly-img
 const REMOTE_HOST = /\.public\.blob\.vercel-storage\.com$/;
 const MAX_SOURCE_BYTES = 25 * 1024 * 1024;
 
+function localPath(src: string): string | null {
+  const file = path.normalize(path.join(PUBLIC_DIR, decodeURIComponent(src)));
+  return file.startsWith(PUBLIC_DIR + path.sep) ? file : null;
+}
+
+/**
+ * Part of the cache key that changes when a local file does. The cache
+ * outlives deploys, and a deploy can replace a bundled /images file under
+ * the same name.
+ */
+async function sourceVersion(src: string): Promise<string> {
+  if (!src.startsWith("/")) return "";
+  const file = localPath(src);
+  if (!file) return "";
+  const info = await stat(file).catch(() => null);
+  return info ? `${info.size}-${Math.round(info.mtimeMs)}` : "";
+}
+
 async function loadSource(src: string): Promise<Buffer | null> {
   if (src.startsWith("/")) {
-    const file = path.normalize(path.join(PUBLIC_DIR, decodeURIComponent(src)));
-    if (!file.startsWith(PUBLIC_DIR + path.sep)) return null;
+    const file = localPath(src);
+    if (!file) return null;
     try {
       const info = await stat(file);
       if (!info.isFile() || info.size > MAX_SOURCE_BYTES) return null;
@@ -66,7 +84,8 @@ export async function GET(req: NextRequest) {
       : "public, max-age=86400, stale-while-revalidate=604800",
   };
 
-  const key = createHash("sha1").update(`${src}|${width}|${quality}`).digest("hex");
+  const version = await sourceVersion(src);
+  const key = createHash("sha1").update(`${src}|${version}|${width}|${quality}`).digest("hex");
   const cacheFile = path.join(CACHE_DIR, `${key}.webp`);
   const hit = await readFile(cacheFile).catch(() => null);
   if (hit) return new NextResponse(new Uint8Array(hit), { headers });
