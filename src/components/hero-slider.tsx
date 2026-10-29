@@ -38,6 +38,9 @@ function Arrow({ dir }: { dir: -1 | 1 }) {
 export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  // The other slides wait until the first photo is on screen, so on a phone
+  // it gets the whole connection instead of sharing it with hidden ones.
+  const [restReady, setRestReady] = useState(false);
   // Reduced motion shortens every animation to ~0ms, which would turn the
   // progress-bar timer into a runaway loop — autoplay stays off instead.
   const [autoplay, setAutoplay] = useState(true);
@@ -96,15 +99,18 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
                   i === index ? "scale-100 opacity-100" : "scale-[1.04] opacity-0"
                 }`}
               >
-                <Image
-                  src={s.image}
-                  alt={s.alt}
-                  fill
-                  priority={i === 0}
-                  quality={85}
-                  sizes="(min-width: 1280px) 680px, (min-width: 1024px) 55vw, 100vw"
-                  className="object-cover"
-                />
+                {(i === 0 || i === index || restReady) && (
+                  <Image
+                    src={s.image}
+                    alt={s.alt}
+                    fill
+                    priority={i === 0}
+                    quality={85}
+                    sizes="(min-width: 1280px) 680px, (min-width: 1024px) 55vw, 100vw"
+                    className="object-cover"
+                    onLoad={i === 0 ? () => setRestReady(true) : undefined}
+                  />
+                )}
               </div>
             ))}
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-ink/35 to-transparent" />

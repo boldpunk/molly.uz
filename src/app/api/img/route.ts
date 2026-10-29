@@ -16,7 +16,9 @@ export const runtime = "nodejs";
 const WIDTHS = new Set([256, 384, 640, 750, 828, 1080, 1200, 1920, 2048]);
 const QUALITIES = new Set([60, 75, 85]);
 const PUBLIC_DIR = path.join(process.cwd(), "public");
-const CACHE_DIR = path.join(os.tmpdir(), "molly-img-cache");
+// In production this points at a Docker volume, so resized images survive
+// redeploys instead of being re-encoded for the first visitors after each one.
+const CACHE_DIR = process.env.IMG_CACHE_DIR || path.join(os.tmpdir(), "molly-img-cache");
 const REMOTE_HOST = /\.public\.blob\.vercel-storage\.com$/;
 const MAX_SOURCE_BYTES = 25 * 1024 * 1024;
 
