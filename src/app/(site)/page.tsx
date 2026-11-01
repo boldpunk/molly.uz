@@ -23,6 +23,7 @@ import { FeaturedProducts } from "@/components/home/featured-products";
 import { QuizTeaser } from "@/components/home/quiz-teaser";
 import { KitchenHotspots } from "@/components/home/kitchen-hotspots";
 import { RecentlyViewed } from "@/components/recently-viewed";
+import { ReelsStrip } from "@/components/home/reels-strip";
 import { pageMetadata } from "@/lib/seo";
 import { categoryImage } from "@/lib/category-images";
 import type { PageBlock } from "@/db/schema";
@@ -64,6 +65,7 @@ const GALLERY_PHOTOS = [
 const CATEGORY_SLIDES: Record<string, Omit<HeroSlide, "image" | "alt">> = {
   "kuhonnaya-mebel": {
     eyebrow: "Кухни на заказ",
+    nav: "Кухни",
     title: "Кухня, собранная по вашим размерам",
     text: "Фасады МДФ с окраской, влагостойкие корпуса и фурнитура HIGOLD или BLUM. Стоимость — за погонный метр.",
     cta: { label: "Смотреть кухни", href: "/catalog/kuhonnaya-mebel" },
@@ -71,6 +73,7 @@ const CATEGORY_SLIDES: Record<string, Omit<HeroSlide, "image" | "alt">> = {
   },
   garderoby: {
     eyebrow: "Конфигуратор",
+    nav: "Шкафы",
     title: "Соберите свой шкаф онлайн",
     text: "Модули, наполнение, цвет фасада и петли — спецификация готова за пару минут, заявка прямо со страницы.",
     cta: { label: "Собрать шкаф", href: "/configurator/shkaf" },
@@ -78,6 +81,7 @@ const CATEGORY_SLIDES: Record<string, Omit<HeroSlide, "image" | "alt">> = {
   },
   "spalnye-garnitury": {
     eyebrow: "Спальни",
+    nav: "Спальни",
     title: "Спальня, в которой хочется отдыхать",
     text: "Кровати, тумбы и шкафы одной коллекции — спокойные фактуры и продуманное хранение.",
     cta: { label: "Смотреть спальни", href: "/catalog/spalnye-garnitury" },
@@ -173,6 +177,7 @@ export default async function HomePage() {
     "Molly Home — производитель мебели в Ташкенте. Мы совмещаем современные технологии производства с индивидуальным подходом к каждому заказу — от кухни по размерам вашей комнаты до готовых моделей спален и гардеробов.";
   const brandImage = pick(blocks, 6, "image");
   const instagramUrls = pick(blocks, 7, "instagram_strip")?.urls ?? [];
+  const reels = pick(blocks, 7, "instagram_strip")?.videos ?? [];
   const partnerBrands = pick(blocks, 8, "brand_list")?.items ?? [];
   const reviews = pick(blocks, 9, "reviews")?.items ?? [];
 
@@ -208,6 +213,7 @@ export default async function HomePage() {
       image: heroImage?.url || heroProduct?.imageUrl || "/images/hero.jpg",
       alt: heroImage?.alt || "Интерьер с мебелью Molly Home",
       eyebrow: "Мебельная фабрика в Ташкенте",
+      nav: "Molly Home",
       title: heroHeading,
       text: heroSubtitle,
       cta: { label: "Смотреть каталог", href: "/catalog" },
@@ -251,8 +257,16 @@ export default async function HomePage() {
         <div className="mt-10 grid auto-rows-[180px] grid-cols-2 gap-4 sm:auto-rows-[220px] md:grid-cols-4">
           {categories.map((cat, i) => {
             const Icon = getCategoryIcon(cat.slug);
-            const image = categoryImage(cat);
             const big = i === 0;
+            // The big tile is shown far larger than the bundled 900 px
+            // category photos allow, so without an admin cover it borrows a
+            // full-size product photo (not FIONA, which the hero and the
+            // hotspots section already use).
+            const tilePhoto =
+              big && !cat.imageUrl
+                ? allProducts.find((p) => p.categorySlug === cat.slug && p.imageUrl && p.slug !== "fiona")?.imageUrl
+                : undefined;
+            const image = tilePhoto ?? categoryImage(cat);
             return (
               <Reveal
                 key={cat.id}
@@ -524,6 +538,11 @@ export default async function HomePage() {
             @molly_home.uz <ArrowIcon />
           </a>
         </Reveal>
+        {reels.length > 0 ? (
+          <Reveal delay={100} className="mt-8">
+            <ReelsStrip reels={reels} />
+          </Reveal>
+        ) : (
         <div className="mt-8 grid grid-cols-3 gap-2 sm:gap-3 md:grid-cols-6">
           {instagramUrls.length > 0
             ? instagramUrls.slice(0, 6).map((url, i) => (
@@ -555,6 +574,7 @@ export default async function HomePage() {
                 <PlaceholderImage key={i} label="Instagram" aspect="aspect-square" />
               ))}
         </div>
+        )}
       </section>
 
       {/* Partner brands */}

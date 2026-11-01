@@ -132,7 +132,12 @@ export type PageBlock =
       items: { name: string; role?: string; rating: number; text: string }[];
     }
   | { type: "faq"; items: { question: string; answer: string }[] }
-  | { type: "instagram_strip"; urls: string[] }
+  | {
+      type: "instagram_strip";
+      urls: string[];
+      /** Short clips shown as live, muted, looping reels. */
+      videos?: { url: string; caption?: string }[];
+    }
   | {
       type: "contact_info";
       phone: string;
