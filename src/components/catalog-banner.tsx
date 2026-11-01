@@ -76,7 +76,7 @@ export function CatalogBanner({
                 aria-hidden={i !== index}
               >
                 {(i === 0 || i === index || Math.abs(i - index) === 1) && (
-                  <div key={i === index ? `on-${index}` : "off"} className={`absolute inset-0 ${i === index ? "animate-drift" : ""}`}>
+                  <div key={i === index ? `on-${index}` : "off"} className={`absolute inset-0 bg-cream-light ${i === index ? "animate-drift" : ""}`}>
                     <Image
                       src={s.src}
                       alt={s.name}
