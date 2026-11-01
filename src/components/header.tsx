@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { createPortal } from "react-dom";
 import { Category } from "@/lib/types";
@@ -10,6 +10,7 @@ import { useRequestList } from "@/lib/request-list-context";
 import { Logo } from "@/components/logo";
 import { getCategoryIcon } from "@/components/icons/categories";
 import { LocationPicker } from "@/components/location-picker";
+import { SearchOverlay } from "@/components/search-overlay";
 import { categoryImage } from "@/lib/category-images";
 
 // `wide` links only fit the top bar from xl up; below that they stay in the
@@ -57,6 +58,8 @@ export function Header({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const closeSearch = useCallback(() => setSearchOpen(false), []);
   const { items } = useRequestList();
   const pathname = usePathname();
   const closeMenuTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -225,9 +228,14 @@ export function Header({
               <Icon d={ICONS.phone} className="h-5 w-5 text-clay 2xl:h-4 2xl:w-4" />
               <span className="hidden 2xl:inline">{phone}</span>
             </a>
-            <Link href="/search" className="rounded-full p-2.5 text-navy transition hover:bg-navy/5" aria-label="Поиск">
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className="rounded-full p-2.5 text-navy transition hover:bg-navy/5"
+              aria-label="Поиск"
+            >
               <Icon d={ICONS.search} />
-            </Link>
+            </button>
             <Link
               href="/account#favourites"
               className="hidden rounded-full p-2.5 text-navy transition hover:bg-navy/5 sm:inline-flex"
@@ -266,6 +274,8 @@ export function Header({
           className="absolute bottom-0 left-0 h-[2px] w-full origin-left scale-x-0 bg-gradient-to-r from-clay to-accent-dark"
         />
       </header>
+
+      {searchOpen && <SearchOverlay onClose={closeSearch} />}
 
       {/* Mobile drawer */}
       {drawerOpen &&

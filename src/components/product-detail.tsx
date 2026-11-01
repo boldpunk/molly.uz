@@ -19,6 +19,8 @@ import { PageBlocks } from "@/components/page-blocks";
 import type { PageBlock } from "@/db/schema";
 import { UspIcon } from "@/components/usp-icons";
 import { RecentlyViewed, TrackProductView } from "@/components/recently-viewed";
+import { ShareButton } from "@/components/share-button";
+import { ZoomLens } from "@/components/zoom-lens";
 
 const MIN_WIDTH = 2;
 const MAX_WIDTH = 15;
@@ -292,6 +294,7 @@ export function ProductDetail({
                   priority
                   className="animate-fade-in object-contain"
                 />
+                <ZoomLens key={`zoom-${activeImage}`} src={activeImage} />
               </button>
             ) : (
               <PlaceholderImage label={product.name} aspect="aspect-[5/4]" className="rounded-none border-0" />
@@ -550,6 +553,7 @@ export function ProductDetail({
               >
                 Задать вопрос в Telegram →
               </a>
+              <ShareButton title={`${product.name} — Molly Home`} url={productUrl} />
             </div>
           </div>
 
