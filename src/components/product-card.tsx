@@ -21,6 +21,15 @@ export function ProductCard({
   // to see a piece from another angle without opening it.
   const altImage = product.galleryUrls.find((url) => url && url !== product.imageUrl);
   const swatches = (product.colourOptions ?? []).filter((c) => c.swatch);
+  // Colour variants of one model share a name («Уголок Queen» ×3), so the
+  // colour joins the line above it to tell them apart.
+  const colour = product.attributes.find((a) => a.key.toLowerCase() === "цвет")?.value;
+  const eyebrow = [
+    product.collection ?? (product.pricingMode === "per_metre" ? "Под ваш размер" : "Готовая модель"),
+    colour,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <Link
@@ -87,7 +96,7 @@ export function ProductCard({
         {/* The eyebrow and spec rows always take their space, so names and
             prices line up across a row whatever each product has filled in. */}
         <span className="truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-clay">
-          {product.collection ?? (product.pricingMode === "per_metre" ? "Под ваш размер" : "Готовая модель")}
+          {eyebrow}
         </span>
         <h3 className="mt-1 line-clamp-1 font-heading text-base font-semibold text-navy transition group-hover:text-clay sm:text-lg">
           {product.name}
