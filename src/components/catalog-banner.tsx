@@ -84,7 +84,9 @@ export function CatalogBanner({
                       priority={i === 0}
                       quality={85}
                       sizes="(min-width: 1280px) 620px, (min-width: 640px) 52vw, 100vw"
-                      className="object-cover mix-blend-multiply"
+                      // contain: studio shots are often taller than the frame and
+                      // must not lose their top and bottom; 3:2 interiors fill it anyway.
+                      className="object-contain mix-blend-multiply"
                     />
                   </div>
                 )}
