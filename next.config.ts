@@ -6,6 +6,14 @@ import type { NextConfig } from "next";
 // set the VERCEL env var.
 const nextConfig: NextConfig = {
   output: process.env.VERCEL ? undefined : "standalone",
+  experimental: {
+    serverActions: {
+      // Admin photo uploads go through server actions and allow up to 8 MB
+      // (see upload-actions.ts); the 1 MB default rejected most of them.
+      // nginx caps request bodies at 10 MB in front of this.
+      bodySizeLimit: "9mb",
+    },
+  },
   // Headers that add protection without constraining scripts: a full
   // script-src CSP would need nonces for the inline analytics snippet, so
   // that is left as a separate change rather than risked at launch.

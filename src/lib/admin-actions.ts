@@ -1,5 +1,7 @@
 "use server";
 
+import { requireRole, ROLES } from "./admin-guard";
+
 import { and, eq, inArray, ne } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "./revalidate";
@@ -46,6 +48,7 @@ function parseJsonArray<T>(raw: FormDataEntryValue | null): T[] {
 // --- Categories ---------------------------------------------------------
 
 export async function createCategory(formData: FormData) {
+  await requireRole(ROLES.catalog);
   await db.insert(categories).values({
     name: String(formData.get("name")),
     slug: String(formData.get("slug")),
@@ -63,6 +66,7 @@ export async function createCategory(formData: FormData) {
 }
 
 export async function updateCategory(id: string, formData: FormData) {
+  await requireRole(ROLES.catalog);
   await db
     .update(categories)
     .set({
@@ -83,6 +87,7 @@ export async function updateCategory(id: string, formData: FormData) {
 }
 
 export async function deleteCategory(id: string) {
+  await requireRole(ROLES.catalog);
   await db.delete(categories).where(eq(categories.id, id));
   revalidatePath("/admin/categories");
   revalidatePath("/", "layout");
@@ -153,6 +158,7 @@ async function deleteProductImageIfUnreferenced(url: string, excludeProductId: s
 }
 
 export async function createProduct(formData: FormData) {
+  await requireRole(ROLES.catalog);
   await db.insert(products).values(productValuesFromFormData(formData));
   revalidatePath("/admin/products");
   revalidatePath("/", "layout");
@@ -160,6 +166,7 @@ export async function createProduct(formData: FormData) {
 }
 
 export async function updateProduct(id: string, formData: FormData) {
+  await requireRole(ROLES.catalog);
   const [existing] = await db
     .select({ imageUrl: products.imageUrl, galleryUrls: products.galleryUrls })
     .from(products)
@@ -187,6 +194,7 @@ export async function updateProduct(id: string, formData: FormData) {
 // Several products at once from the list: show or hide them on the site,
 // mark them popular, or move them to another category.
 export async function bulkUpdateProducts(formData: FormData) {
+  await requireRole(ROLES.catalog);
   const ids = formData.getAll("ids").map(String).filter(Boolean);
   const op = String(formData.get("op") ?? "");
   if (ids.length === 0) return;
@@ -208,6 +216,7 @@ export async function bulkUpdateProducts(formData: FormData) {
 }
 
 export async function duplicateProduct(id: string) {
+  await requireRole(ROLES.catalog);
   const [existing] = await db
     .select()
     .from(products)
@@ -255,6 +264,7 @@ export async function duplicateProduct(id: string) {
 }
 
 export async function deleteProduct(id: string) {
+  await requireRole(ROLES.catalog);
   const [existing] = await db
     .select({ imageUrl: products.imageUrl, galleryUrls: products.galleryUrls })
     .from(products)
@@ -279,6 +289,7 @@ export async function deleteProduct(id: string) {
 // bot; the admin panel can only edit notes) --------------------------------
 
 export async function createManualOrder(formData: FormData) {
+  await requireRole(ROLES.sales);
   const customerName = String(formData.get("customerName") ?? "").trim();
   const customerPhone = String(formData.get("customerPhone") ?? "").trim();
   const source = String(formData.get("source") ?? "").trim() || "Ручной ввод";
@@ -345,6 +356,7 @@ export async function createManualOrder(formData: FormData) {
 }
 
 export async function updateRequest(id: string, formData: FormData) {
+  await requireRole(ROLES.sales);
   const notes = String(formData.get("notes") ?? "");
 
   await db
@@ -358,6 +370,7 @@ export async function updateRequest(id: string, formData: FormData) {
 }
 
 export async function deleteRequest(id: string) {
+  await requireRole(ROLES.sales);
   if (isStaffNotifyConfigured()) {
     const [current] = await db
       .select({ telegramMessageId: requests.telegramMessageId })
@@ -401,6 +414,7 @@ function revalidatePageRoutes(slug: string) {
 }
 
 export async function updatePage(slug: string, formData: FormData) {
+  await requireRole(ROLES.content);
   const title = String(formData.get("title") ?? "");
   const blocks = parseJsonArray<PageBlock>(formData.get("blocksJson"));
   const metaTitle = String(formData.get("metaTitle") ?? "") || null;
@@ -418,6 +432,7 @@ export async function updatePage(slug: string, formData: FormData) {
 
 /** Rolls a page back to a saved revision — the current state is kept too. */
 export async function restorePageRevision(revisionId: string) {
+  await requireRole(ROLES.content);
   const [revision] = await db
     .select()
     .from(pageRevisions)
@@ -449,6 +464,7 @@ interface WardrobeFinishInput {
 }
 
 export async function updateWardrobeFinishes(formData: FormData) {
+  await requireRole(ROLES.catalog);
   const items = parseJsonArray<WardrobeFinishInput>(
     formData.get("finishesJson")
   )
@@ -476,6 +492,7 @@ export async function updateWardrobeFinishes(formData: FormData) {
 // --- Telegram employees (bot access, separate from admin_users/admin login) -
 
 export async function approveEmployeeApplication(applicationId: string) {
+  await requireRole(ROLES.admin);
   const [application] = await db
     .select()
     .from(employeeApplications)
@@ -507,6 +524,7 @@ export async function approveEmployeeApplication(applicationId: string) {
 }
 
 export async function rejectEmployeeApplication(applicationId: string) {
+  await requireRole(ROLES.admin);
   const [application] = await db
     .select()
     .from(employeeApplications)
@@ -528,6 +546,7 @@ export async function rejectEmployeeApplication(applicationId: string) {
 }
 
 export async function addEmployeeManually(formData: FormData) {
+  await requireRole(ROLES.admin);
   const telegramId = String(formData.get("telegramId") ?? "").trim();
   const name = String(formData.get("name") ?? "").trim();
   if (!telegramId || !name || !/^\d+$/.test(telegramId)) {
@@ -544,6 +563,7 @@ export async function addEmployeeManually(formData: FormData) {
 }
 
 export async function removeEmployee(id: string) {
+  await requireRole(ROLES.admin);
   await db.delete(employees).where(eq(employees.id, id));
   revalidatePath("/admin/employees");
 }

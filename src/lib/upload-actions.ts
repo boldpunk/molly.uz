@@ -1,5 +1,7 @@
 "use server";
 
+import { requireRole, ROLES } from "./admin-guard";
+
 import { randomBytes } from "node:crypto";
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -63,6 +65,7 @@ async function uploadImage(
 export async function uploadProductImage(
   formData: FormData
 ): Promise<{ url: string } | { error: string }> {
+  await requireRole(ROLES.catalog);
   return uploadImage(formData, "products");
 }
 
@@ -84,6 +87,7 @@ const SVG_FORBIDDEN = [
 export async function uploadBrandAsset(
   formData: FormData
 ): Promise<{ url: string } | { error: string }> {
+  await requireRole(ROLES.admin);
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
     return { error: "Файл не выбран." };
@@ -128,16 +132,19 @@ export async function uploadBrandAsset(
 export async function uploadProposalImage(
   formData: FormData
 ): Promise<{ url: string } | { error: string }> {
+  await requireRole(ROLES.sales);
   return uploadImage(formData, "proposals");
 }
 
 export async function uploadPageImage(
   formData: FormData
 ): Promise<{ url: string } | { error: string }> {
+  await requireRole(ROLES.content);
   return uploadImage(formData, "pages");
 }
 
 export async function deleteProductImage(url: string): Promise<void> {
+  await requireRole(ROLES.catalog);
   if (!url.startsWith("/uploads/")) return;
   const target = path.join(
     /* turbopackIgnore: true */ UPLOAD_DIR,
