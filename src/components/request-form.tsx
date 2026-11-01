@@ -9,6 +9,7 @@ import { reachGoal } from "@/components/yandex-metrika";
 import { PhoneInput } from "@/components/phone-input";
 import { buildStatusDeepLink } from "@/lib/telegram-links";
 import { PageHero } from "@/components/page-hero";
+import { LOCATIONS, saveLocation, useLocation, withLocationNote } from "@/lib/location";
 
 const ROOM_CHOICES = ["Кухня", "Шкаф или гардероб", "Спальня", "Гостиная", "Другое"];
 
@@ -26,6 +27,7 @@ export function RequestForm({
   const [phone, setPhone] = useState(initialPhone);
   const [notes, setNotes] = useState("");
   const [rooms, setRooms] = useState<string[]>([]);
+  const location = useLocation();
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [trap, setTrap] = useState("");
   const [error, setError] = useState(
@@ -43,7 +45,7 @@ export function RequestForm({
       const result = await submitRequest(
         name,
         phone,
-        [roomNote, notes].filter(Boolean).join("\n\n"),
+        withLocationNote([roomNote, notes].filter(Boolean).join("\n\n")),
         items,
         customerId,
         trap
@@ -210,6 +212,24 @@ export function RequestForm({
                 onChange={setPhone}
                 className="mt-1"
               />
+            </div>
+            <div>
+              <label htmlFor="request-location" className="text-sm font-medium text-navy">
+                Район замера
+              </label>
+              <select
+                id="request-location"
+                value={location}
+                onChange={(e) => saveLocation(e.target.value)}
+                className="input mt-1.5 rounded-xl py-3"
+              >
+                <option value="">Не выбран — уточним по телефону</option>
+                {LOCATIONS.map((loc) => (
+                  <option key={loc} value={loc}>
+                    {loc}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="text-sm font-medium text-navy">

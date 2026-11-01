@@ -85,13 +85,23 @@ export function Footer({
               </a>
             </li>
             <li>
+              {/* A two-line card rather than a pill: the label wraps in the
+                  narrow phone column and a wrapped pill looks broken. */}
               <a
                 href="https://t.me/mollyhomeuzbot"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full bg-cream/10 px-3 py-1.5 font-medium text-cream transition hover:bg-cream hover:text-navy"
+                className="group mt-1 flex items-center gap-3 rounded-2xl bg-cream/[0.08] p-3 ring-1 ring-cream/10 transition hover:bg-cream hover:ring-cream"
               >
-                Проверить заявку в Telegram
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#2AABEE] text-white">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4 -translate-x-px" aria-hidden>
+                    <path fill="currentColor" d="M21.4 4.6 2.9 11.7c-1.3.5-1.2 1.2-.2 1.5l4.7 1.5 1.8 5.6c.2.6.4.8.9.8.4 0 .6-.2.8-.4l2.3-2.2 4.7 3.5c.9.5 1.5.2 1.7-.8l3.1-14.6c.3-1.3-.5-1.8-1.3-1.5Zm-3.9 3.6-8.9 8-.3 3.4-1.4-4.6 10.3-6.5c.5-.3.8-.1.3.2Z" />
+                  </svg>
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold text-cream transition group-hover:text-navy">Статус заявки</span>
+                  <span className="block text-xs text-cream/55 transition group-hover:text-navy/60">в Telegram-боте</span>
+                </span>
               </a>
             </li>
           </ul>

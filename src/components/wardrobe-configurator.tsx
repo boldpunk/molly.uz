@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { submitRequest } from "@/lib/actions";
 import { reachGoal } from "@/components/yandex-metrika";
+import { withLocationNote } from "@/lib/location";
 import { getHardwareBrandBadge } from "@/lib/hardware-brands";
 import { PhoneInput } from "@/components/phone-input";
 import { buildStatusDeepLink } from "@/lib/telegram-links";
@@ -635,7 +636,7 @@ export function WardrobeConfigurator({
     setStatus("submitting");
     try {
       const projectNote = `Проект в конфигураторе: ${projectUrl()}`;
-      const result = await submitRequest(name, phone, comment ? `${comment}\n\n${projectNote}` : projectNote, [
+      const result = await submitRequest(name, phone, withLocationNote(comment ? `${comment}\n\n${projectNote}` : projectNote), [
         {
           productId,
           productName: "Шкаф — по конфигуратору",
