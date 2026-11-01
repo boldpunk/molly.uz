@@ -34,7 +34,10 @@ export async function GET(req: NextRequest) {
         name: p.name,
         href: `/catalog/${p.categorySlug}/${p.slug}`,
         image: p.imageUrl ?? null,
-        category: categoryName.get(p.categorySlug) ?? "",
+        // The colour tells apart variants that share a model name.
+        category: [categoryName.get(p.categorySlug), p.attributes.find((a) => a.key.toLowerCase() === "цвет")?.value]
+          .filter(Boolean)
+          .join(" · "),
         price: price
           ? `${p.pricingMode === "per_metre" ? "от " : ""}${formatSum(price.amount)}${p.pricingMode === "per_metre" ? " / пог.м" : ""}`
           : "Цена по запросу",
