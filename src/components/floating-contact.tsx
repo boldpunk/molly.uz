@@ -94,7 +94,7 @@ export function FloatingContact({
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-label={open ? "Закрыть" : "Связаться с нами"}
-        className={`relative flex h-14 w-14 items-center justify-center rounded-full bg-navy text-white shadow-xl shadow-navy/30 transition hover:bg-clay ${
+        className={`relative flex h-14 w-14 items-center justify-center rounded-full bg-navy text-white shadow-xl shadow-navy/30 ring-2 ring-white/90 transition hover:bg-clay ${
           visible ? "pointer-events-auto" : ""
         }`}
       >

@@ -333,9 +333,7 @@ export function Header({
               </nav>
 
               <div className="mt-auto flex flex-col gap-3 pt-6">
-                <div className="px-1 text-xs text-navy/60">
-                  <LocationPicker />
-                </div>
+                <LocationPicker />
                 <a href={`tel:${tel}`} className="btn btn-outline">
                   <Icon d={ICONS.phone} className="h-4 w-4" />
                   {phone}

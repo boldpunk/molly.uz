@@ -10,6 +10,7 @@ import { PhoneInput } from "@/components/phone-input";
 import { ProductCard } from "@/components/product-card";
 import { getCategoryIcon } from "@/components/icons/categories";
 import { buildStatusDeepLink } from "@/lib/telegram-links";
+import { withLocationNote } from "@/lib/location";
 
 type Size = (typeof SIZES)[number]["id"];
 type Timing = (typeof TIMING)[number]["id"];
@@ -122,7 +123,7 @@ export function FurnitureQuiz({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setStatus("submitting");
-    const notes = `Подбор на сайте: ${summary.map(([k, v]) => `${k} — ${v}`).join("; ")}`;
+    const notes = withLocationNote(`Подбор на сайте: ${summary.map(([k, v]) => `${k} — ${v}`).join("; ")}`);
     try {
       const result = await submitRequest(
         name,
