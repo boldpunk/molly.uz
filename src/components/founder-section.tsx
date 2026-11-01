@@ -19,7 +19,8 @@ export function FounderSection({ founder }: { founder: Founder }) {
       <div className="relative isolate grid overflow-hidden rounded-[2rem] bg-navy text-white lg:grid-cols-[0.85fr_1.15fr]">
         <div aria-hidden className="absolute -right-24 -top-24 -z-10 h-80 w-80 rounded-full bg-clay/25 blur-3xl" />
 
-        <div className="relative aspect-[4/5] lg:aspect-auto lg:min-h-[520px]">
+        {/* A portrait gets a tall frame; the initials alone get a short band on phones. */}
+        <div className={`relative lg:aspect-auto lg:min-h-[520px] ${founder.photoUrl ? "aspect-[4/5]" : "aspect-[2/1] sm:aspect-[5/2]"}`}>
           {founder.photoUrl ? (
             <Image
               src={founder.photoUrl}
@@ -32,12 +33,14 @@ export function FounderSection({ founder }: { founder: Founder }) {
           ) : (
             // Until a portrait is uploaded: the initials on the brand's cream.
             <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-cream to-clay-light">
-              <span className="font-heading text-[7rem] font-bold leading-none tracking-tight text-navy/15 sm:text-[9rem]">
+              <span className="font-heading text-[5rem] font-bold leading-none tracking-tight text-navy/15 sm:text-[7rem] lg:text-[9rem]">
                 {initials(founder.name)}
               </span>
             </div>
           )}
-          <div aria-hidden className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-navy/60 to-transparent lg:hidden" />
+          {founder.photoUrl && (
+            <div aria-hidden className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-navy/60 to-transparent lg:hidden" />
+          )}
         </div>
 
         <div className="flex flex-col justify-center p-7 sm:p-10 lg:p-14">
