@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Category, Product } from "@/lib/types";
@@ -9,6 +8,7 @@ import { getCategoryIcon, FurnitureIcon } from "@/components/icons/categories";
 import { getHardwareBrandBadge } from "@/lib/hardware-brands";
 import { getDisplayPrice } from "@/lib/pricing";
 import { categoryImage } from "@/lib/category-images";
+import { CatalogBanner, type BannerShot } from "@/components/catalog-banner";
 
 function pluralModels(n: number) {
   const mod10 = n % 10;
@@ -48,9 +48,19 @@ export function CatalogView({
     }
   }, [category?.id]);
 
-  const bannerImage = category
-    ? categoryImage(category)
-    : "/images/hero.jpg";
+  // An admin-uploaded cover wins; otherwise the section's own models (hits
+  // first), which are full-size photos, and the bundled cover as a last resort.
+  const bannerShots = useMemo<BannerShot[]>(() => {
+    if (category?.imageUrl) return [{ src: category.imageUrl, name: category.name }];
+    const own = [...products]
+      .filter((p) => p.imageUrl)
+      .sort((a, b) => Number(!!b.isFeatured) - Number(!!a.isFeatured))
+      .slice(0, 4)
+      .map((p) => ({ src: p.imageUrl!, name: p.name, href: `/catalog/${p.categorySlug}/${p.slug}` }));
+    if (own.length > 0) return own;
+    const fallback = category ? categoryImage(category) : "/images/hero.jpg";
+    return fallback ? [{ src: fallback, name: category?.name ?? "Molly Home" }] : [];
+  }, [category, products]);
 
   const colourOptions = useMemo(() => {
     const map = new Map<string, { label: string; swatch: string }>();
@@ -100,37 +110,13 @@ export function CatalogView({
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
-      {/* Banner: the section's photo behind its name */}
-      <div className="relative isolate overflow-hidden rounded-[2rem] bg-ink px-6 py-10 text-white sm:px-10 sm:py-14">
-        {bannerImage && (
-          <Image
-            src={bannerImage}
-            alt=""
-            fill
-            priority
-            sizes="(min-width: 1280px) 1232px, 100vw"
-            className="-z-10 animate-kenburns object-cover"
-          />
-        )}
-        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-ink/90 via-ink/65 to-ink/20" />
-        <nav className="animate-fade-up text-xs text-white/60">
-          <Link href="/" className="transition hover:text-white">
-            Главная
-          </Link>{" "}
-          /{" "}
-          <span className="text-white">
-            {category ? category.name : "Все продукты"}
-          </span>
-        </nav>
-        <h1 className="mt-4 animate-fade-up font-heading text-3xl font-bold tracking-tight [animation-delay:120ms] sm:text-5xl">
-          {category ? category.name : "Все продукты"}
-        </h1>
-        {!category?.isPlaceholder && (
-          <p className="mt-3 animate-fade-up text-sm text-white/70 [animation-delay:220ms]">
-            {products.length} {pluralModels(products.length)} в разделе
-          </p>
-        )}
-      </div>
+      <CatalogBanner
+        title={category ? category.name : "Все продукты"}
+        subtitle={
+          !category?.isPlaceholder ? `${products.length} ${pluralModels(products.length)} в разделе` : undefined
+        }
+        shots={bannerShots}
+      />
 
       {/* Category tabs */}
       <div ref={tabsRef} className="no-scrollbar relative -mx-6 mt-6 flex gap-2 overflow-x-auto scroll-smooth px-6 pb-2">

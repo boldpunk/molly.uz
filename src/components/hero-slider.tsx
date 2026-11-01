@@ -8,6 +8,8 @@ export interface HeroSlide {
   image: string;
   alt: string;
   eyebrow: string;
+  /** Short name for the slide picker; the eyebrow is too long for it. */
+  nav?: string;
   title: string;
   text: string;
   cta: { label: string; href: string };
@@ -100,6 +102,9 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
                 }`}
               >
                 {(i === 0 || i === index || restReady) && (
+                  // A slow push-in on the slide that is showing keeps the
+                  // photo alive; it restarts each time the slide comes back.
+                  <div key={i === index ? `on-${index}` : "off"} className={`absolute inset-0 ${i === index ? "animate-drift" : ""}`}>
                   <Image
                     src={s.image}
                     alt={s.alt}
@@ -110,6 +115,7 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
                     className="object-cover"
                     onLoad={i === 0 ? () => setRestReady(true) : undefined}
                   />
+                  </div>
                 )}
               </div>
             ))}
@@ -133,6 +139,12 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
               </Link>
             )}
 
+            {count > 1 && (
+              <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1.5 font-heading text-xs font-bold tabular-nums text-navy shadow-lg backdrop-blur sm:left-6 sm:top-6">
+                {String(index + 1).padStart(2, "0")}
+                <span className="text-navy/35"> / {String(count).padStart(2, "0")}</span>
+              </span>
+            )}
             {count > 1 && (
               <div className="absolute right-4 top-4 flex gap-2 sm:right-6 sm:top-6">
                 {([-1, 1] as const).map((dir) => (
@@ -197,12 +209,11 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
                       <Image src={s.image} alt="" fill sizes="96px" className="object-cover" />
                     </span>
                     <span
-                      lang="ru"
-                      className={`line-clamp-2 hyphens-auto text-xs font-semibold leading-tight transition [overflow-wrap:anywhere] ${
+                      className={`truncate text-xs font-semibold leading-tight transition ${
                         i === index ? "text-navy" : "text-navy/45 group-hover:text-navy/80"
                       }`}
                     >
-                      {s.eyebrow}
+                      {s.nav ?? s.eyebrow}
                     </span>
                   </span>
                   <span className="mt-3 block h-[3px] overflow-hidden rounded-full bg-navy/10">

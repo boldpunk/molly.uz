@@ -9,6 +9,7 @@ import {
   ReviewsFields,
 } from "./page-blocks-editor";
 import { GalleryUploadField } from "./gallery-upload-field";
+import { VideoUploadField } from "./video-upload-field";
 import { uploadPageImage } from "@/lib/upload-actions";
 import type { PageBlock } from "@/db/schema";
 
@@ -54,6 +55,9 @@ export function HomeContentForm({
   const [instagramUrls, setInstagramUrls] = useState(
     pick(initialBlocks, 7, "instagram_strip")?.urls ?? []
   );
+  const [reels, setReels] = useState(
+    pick(initialBlocks, 7, "instagram_strip")?.videos ?? []
+  );
   const [partnerBrands, setPartnerBrands] = useState(
     pick(initialBlocks, 8, "brand_list")?.items ?? []
   );
@@ -69,7 +73,11 @@ export function HomeContentForm({
     { type: "heading", text: brandHeading },
     { type: "paragraph", text: brandParagraph },
     { type: "image", url: brandImage.url, alt: brandImage.alt },
-    { type: "instagram_strip", urls: instagramUrls },
+    {
+      type: "instagram_strip",
+      urls: instagramUrls,
+      videos: reels.filter((r) => r.url).map((r) => ({ url: r.url, caption: r.caption?.trim() || undefined })),
+    },
     { type: "brand_list", items: partnerBrands },
     { type: "reviews", items: reviews },
   ];
@@ -156,6 +164,13 @@ export function HomeContentForm({
             />
           </div>
         </div>
+      </FormSection>
+
+      <FormSection
+        title="Ролики"
+        description="Живые видео в блоке Instagram на главной. Скачайте свои Reels из Instagram и загрузите сюда — если роликов нет, показываются фото ниже"
+      >
+        <VideoUploadField initialItems={reels} onChange={setReels} />
       </FormSection>
 
       <FormSection
