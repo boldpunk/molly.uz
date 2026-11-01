@@ -71,7 +71,8 @@ export function Footer({
             </li>
           </ul>
         </div>
-        <div>
+        {/* Full width on phones so the Telegram card has room for one line. */}
+        <div className="col-span-2 md:col-span-1">
           <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-clay">
             Связь
           </h3>
@@ -91,7 +92,7 @@ export function Footer({
                 href="https://t.me/mollyhomeuzbot"
                 target="_blank"
                 rel="noreferrer"
-                className="group mt-1 flex items-center gap-3 rounded-2xl bg-cream/[0.08] p-3 ring-1 ring-cream/10 transition hover:bg-cream hover:ring-cream"
+                className="group mt-1 flex max-w-xs items-center gap-3 rounded-2xl bg-cream/[0.08] p-3 ring-1 ring-cream/10 transition hover:bg-cream hover:ring-cream"
               >
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#2AABEE] text-white">
                   <svg viewBox="0 0 24 24" className="h-4 w-4 -translate-x-px" aria-hidden>
@@ -99,8 +100,8 @@ export function Footer({
                   </svg>
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-sm font-semibold text-cream transition group-hover:text-navy">Статус заявки</span>
-                  <span className="block text-xs text-cream/55 transition group-hover:text-navy/60">в Telegram-боте</span>
+                  <span className="block whitespace-nowrap text-sm font-semibold text-cream transition group-hover:text-navy">Статус заявки</span>
+                  <span className="block whitespace-nowrap text-xs text-cream/55 transition group-hover:text-navy/60">в Telegram-боте</span>
                 </span>
               </a>
             </li>
