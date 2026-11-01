@@ -23,6 +23,7 @@ const BLOCK_LABELS: Record<AddableBlockType, string> = {
   brand_list: "Список брендов",
   reviews: "Отзывы",
   faq: "Вопросы и ответы",
+  founder: "Основатель",
 };
 
 function emptyBlock(type: AddableBlockType): EditableBlock {
@@ -43,6 +44,8 @@ function emptyBlock(type: AddableBlockType): EditableBlock {
       return { type, items: [] };
     case "faq":
       return { type, items: [{ question: "", answer: "" }] };
+    case "founder":
+      return { type, name: "", role: "Основатель", photoUrl: "", text: "" };
   }
 }
 
@@ -281,6 +284,36 @@ function BlockFields({
       );
     case "faq":
       return <FaqFields block={block} onChange={(b) => onChange(b as EditableBlock)} />;
+    case "founder":
+      return (
+        <div className="flex flex-col gap-2">
+          <BlockImageField
+            block={{ type: "image", url: block.photoUrl, alt: block.name }}
+            onChange={(b) => b.type === "image" && onChange({ ...block, photoUrl: b.url })}
+          />
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              value={block.name}
+              onChange={(e) => onChange({ ...block, name: e.target.value })}
+              placeholder="Имя и фамилия"
+              className="input"
+            />
+            <input
+              value={block.role}
+              onChange={(e) => onChange({ ...block, role: e.target.value })}
+              placeholder="Должность"
+              className="input"
+            />
+          </div>
+          <textarea
+            value={block.text}
+            onChange={(e) => onChange({ ...block, text: e.target.value })}
+            rows={5}
+            placeholder="О человеке и о том, зачем он создал бренд"
+            className="input"
+          />
+        </div>
+      );
     case "brand_list":
       return (
         <BrandListFields

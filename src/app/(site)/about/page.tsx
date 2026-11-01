@@ -2,8 +2,21 @@ import { getPageBySlug } from "@/lib/data";
 import { PageBlocks } from "@/components/page-blocks";
 import { PageHero } from "@/components/page-hero";
 import { pageMetadata } from "@/lib/seo";
+import { FounderSection } from "@/components/founder-section";
+import type { PageBlock } from "@/db/schema";
 
 export const dynamic = "force-dynamic";
+
+// Shown until a «Основатель» block is added to the page in the admin, which
+// then replaces it (with its own photo and text).
+const DEFAULT_FOUNDER: Extract<PageBlock, { type: "founder" }> = {
+  type: "founder",
+  name: "Саидазим Тойчибаев",
+  role: "Основатель Molly Home",
+  photoUrl: "",
+  text:
+    "Саидазим основал Molly Home как мебельную фабрику полного цикла: собственное производство в Ташкенте и одна команда от первого замера до сборки у вас дома.\n\nПоэтому мебель здесь делают под конкретную квартиру — по размерам, которые снял замерщик, а не по стандартной сетке. И за сроки, материалы и результат отвечает тот, кто её сделал.",
+};
 
 export async function generateMetadata() {
   const page = await getPageBySlug("about");
@@ -26,7 +39,9 @@ export default async function AboutPage() {
   // the blocks follow as the article.
   const imageBlock = blocks.find((b) => b.type === "image");
   const intro = blocks.find((b) => b.type === "paragraph");
-  const rest = blocks.filter((b) => b !== imageBlock && b !== intro);
+  const founderBlock = blocks.find((b) => b.type === "founder");
+  const founder = founderBlock?.type === "founder" ? founderBlock : DEFAULT_FOUNDER;
+  const rest = blocks.filter((b) => b !== imageBlock && b !== intro && b !== founderBlock);
 
   return (
     <>
@@ -37,6 +52,9 @@ export default async function AboutPage() {
         image={imageBlock?.type === "image" && imageBlock.url ? imageBlock.url : "/images/about.jpg"}
         imageAlt="Molly Home"
       />
+      <div className="mt-10">
+        <FounderSection founder={founder} />
+      </div>
       <article className="mx-auto max-w-4xl px-6 py-16">
         <PageBlocks blocks={rest} />
       </article>

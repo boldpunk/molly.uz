@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { FounderSection } from "./founder-section";
 import Link from "next/link";
 import type { PageBlock } from "@/db/schema";
 import { PlaceholderImage } from "@/components/placeholder-image";
@@ -108,6 +109,12 @@ function PageBlockView({ block }: { block: PageBlock }) {
       return (
         <div className="mt-8 first:mt-0">
           <BrandSlider items={block.items} />
+        </div>
+      );
+    case "founder":
+      return (
+        <div className="-mx-4 mt-10 first:mt-0 sm:-mx-6">
+          <FounderSection founder={block} />
         </div>
       );
     case "faq": {
