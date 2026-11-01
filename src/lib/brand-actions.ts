@@ -1,5 +1,7 @@
 "use server";
 
+import { requireRole, ROLES } from "./admin-guard";
+
 import { revalidatePath } from "./revalidate";
 import { db } from "@/db";
 import { siteSettings } from "@/db/schema";
@@ -26,6 +28,7 @@ function sanitizeAssetPath(value: string): string | null {
 }
 
 export async function saveBrandAsset(slot: string, formData: FormData) {
+  await requireRole(ROLES.admin);
   if (!isBrandSlot(slot)) return;
 
   const raw = formData.get("url");
@@ -45,10 +48,12 @@ export async function saveBrandAsset(slot: string, formData: FormData) {
 }
 
 export async function resetBrandAsset(slot: string) {
+  await requireRole(ROLES.admin);
   await saveBrandAsset(slot, new FormData());
 }
 
 export async function saveCompanyDetails(formData: FormData) {
+  await requireRole(ROLES.admin);
   const read = (key: string) => {
     const value = formData.get(key);
     return typeof value === "string" ? value.trim().slice(0, 120) : "";
@@ -72,6 +77,7 @@ export async function saveCompanyDetails(formData: FormData) {
 }
 
 export async function saveLogoScale(percent: number) {
+  await requireRole(ROLES.admin);
   const value = String(clampLogoScale(percent));
   await db
     .insert(siteSettings)

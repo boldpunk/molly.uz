@@ -1,5 +1,7 @@
 "use server";
 
+import { requireRole, ROLES } from "./admin-guard";
+
 import { eq, ne, and, count } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -41,6 +43,7 @@ async function countAdministrators(excludeId?: string) {
 }
 
 export async function createAdminUser(formData: FormData) {
+  await requireRole(ROLES.admin);
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "")
     .trim()
@@ -65,6 +68,7 @@ export async function createAdminUser(formData: FormData) {
 }
 
 export async function updateAdminUser(id: string, formData: FormData) {
+  await requireRole(ROLES.admin);
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "")
     .trim()
@@ -115,6 +119,7 @@ export async function updateAdminUser(id: string, formData: FormData) {
 }
 
 export async function deleteAdminUser(id: string) {
+  await requireRole(ROLES.admin);
   const current = await getCurrentAdmin();
   if (current?.id === id) {
     redirect("/admin/users?error=self_delete");

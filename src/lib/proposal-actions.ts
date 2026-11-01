@@ -1,5 +1,7 @@
 "use server";
 
+import { requireRole, ROLES } from "./admin-guard";
+
 import { asc, eq, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -160,6 +162,7 @@ function parseBrands(raw: FormDataEntryValue | null): ProposalBrand[] {
 }
 
 export async function createProposal() {
+  await requireRole(ROLES.sales);
   const admin = await getCurrentAdmin();
   const number = await nextProposalNumber();
   const [row] = await db
@@ -178,6 +181,7 @@ export async function createProposal() {
 }
 
 export async function saveProposal(id: string, formData: FormData) {
+  await requireRole(ROLES.sales);
   const items = normalizeItems(formData.get("itemsJson"));
   const subtotalMinor = items.reduce((sum, item) => sum + item.totalMinor, 0);
   const customerId = text(formData, "customerId");
@@ -225,6 +229,7 @@ export async function saveProposal(id: string, formData: FormData) {
 }
 
 export async function setProposalStatus(id: string, status: string) {
+  await requireRole(ROLES.sales);
   await db
     .update(commercialProposals)
     .set({ status: pickStatus(status), updatedAt: new Date() })
@@ -234,12 +239,14 @@ export async function setProposalStatus(id: string, status: string) {
 }
 
 export async function deleteProposal(id: string) {
+  await requireRole(ROLES.sales);
   await db.delete(commercialProposals).where(eq(commercialProposals.id, id));
   revalidatePath("/admin/proposals");
   redirect("/admin/proposals");
 }
 
 export async function duplicateProposal(id: string) {
+  await requireRole(ROLES.sales);
   const [source] = await db
     .select()
     .from(commercialProposals)
@@ -307,6 +314,7 @@ export async function duplicateProposal(id: string) {
 // nothing here links prices back, so editing either side leaves the other
 // untouched. sourceRequestId is kept only to show the link in the UI.
 export async function createProposalFromRequest(requestId: string) {
+  await requireRole(ROLES.sales);
   const [request] = await db
     .select()
     .from(requestsTable)
@@ -392,6 +400,7 @@ export async function createProposalFromRequest(requestId: string) {
 // --- Text templates ------------------------------------------------------
 
 export async function createTextTemplate(formData: FormData) {
+  await requireRole(ROLES.sales);
   const admin = await getCurrentAdmin();
   const name = text(formData, "name");
   const body = text(formData, "text");
@@ -410,6 +419,7 @@ export async function createTextTemplate(formData: FormData) {
 }
 
 export async function updateTextTemplate(id: string, formData: FormData) {
+  await requireRole(ROLES.sales);
   await db
     .update(proposalTextTemplates)
     .set({
@@ -424,6 +434,7 @@ export async function updateTextTemplate(id: string, formData: FormData) {
 }
 
 export async function deleteTextTemplate(id: string) {
+  await requireRole(ROLES.sales);
   await db
     .delete(proposalTextTemplates)
     .where(eq(proposalTextTemplates.id, id));
