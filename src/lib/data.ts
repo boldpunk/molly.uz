@@ -21,7 +21,7 @@ const DEFAULT_CONTACT_INFO: Extract<PageBlock, { type: "contact_info" }> = {
   telegram: "mollyhomeuzbot",
   instagram: "molly_home.uz",
   address: "Ташкент, ул. Янги Олмазор, 17/23",
-  addressNote: "Работаем по всему Ташкенту и области — выезд замерщика бесплатный.",
+  addressNote: "Работаем по всему Ташкенту и области.",
   mapLat: 41.350703,
   mapLng: 69.245558,
 };

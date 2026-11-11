@@ -314,7 +314,7 @@ export function FurnitureQuiz({
           {done && status !== "submitted" && (
             <form onSubmit={handleSubmit} className="flex animate-fade-up flex-col gap-3 border-t border-navy/10 bg-navy p-6 text-white">
               <p className="font-heading text-lg font-bold">Получить расчёт</p>
-              <p className="-mt-2 text-xs text-white/60">Перезвоним, уточним размеры и пришлём стоимость. Замер — бесплатно.</p>
+              <p className="-mt-2 text-xs text-white/60">Перезвоним, уточним размеры и пришлём стоимость.</p>
               <input
                 required
                 value={name}

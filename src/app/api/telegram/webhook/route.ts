@@ -514,7 +514,7 @@ async function handleMenuButton(chatId: number, text: string, from: TelegramFrom
     case CLIENT_BUTTONS.measure:
       await sendTelegramMessage(
         chatId,
-        "📝 <b>Бесплатный замер</b>\n\nОставьте заявку на сайте или просто напишите сюда адрес и удобное время — менеджер перезвонит и согласует выезд.",
+        "📝 <b>Заказать замер</b>\n\nОставьте заявку на сайте или просто напишите сюда адрес и удобное время — менеджер перезвонит и согласует выезд.",
         {
           replyMarkup: {
             inline_keyboard: [
