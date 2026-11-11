@@ -522,7 +522,7 @@ export function ProductDetail({
               </div>
               <p className="relative mt-2 text-xs text-white/60">
                 {isConfigurable
-                  ? `${width} м × ${hardware ? hardware.label : ""}. Точная цена — после бесплатного замера.`
+                  ? `${width} м × ${hardware ? hardware.label : ""}. Точная цена — после замера.`
                   : isFixedPrice
                     ? "Доставка и сборка — по согласованию с менеджером."
                     : "Менеджер рассчитает стоимость под ваш размер и отделку."}
@@ -559,18 +559,30 @@ export function ProductDetail({
 
           <ul className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
             {[
-              { icon: "ruler", title: "Бесплатный замер", tone: "bg-clay-light text-clay" },
+              { icon: "ruler", title: "Заказать замер", tone: "bg-clay-light text-clay", href: "/request" },
               { icon: "shield", title: "Своё производство", tone: "bg-sage-light text-sage" },
               { icon: "truck", title: "Доставка и монтаж", tone: "bg-cream text-accent-dark" },
             ].map((f) => (
-              <li
-                key={f.title}
-                className="flex flex-col items-center gap-2 rounded-2xl border border-navy/10 p-3 text-center sm:flex-row sm:text-left"
-              >
-                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${f.tone}`}>
-                  <UspIcon icon={f.icon} className="h-4 w-4" />
-                </span>
-                <span className="text-xs font-semibold text-navy">{f.title}</span>
+              <li key={f.title}>
+                {(() => {
+                  const inner = (
+                    <>
+                      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${f.tone}`}>
+                        <UspIcon icon={f.icon} className="h-4 w-4" />
+                      </span>
+                      <span className="text-xs font-semibold text-navy">{f.title}</span>
+                    </>
+                  );
+                  const cls =
+                    "flex h-full flex-col items-center gap-2 rounded-2xl border border-navy/10 p-3 text-center sm:flex-row sm:text-left";
+                  return f.href ? (
+                    <Link href={f.href} className={`${cls} transition hover:border-navy/30 hover:shadow-md`}>
+                      {inner}
+                    </Link>
+                  ) : (
+                    <div className={cls}>{inner}</div>
+                  );
+                })()}
               </li>
             ))}
           </ul>

@@ -1040,7 +1040,7 @@ export function WardrobeConfigurator({
             <div>
               <h3 className="font-heading text-xl font-bold">Отправить конфигурацию</h3>
               <p className="mt-1 text-sm text-white/60">
-                Менеджер посчитает стоимость и согласует бесплатный замер.
+                Менеджер посчитает стоимость и согласует замер.
               </p>
             </div>
             <input

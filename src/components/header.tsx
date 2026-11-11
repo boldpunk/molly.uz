@@ -263,7 +263,7 @@ export function Header({
               )}
             </Link>
             <Link href="/request" className="btn btn-primary ml-1 hidden whitespace-nowrap px-4 py-2.5 md:inline-flex xl:ml-2 xl:px-5">
-              Бесплатный замер
+              Заказать замер
             </Link>
           </div>
         </div>
@@ -349,7 +349,7 @@ export function Header({
                   {phone}
                 </a>
                 <Link href="/request" onClick={() => setDrawerOpen(false)} className="btn btn-primary">
-                  Бесплатный замер
+                  Заказать замер
                 </Link>
               </div>
             </div>

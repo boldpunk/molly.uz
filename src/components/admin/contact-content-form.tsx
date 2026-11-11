@@ -163,7 +163,7 @@ export function ContactContentForm({
           <input
             value={addressNote}
             onChange={(e) => setAddressNote(e.target.value)}
-            placeholder="Работаем по всему Ташкенту и области — выезд замерщика бесплатный."
+            placeholder="Работаем по всему Ташкенту и области."
             className="input"
           />
         </label>

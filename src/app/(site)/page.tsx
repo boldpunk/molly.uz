@@ -39,7 +39,7 @@ const PROCESS_STEPS = [
   {
     icon: "ruler",
     title: "Замер",
-    text: "Бесплатно выезжаем на объект и снимаем точные размеры под ваше помещение.",
+    text: "Выезжаем на объект и снимаем точные размеры под ваше помещение.",
   },
   {
     icon: "wrench",
@@ -69,7 +69,7 @@ const CATEGORY_SLIDES: Record<string, Omit<HeroSlide, "image" | "alt">> = {
     title: "Кухня, собранная по вашим размерам",
     text: "Фасады МДФ с окраской, влагостойкие корпуса и фурнитура HIGOLD или BLUM. Стоимость — за погонный метр.",
     cta: { label: "Смотреть кухни", href: "/catalog/kuhonnaya-mebel" },
-    secondary: { label: "Бесплатный замер", href: "/request" },
+    secondary: { label: "Заказать замер", href: "/request" },
   },
   garderoby: {
     eyebrow: "Конфигуратор",
@@ -601,7 +601,7 @@ export default async function HomePage() {
           <div className="relative flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
             <div className="max-w-xl">
               <h2 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
-                Замер — бесплатно
+                Заказать замер
               </h2>
               <p className="mt-3 text-white/85">
                 Приедем, снимем размеры и подскажем, что лучше подойдёт вашему
