@@ -1,0 +1,23 @@
+name: One-off — remove «бесплатный замер» from page content
+
+# Rewrites the free-measurement wording stored in the database (pages and
+# products) and prints each change. Old page text is saved to the page's
+# history first. Run by hand once, then delete this workflow.
+on:
+  workflow_dispatch:
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install the database driver
+        run: npm install --no-save --no-audit --no-fund @neondatabase/serverless@1
+      - name: Rewrite
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/one-off/fix-free-measure.mjs
